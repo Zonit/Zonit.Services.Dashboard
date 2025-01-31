@@ -1,0 +1,106 @@
+﻿@using Zonit.Extensions.Projects
+
+@implements IDisposable
+
+@inject ICatalogProvider Catalog
+@inject ICatalogManager CatalogManager
+@inject ICultureProvider Culture
+@inject NavigationManager NavigationManager
+
+@if (Catalog.Project is not null)
+{
+
+    @*     <MudAvatar Color="Color.Surface" Rounded="true" Size="Size.Small">
+        @Workspace.Organization.Name[0]
+    </MudAvatar> *@
+
+@*     <MudTooltip Text="@Culture.Translate("Change projects")" Arrow="true" Placement="Placement.Top" RootStyle="width: 100%;">
+        <MudButton Variant="Variant.Text" FullWidth=true OnClick="OpenDrawer">@Catalog.Project.Name</MudButton>
+    </MudTooltip> *@
+
+@*     <MudStack Justify="Justify.Center" Row="true">
+        <div>
+            <MudAvatar Color="Color.Surface" Rounded="true" Style="height: 100%">
+                @Catalog.Project.Name[0]
+            </MudAvatar>
+        </div>
+        <div> *@
+            <MudTooltip Text="@Culture.Translate("Change organizations")" Arrow="true" Placement="Placement.Top" RootStyle="width: 100%;">
+                <MudButton Variant="Variant.Text" FullWidth=true OnClick="OpenDrawer">@Catalog.Project.Name</MudButton>
+            </MudTooltip>
+@*         </div>
+    </MudStack> *@
+
+    <MudDivider Class="my-2" />
+
+    <MudDrawer @bind-Open="@open" Width="300px" Height="100%" Anchor="Anchor.End" Elevation="3" Variant="@DrawerVariant.Temporary" Class="z-index: 99999999">
+        <MudDrawerHeader>
+            <div Class="d-flex align-center justify-space-between flex-grow-1 gap-4">
+                <MudText Typo="Typo.h6">@Culture.Translate("Projects")</MudText>
+                <MudIconButton OnClick="@(() => OpenDrawer())"
+                               Icon=@Icons.Material.Filled.Close
+                               aria-label="@Culture.Translate("Close")" />
+            </div>
+        </MudDrawerHeader>
+        <MudNavMenu>
+            <MudPaper Elevation="0" Class="px-6 py-2">
+                <MudText Align="Align.Center" Class="mb-3">
+                    <MudAvatar Color="Color.Tertiary" Rounded="true" Style="height:90px; width:90px; font-size:2rem;">
+                        @Catalog.Project.Name[0]
+                    </MudAvatar>
+                </MudText>
+                <MudText Align="Align.Center" Class="my-3" Typo="Typo.body1">
+                    @Catalog.Project.Name
+                </MudText>
+
+                <MudDivider Class="my-4" />
+                @if (CatalogManager.Projects is not null)
+                {
+                    <MudText Typo="Typo.body1">@Culture.Translate("Your projects")</MudText>
+                    <MudList T=Guid @bind-SelectedValue=selectedProject>
+                        @foreach (var organization in CatalogManager.Projects)
+                        {
+                            <MudListItem Value="@organization.Id" Text="@organization.Name" OnClick="(async () => await SwitchAsync(organization.Id))" />
+                        }
+                    </MudList>
+                }
+                <MudDivider Class="my-2" />
+                <MudButton FullWidth="true" OnClick="GoToManage">@Culture.Translate("Manage projects")</MudButton>
+            </MudPaper>
+        </MudNavMenu>
+    </MudDrawer>
+}
+
+@code {
+    bool open;
+    Guid selectedProject;
+
+    protected override void OnInitialized()
+    {
+        Culture.OnChange += StateHasChanged;
+        Catalog.OnChange += StateHasChanged;
+
+        if (Catalog.Project is not null)
+            selectedProject = Catalog.Project.Id;
+    }
+
+    public void Dispose()
+    {
+        Culture.OnChange -= StateHasChanged;
+        Catalog.OnChange -= StateHasChanged;
+    }
+
+    void OpenDrawer()
+        => open = !open;
+
+    void GoToManage()
+    {
+        open = false;
+        NavigationManager.NavigateTo("Projects");
+    }
+
+    public async Task SwitchAsync(Guid projectId)
+    {
+        await CatalogManager.SwitchProjectAsync(projectId);
+    }
+}

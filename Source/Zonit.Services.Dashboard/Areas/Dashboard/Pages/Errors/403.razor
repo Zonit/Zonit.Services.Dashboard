@@ -1,0 +1,17 @@
+﻿@page "/errors/403"
+@layout ErrorLayout
+@inject ICultureProvider Culture
+
+<HeadContent>
+    <title>@Culture.Translate("Forbidden")</title>
+</HeadContent>
+
+<MudCard>
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">@Culture.Translate("Forbidden")</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudText Class="mb-2">@Culture.Translate("Access to this resource is forbidden.")</MudText>
+        <MudLink Href="">@Culture.Translate("Back to home page")</MudLink>
+    </MudCardContent>
+</MudCard>

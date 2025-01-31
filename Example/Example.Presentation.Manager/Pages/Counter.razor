@@ -1,0 +1,29 @@
+@inherits Zonit.SDK.Website.PageComponent
+@rendermode InteractiveServer
+<HeadContent>
+    <title>@Culture.Translate("Counter")</title>
+</HeadContent>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudGrid Spacing="4">
+        <MudItem xs="12">
+            <MudText Typo="Typo.h6" GutterBottom="true">@Culture.Translate("Counter")</MudText>
+            <MudCard>
+                <MudCardContent>
+                    <p role="status">Current count: @currentCount</p>
+
+                    <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+}

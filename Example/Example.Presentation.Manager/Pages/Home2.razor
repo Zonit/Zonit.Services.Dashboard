@@ -1,0 +1,79 @@
+﻿@page "/Home2"
+
+@* @rendermode InteractiveServer *@
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+@using System.Globalization
+@using Zonit.Extensions.Website
+@using Zonit.Extensions.Cultures
+
+@inject ICookieProvider Cookie
+@inject ICultureProvider Culture
+
+<PageTitle>Counter</PageTitle>
+
+<div class="ma-4">
+    <h1>Counter</h1>
+
+    <MudPaper Class="my-3">
+        <a href="Home">Home</a>
+        <a href="Home2">Home2</a>
+        <a href="Counter">Counter</a>
+    </MudPaper>
+
+    <MudPaper Class="my-3">
+        <p role="status">Current count: @currentCount</p>
+        <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+    </MudPaper>
+
+    <MudPaper Class="my-2">
+        @foreach (var cookie in Cookie.GetCookies())
+        {
+            <div>@cookie.Name</div>
+        }
+    </MudPaper>
+
+    <MudPaper Class="my-3">
+        @Culture.ClientTimeZone(DateTime.UtcNow).ToString($"{Culture.DateTimeFormat.ShortDatePattern} {Culture.DateTimeFormat.ShortTimePattern}")
+    </MudPaper>
+
+    <MudCard>
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Card Header</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <form action="" method="get" data-clarity-mask="false">
+                <label for="GET-name">User Name:</label>
+                <input id="GET-name" type="text" name="name">
+                <input type="submit" value="Submit">
+            </form>
+        </MudCardContent>
+    </MudCard>
+
+    @code {
+        public DateTime DateTimeOffset1 = new DateTime(2023, 12, 5, 18, 0, 0);
+    }
+    <p>
+
+        @DateTimeOffset1.ToString()
+    </p>
+    <p>
+        @DateTimeOffset1.ToLocalTime().ToString()
+    </p>
+
+
+</div>
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+
+    protected override void OnInitialized()
+    {
+        Culture.OnChange += StateHasChanged;
+    }
+}

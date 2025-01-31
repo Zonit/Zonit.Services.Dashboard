@@ -1,0 +1,73 @@
+﻿@page "/"
+@page "/home"
+
+@rendermode InteractiveServer
+
+@using Zonit.Extensions.Website
+@using Zonit.Extensions.Cultures
+
+@inject ICookieProvider Cookie
+@inject ICultureProvider Culture
+
+<PageTitle>Counter</PageTitle>
+
+<div class="ma-4">
+    <h1>Counter</h1>
+
+    <a href="Counter">Click href</a>
+
+    <p role="status">Current count: @currentCount</p>
+
+    <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+    <MudPaper>
+        <h2>Culture @Culture.GetCulture</h2>
+    </MudPaper>
+
+ @foreach(var cookie in Cookie.GetCookies())
+{
+    <MudPaper Class="my-2">
+        <h2>@cookie.Name</h2>
+        <p>@cookie.Value</p>
+    </MudPaper>
+}
+
+<MudPaper>
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+            <MudTabPanel Text="Tab One">
+                <MudText>Content One</MudText>
+            </MudTabPanel>
+            <MudTabPanel Text="Tab Two">
+                <MudText>Content Two</MudText>
+            </MudTabPanel>
+            <MudTabPanel Text="Tab Three">
+                <MudText>Content Three</MudText>
+            </MudTabPanel>
+            <MudTabPanel Text="Tab Disabled" Disabled="true">
+                <MudText>Content Disabled</MudText>
+            </MudTabPanel>
+        </MudTabs>
+</MudPaper>
+
+<MudCard>
+    <MudCardHeader >
+        <MudText Typo="Typo.h6">Card Header</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+            <MudTextField data-clarity-mask="false" @bind-Value="TextValue" Label="Standard" Variant="Variant.Text"></MudTextField>
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton>Click me</MudButton>
+    </MudCardActions>
+</MudCard>
+
+</div>
+
+@code {
+    private int currentCount = 0;
+    string TextValue { get; set; } = "Hello, World!";
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+}

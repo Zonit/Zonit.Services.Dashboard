@@ -1,0 +1,35 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Zonit.Extensions
+
+<Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="@_assemblies">
+    @* AdditionalAssemblies="@Types()" *@
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layouts.MainLayout)" >
+            <NotAuthorized>
+                
+                <MudContainer>
+                    <MudCard>
+                        <MudCardHeader><MudText Typo="Typo.h6">Not authorized</MudText></MudCardHeader>
+                        <MudCardContent>
+                            <p>You are not authorized to access this resource.</p>
+                        </MudCardContent>
+                    </MudCard>
+                </MudContainer>
+
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+
+    <NotFound>
+        <LayoutView Layout="@typeof(Layouts.ErrorLayout)">
+            <Zonit.Services.Dashboard.Areas.Dashboard.Pages.Errors._404 />
+        </LayoutView>
+    </NotFound>
+</Router>
+
+<ZonitCookiesExtension />
+<ZonitCulturesExtension />
+<ZonitIdentityExtension />
+<ZonitOrganizationsExtension />
+<ZonitProjectsExtension />

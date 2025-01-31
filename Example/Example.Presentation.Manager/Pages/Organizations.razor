@@ -1,0 +1,91 @@
+﻿@inherits Zonit.SDK.Website.PageComponent
+
+<HeadContent>
+    <title>@Culture.Translate("Organizations")</title>
+</HeadContent>
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    
+    <MudGrid Spacing="4">
+        <MudItem xs="12">
+            <MudText Typo="Typo.h6" GutterBottom="true">@Culture.Translate("You organization")</MudText>
+            @if (Workspace.Organization is not null)
+            {
+                <MudSimpleTable Hover="true" Style="overflow-x: auto;">
+                    <tbody>
+                        <tr>
+                            <td>ID</td>
+                            <td>@Workspace.Organization.Id</td>
+                        </tr>
+                        <tr>
+                            <td>Name</td>
+                            <td>@Workspace.Organization.Name</td>
+                        </tr>
+                        <tr>
+                            <td>Created Date</td>
+                            <td>@Workspace.Organization.CreatedDate</td>
+                        </tr>
+                    </tbody>
+                </MudSimpleTable>
+            }
+            else
+            {
+                <MudCard>
+                    <MudCardContent>
+                        <MudText>
+                            @Culture.Translate("No organization. The user is not in any organization or the module does not exist.")
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            }
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudText Typo="Typo.h6" GutterBottom="true">@Culture.Translate("Your available organizations")</MudText>
+            <MudPaper Class="pa-4">
+                @if (workspaceManager.Organizations is not null)
+                {
+                    @foreach (var organization in workspaceManager.Organizations)
+                    {
+                        <MudButton Variant="Variant.Filled" OnClick="async (e) => await SwitchOrgnaizationAsync(organization.Id)">Change to "@organization.Name" organization</MudButton><br/>
+                    }
+                }
+            </MudPaper>
+        </MudItem>
+
+        @if (workspaceManager.Workspace is not null)
+        {
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" GutterBottom="true">@Culture.Translate("Your permissions")</MudText>
+                <MudPaper Class="pa-4">
+                    @foreach (var permission in workspaceManager.Workspace.Permissions)
+                    {
+                        <div>@permission</div>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" GutterBottom="true">@Culture.Translate("Your roles")</MudText>
+                <MudPaper Class="pa-4">
+
+                        @foreach (var role in workspaceManager.Workspace.Roles)
+                        {
+                            <div>@role</div>
+                        }
+                
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+</MudContainer>
+
+@using Zonit.Extensions.Organizations
+@inject IWorkspaceManager workspaceManager
+
+@code{
+    async Task SwitchOrgnaizationAsync(Guid id)
+    {
+        await workspaceManager.SwitchOrganizationAsync(id);
+    }
+}

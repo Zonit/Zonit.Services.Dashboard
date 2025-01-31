@@ -1,0 +1,38 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="MyCustomTheme" />
+<MudDialogProvider />
+<MudPopoverProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Medium">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    MudTheme MyCustomTheme = new()
+    {
+        PaletteLight = new()
+        {
+            AppbarBackground = "#ffffff",
+            AppbarText = "#65676b",
+            Background = "#f0f2f5",
+            DrawerBackground = "#fdfdfd",
+            Surface = "#ffffff",
+            TextPrimary = "#050505",
+        },
+        PaletteDark = new()
+        {
+            AppbarBackground = "#242526",
+            AppbarText = "#b0b3b8",
+            Background = "#18191a",
+            DrawerBackground = "#212223",
+            Surface = "#242526",
+            TextPrimary = "#E4E6EB"
+        },
+    };
+}

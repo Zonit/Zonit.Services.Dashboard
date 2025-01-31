@@ -1,0 +1,201 @@
+﻿@using System.Globalization
+@using Zonit.Extensions.Cultures
+@using Zonit.Extensions.Website.Abstractions
+
+@inject ICultureProvider Culture
+@inject IHttpContextAccessor _httpContextAccessor
+@inject IAuthenticatedProvider Authenticated
+
+@code{
+    protected override void OnInitialized()
+    {
+        var GetIP = string.Empty;
+        if (_httpContextAccessor.HttpContext?.Connection.RemoteIpAddress is not null)
+            GetIP = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
+
+        // var GetAgent = _httpContextAccessor.Headers["User-Agent"].ToString();
+    }
+}
+
+<!DOCTYPE html>
+<html lang="@Culture.GetCulture">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <base href="/Manager/" />
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+
+    <title>SeoMatch</title>
+
+    @* Tymczasowo  *@
+    <link href="//cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link href="//cdn.quilljs.com/1.3.6/quill.bubble.css" rel="stylesheet">
+
+    <meta name="theme-color" content="#ff6100">
+    <meta name="msapplication-TileColor" content="#ff6100">
+
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+    <HeadOutlet @rendermode="@RenderMode.InteractiveServer" />
+</head>
+
+<body>
+    <Routes @rendermode="@RenderMode.InteractiveServer" />
+
+    <Connection />
+    <script src="_framework/blazor.web.js" autostart="false"></script>
+
+ @*    <script>
+        (() => {
+            const maximumRetryCount = 3;
+            const retryIntervalMilliseconds = 5000;
+            const reconnectModal = document.getElementById('reconnect-modal');
+
+            const startReconnectionProcess = () => {
+                reconnectModal.style.display = 'block';
+
+                let isCanceled = false;
+
+                (async () => {
+                    for (let i = 0; i < maximumRetryCount; i++) {
+                        reconnectModal.innerText = `Attempting to reconnect: ${i + 1} of ${maximumRetryCount}`;
+
+                        await new Promise(resolve => setTimeout(resolve, retryIntervalMilliseconds));
+
+                        if (isCanceled) {
+                            return;
+                        }
+
+                        try {
+                            const result = await Blazor.reconnect();
+                            if (!result) {
+                                // The server was reached, but the connection was rejected; reload the page.
+                                location.reload();
+                                return;
+                            }
+
+                            // Successfully reconnected to the server.
+                            return;
+                        } catch {
+                            // Didn't reach the server; try again.
+                        }
+                    }
+
+                    // Retried too many times; reload the page.
+                    location.reload();
+                })();
+
+                return {
+                    cancel: () => {
+                        isCanceled = true;
+                        reconnectModal.style.display = 'none';
+                    },
+                };
+            };
+
+            let currentReconnectionProcess = null;
+
+            Blazor.start({
+                circuit: {
+                    reconnectionHandler: {
+                        onConnectionDown: () => currentReconnectionProcess ??= startReconnectionProcess(),
+                        onConnectionUp: () => {
+                            currentReconnectionProcess?.cancel();
+                            currentReconnectionProcess = null;
+                        }
+                    }
+                }
+            });
+        })();
+    </script> *@
+
+
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+
+    <script>
+        window.blazorCulture = {
+            get: () => window.localStorage['BlazorCulture'],
+            set: (value) => window.localStorage['BlazorCulture'] = value
+        };
+    </script>
+
+    <script>
+        window.downloadFile = (fileName, fileContentBase64) => {
+            // Dekodowanie Base64 do tablicy bajtów
+            const binaryData = atob(fileContentBase64);
+            const byteNumbers = new Array(binaryData.length);
+            for (let i = 0; i < binaryData.length; i++) {
+                byteNumbers[i] = binaryData.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+
+            // Tworzenie Blob z tablicy bajtów
+            const blob = new Blob([byteArray], { type: 'text/plain' });
+
+            // Tworzenie linku do pobrania pliku
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+
+            // Dodanie linku do dokumentu i wywołanie akcji pobierania
+            document.body.appendChild(link);
+            link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+
+            // Usunięcie linku po pobraniu pliku
+            document.body.removeChild(link);
+        };
+    </script>
+
+    <!-- Quill library -->
+@*     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="_content/Blazored.TextEditor/quill-blot-formatter.min.js"></script>
+    <script src="_content/Blazored.TextEditor/Blazored-BlazorQuill.js"></script> *@
+
+@*     <script type="text/javascript">
+        (function (c, l, a, r, i, t, y) {
+            c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
+            t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+            y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+        })(window, document, "clarity", "script", "jyeh0np2ty");
+    </script> *@
+
+    @if (Authenticated.User is not null)
+    {
+        <script type="text/javascript">
+            (function (c, l, a, r, i, t, y) {
+                c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
+                t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+                y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+           
+                t.onload = function () {
+
+                };
+
+            })(window, document, "clarity", "script", "jyeh0np2ty");
+
+            window.clarity('consent');
+            window.clarity("set", "area", "Manager");
+            window.clarity("set", "User.Id", "@Authenticated.User.Id");
+            window.clarity("set", "User.Name", "@Authenticated.User.Name");
+            window.clarity("identify", "@Authenticated.User.Id", "", "", "@Authenticated.User.Name");
+        </script>
+    }
+
+    <script>
+        var _paq = window._paq = window._paq || [];
+        _paq.push(['trackPageView']);
+        _paq.push(['enableLinkTracking']);
+        (function () {
+            var u = "https://analytics.zonit.pro/";
+            _paq.push(['setTrackerUrl', u + 'matomo.php']);
+            _paq.push(['setSiteId', '12']);
+            var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+            g.async = true; g.src = u + 'matomo.js'; s.parentNode.insertBefore(g, s);
+        })();
+    </script>
+
+</body>
+</html>
+
