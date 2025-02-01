@@ -6,6 +6,7 @@ using Zonit.SDK.Website;
 namespace Example.Presentation.Management.Pages;
 
 [Authorize]
+[Route("/")]
 [Route("/" + Route)]
 public sealed partial class Home : PageComponent, IAreaManagement
 {
@@ -14,6 +15,8 @@ public sealed partial class Home : PageComponent, IAreaManagement
     protected override void OnInitialized()
     {
         base.OnInitialized();
+
+        Console.WriteLine(Culture.GetCulture);
     }
 
     protected override async Task OnParametersSetAsync()

@@ -1,38 +1,34 @@
 <Project>
-	<PropertyGroup>
-		<EnableCentralPackageManagement>true</EnableCentralPackageManagement>
-		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-		<!--<TargetFramework>net8.0</TargetFramework>-->
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<AssemblyVersion>0.0.50</AssemblyVersion>
-
-		<!-- Package info -->
-		<FileVersion>$(AssemblyVersion)</FileVersion>
-		<Version>$(AssemblyVersion)</Version>
-		<Authors>Zonit</Authors>
-		<Title>Zonit.Core</Title>
-		<PackageOutputPath>$(SolutionDir)Packages</PackageOutputPath>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<PackageProjectUrl>https://github.com/Zonit</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zonit/Zonit.Services.Dashboard</RepositoryUrl>
-
-		<!-- Debugging symbol settings -->
-		<IncludeSymbols>true</IncludeSymbols>
-		<IncludeSource>true</IncludeSource>
-		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-	</PropertyGroup>
-
-
-	<ItemGroup>
-		<PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
-		<PackageVersion Include="MudBlazor" Version="8.1.0" />
-		<PackageVersion Include="Zonit.Extensions.Cultures" Version="0.1.2" />
-		<PackageVersion Include="Zonit.Extensions.Identity" Version="0.1.6" />
-		<PackageVersion Include="Zonit.Extensions.Organizations" Version="0.1.7" />
-		<PackageVersion Include="Zonit.Extensions.Organizations.Abstractions" Version="0.1.7" />
-		<PackageVersion Include="Zonit.Extensions.Projects" Version="0.1.4" />
-		<PackageVersion Include="Zonit.Extensions.Website" Version="0.0.32" />
-	</ItemGroup>
+  <PropertyGroup>
+    <EnableCentralPackageManagement>true</EnableCentralPackageManagement>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <!--<TargetFramework>net8.0</TargetFramework>-->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyVersion>0.0.50</AssemblyVersion>
+    <!-- Package info -->
+    <FileVersion>$(AssemblyVersion)</FileVersion>
+    <Version>$(AssemblyVersion)</Version>
+    <Authors>Zonit</Authors>
+    <Title>Zonit.Core</Title>
+    <PackageOutputPath>$(SolutionDir)Packages</PackageOutputPath>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/Zonit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Zonit/Zonit.Services.Dashboard</RepositoryUrl>
+    <!-- Debugging symbol settings -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+    <PackageVersion Include="MudBlazor" Version="8.2.0" />
+    <PackageVersion Include="Zonit.Extensions.Cultures" Version="0.1.2" />
+    <PackageVersion Include="Zonit.Extensions.Identity" Version="0.1.6" />
+    <PackageVersion Include="Zonit.Extensions.Organizations" Version="0.1.7" />
+    <PackageVersion Include="Zonit.Extensions.Organizations.Abstractions" Version="0.1.7" />
+    <PackageVersion Include="Zonit.Extensions.Projects" Version="0.1.4" />
+    <PackageVersion Include="Zonit.Extensions.Website" Version="0.0.34" />
+  </ItemGroup>
 </Project>

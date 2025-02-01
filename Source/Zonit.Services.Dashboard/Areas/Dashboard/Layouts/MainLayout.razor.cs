@@ -2,6 +2,11 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using MudBlazor.Services;
+using Zonit.Extensions.Website;
+using Zonit.Extensions.Website.Abstractions.Navigations.Types;
+using Zonit.Services.Dashboard.Options;
+using Zonit.Services.Dashboard.Repositories;
+using Zonit.Services.Dashboard.Services;
 
 namespace Zonit.Services.Dashboard.Areas.Dashboard.Layouts;
 
@@ -10,6 +15,14 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
 {
     [Inject]
     IBrowserViewportService BrowserViewportService { get; set; } = null!;
+
+    [Inject]
+    private ISettingsProvider settingsProvider { get; set; } = default!;
+
+    [Inject]
+    ISettingsManager Settings { get; set; } = default!;
+
+    AreaType AreaType { get; set; }
 
     Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
 
@@ -21,6 +34,26 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
 
     private int _width = 0;
     private int _height = 0;
+
+    protected override void OnInitialized()
+    {
+        Culture.OnChange += () =>
+        {
+            if (Culture.GetCulture == "ar-sa")
+                RightToLeft = true;
+            else
+                RightToLeft = false;
+
+            StateHasChanged();
+        };
+
+        if (Settings.Settings.Directory.ToLower() == "manager")
+            AreaType = AreaType.Manager;
+        else if (Settings.Settings.Directory.ToLower() == "management")
+            AreaType = AreaType.Management;
+        else if (Settings.Settings.Directory.ToLower() == "diagnostic")
+            AreaType = AreaType.Diagnostic;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

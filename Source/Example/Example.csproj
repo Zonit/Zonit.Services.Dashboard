@@ -1,9 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-	
-  <ItemGroup>
-    <ProjectReference Include="..\..\Example\Example.Presentation.Management\Example.Presentation.Management.csproj" />
-    <ProjectReference Include="..\..\Example\Example.Presentation.Manager\Example.Presentation.Manager.csproj" />
-    <ProjectReference Include="..\Zonit.Services.Dashboard\Zonit.Services.Dashboard.csproj" />
-  </ItemGroup>
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Example\Example.Presentation.Management\Example.Presentation.Management.csproj" />
+		<ProjectReference Include="..\..\Example\Example.Presentation.Manager\Example.Presentation.Manager.csproj" />
+		<ProjectReference Include="..\Zonit.Services.Dashboard\Zonit.Services.Dashboard.csproj" />
+	</ItemGroup>
 
 </Project>

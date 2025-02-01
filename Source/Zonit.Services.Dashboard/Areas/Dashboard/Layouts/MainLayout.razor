@@ -36,11 +36,11 @@
             <MudDrawer @bind-Open="_drawerOpen" Variant="_drawerVariant" OpenMiniOnHover="_drawerOpenMin" Anchor="Anchor.Start" Elevation="2">
                 <MudDrawerHeader>
                     <a Href="/">
-                        <MudText Typo="Typo.h5" Class="mt-1">SeoMatch</MudText>
+                        <MudText Typo="Typo.h5" Class="mt-1">@settingsProvider.Settings.Title</MudText>
                     </a>
                 </MudDrawerHeader>
                 <MudNavMenu Bordered="true">
-                    <Nav AreaType="AreaType.Manager"/>
+                    <Nav AreaType="AreaType" />
                     <MudDivider Class="my-2" />
                     <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Row="true" Spacing="8" Class="pa-2 pb-4" Style="fill: var(--mud-palette-text-secondary)">
                         <a href="/Discord" target="_blank">
@@ -81,7 +81,7 @@
                     <Zonit.Services.Dashboard.Areas.Dashboard.Components.ChangeProjects />
                     <Zonit.Services.Dashboard.Areas.Dashboard.Components.ChangeCulture />
 
-                    <Nav AreaType="AreaType.ManagerRight" />
+                    <Nav AreaType="AreaType" Position="right" />
 
                     <MudDivider Class="my-2" />
 
@@ -157,19 +157,6 @@
     MudThemeProvider _mudThemeProvider = null!;
 
     bool RightToLeft = false;
-
-    protected override void OnInitialized()
-    {
-        Culture.OnChange += () =>
-        {
-            if (Culture.GetCulture == "ar-sa")
-                RightToLeft = true;
-            else
-                RightToLeft = false;
-
-            StateHasChanged();
-        };
-    }
 
     public void Dispose()
         => Culture.OnChange -= StateHasChanged;

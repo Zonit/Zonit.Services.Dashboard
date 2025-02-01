@@ -1,18 +1,36 @@
 ﻿using Microsoft.AspNetCore.Components;
 using System.Reflection;
-using Zonit.Extensions.Website;
-using Zonit.Services.Dashboard.Services;
 
 namespace Zonit.Services.Dashboard.Areas.Dashboard;
 
 public partial class Routes : ComponentBase
 {
-    public IEnumerable<Assembly> _assemblies;
+    [Parameter]
+    public string[] AssemblyNames { get; init; } = [];
+
+    public IEnumerable<Assembly> Assemblies { get; private set; } = [];
+
+    [Inject]
+    private ILogger<Routes> Logger { get; set; } = default!;
 
     protected override void OnInitialized()
     {
-        var t = new AssemblyScannerService<IAreaManager>();
-        _assemblies = t.Types();
+        Assemblies = AssemblyNames
+            .Select(LoadAssembly)
+            .Where(a => a is not null)!
+            .Cast<Assembly>();
+    }
 
+    private Assembly? LoadAssembly(string assemblyName)
+    {
+        try
+        {
+            return Assembly.Load(assemblyName);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading assembly '{AssemblyName}'", assemblyName);
+            return null;
+        }
     }
 }

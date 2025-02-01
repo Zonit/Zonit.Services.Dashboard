@@ -34,11 +34,14 @@
     [Parameter, EditorRequired]
     public AreaType AreaType { get; set; }
 
+    [Parameter]
+    public string? Position { get; set; }
+
     public IReadOnlyCollection<NavGroupModel>? NavItems { get; set; }
 
     protected override void OnInitialized()
     {
-        NavItems = Navigation.Get(AreaType);
+        NavItems = Navigation.Get(AreaType, Position);
         Culture.OnChange += StateHasChanged;
     }
 

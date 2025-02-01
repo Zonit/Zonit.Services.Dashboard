@@ -1,8 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Zonit.Extensions
 
-<Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="@_assemblies">
-    @* AdditionalAssemblies="@Types()" *@
+<Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="@Assemblies">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layouts.MainLayout)" >
             <NotAuthorized>
@@ -27,6 +26,8 @@
         </LayoutView>
     </NotFound>
 </Router>
+
+<ZonitDashboardExtension />
 
 <ZonitCookiesExtension />
 <ZonitCulturesExtension />

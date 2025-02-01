@@ -16,4 +16,8 @@
 		<PackageReference Include="Zonit.Extensions.Website" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Middlewares\" />
+	</ItemGroup>
+
 </Project>

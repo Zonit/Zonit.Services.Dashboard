@@ -4,28 +4,31 @@ using Zonit.Extensions;
 using Zonit.Extensions.Website;
 using Zonit.Services.Dashboard.Areas.Dashboard;
 using Zonit.Services.Dashboard.Options;
+using Zonit.Services.Dashboard.Repositories;
 using Zonit.Services.Dashboard.Services;
 
 namespace Zonit.Services.Dashboard.DependencyInjection;
 
 public static class AppMiddlewareExtensions
 {
-
     public static IApplicationBuilder UseDashboardServices<T>(this WebApplication builder, DashboardOptions options) where T : IArea
     {
-
-        builder.UseDashboardServices<T>(options.Directory);
-
-        return builder;
-    }
-
-    public static IApplicationBuilder UseDashboardServices<T>(this WebApplication builder, string dir = "manager") where T : IArea
-    {
-        builder.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/" + dir), app =>
+        builder.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/" + options.Directory), app =>
         {
-            app.UsePathBase("/" + dir + "/");
+            app.Use(async (context, next) =>
+            {
+                var settings = context.RequestServices.GetRequiredService<ISettingsManager>();
+                settings.SetSettings(options);
+                settings.SetArea(typeof(T));
+
+                await next();
+            });
+
+
+            app.UsePathBase("/" + options.Directory + "/");
             app.UseStaticFiles();
             app.UseRouting();
+
             app.UseAntiforgery();
 
             app.UseStatusCodePages(context =>
@@ -73,6 +76,12 @@ public static class AppMiddlewareExtensions
                 // Pobranie metod i wywołanie "Types()"
                 var typesMethod = routeInstance?.GetType().GetMethod("Types");
                 var assemblies = (typesMethod?.Invoke(routeInstance, null) as IEnumerable<Assembly>)?.ToArray() ?? [];
+
+                //Console.WriteLine($"========== ASSEMBLIES {options.Title} ==========");
+                //foreach (var assembly in assemblies)
+                //{
+                //    Console.WriteLine(assembly.FullName);
+                //}
 
                 endpoints.MapRazorComponents<App>()
                     .AddInteractiveServerRenderMode()

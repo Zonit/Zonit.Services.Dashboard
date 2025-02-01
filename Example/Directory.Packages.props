@@ -20,8 +20,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageVersion Include="MudBlazor" Version="8.1.0" />
-		<PackageVersion Include="Zonit.Extensions.Website" Version="0.0.32" />
-		<PackageVersion Include="Zonit.SDK.Website" Version="0.1.2" />
+		<PackageVersion Include="MudBlazor" Version="8.2.0" />
+		<PackageVersion Include="Zonit.SDK.Website" Version="0.1.5" />
 	</ItemGroup>
 </Project>

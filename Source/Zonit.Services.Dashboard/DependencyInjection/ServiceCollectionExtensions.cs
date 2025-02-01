@@ -1,6 +1,9 @@
 ﻿using MudBlazor;
 using MudBlazor.Services;
 using Zonit.Extensions;
+using Zonit.Services.Dashboard.Options;
+using Zonit.Services.Dashboard.Repositories;
+using Zonit.Services.Dashboard.Services;
 
 namespace Zonit.Services.Dashboard.DependencyInjection;
 
@@ -46,6 +49,9 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddMudServices();
+
+        services.AddScoped<ISettingsManager, SettingsRepository>();
+        services.AddScoped<ISettingsProvider, SettingsService>();
 
         return services;
     }

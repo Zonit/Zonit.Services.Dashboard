@@ -6,8 +6,8 @@ public class UserService : IUserProvider
 {
     UserModel? UserModel { get; set; } = new()
     {
-        Name = "NoUser",
-        Roles = ["User", "TwojaStara"]
+        Name = "UserName",
+        Roles = ["User", "Worker"]
     };
 
     public Task<UserModel?> GetByIdAsync(Guid id)

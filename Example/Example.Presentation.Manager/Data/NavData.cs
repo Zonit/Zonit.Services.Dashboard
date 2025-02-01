@@ -53,7 +53,8 @@ internal class NavData(INavigationProvider _navigation) : IHostedService
         _navigation.Add(new()
         {
             Title = "Wallet",
-            Area = AreaType.ManagerRight,
+            Area = AreaType.Manager,
+            Position = "right",
             Order = 70,
             Expanded = true,
             Children = [

@@ -1,8 +1,10 @@
-﻿namespace Zonit.Services.Dashboard.Options;
+﻿using Zonit.Extensions.Website.Abstractions.Navigations.Types;
+
+namespace Zonit.Services.Dashboard.Options;
 
 public class DashboardOptions
 {
-    public string Directory { get; init; } = "Dashboard";
+    public string Directory { get; set; } = "Dashboard";
     public string Title { get; set; } = "Dashboard";
 
 
