@@ -6,7 +6,7 @@
     <!--<TargetFramework>net8.0</TargetFramework>-->
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyVersion>0.0.50</AssemblyVersion>
+    <AssemblyVersion>0.1.0</AssemblyVersion>
     <!-- Package info -->
     <FileVersion>$(AssemblyVersion)</FileVersion>
     <Version>$(AssemblyVersion)</Version>
@@ -24,6 +24,7 @@
   <ItemGroup>
     <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
     <PackageVersion Include="MudBlazor" Version="8.2.0" />
+    <PackageVersion Include="MudBlazor.Translations" Version="2.0.0" />
     <PackageVersion Include="Zonit.Extensions.Cultures" Version="0.1.2" />
     <PackageVersion Include="Zonit.Extensions.Identity" Version="0.1.6" />
     <PackageVersion Include="Zonit.Extensions.Organizations" Version="0.1.7" />

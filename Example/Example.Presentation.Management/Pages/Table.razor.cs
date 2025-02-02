@@ -6,11 +6,10 @@ using Zonit.SDK.Website;
 namespace Example.Presentation.Management.Pages;
 
 [Authorize]
-[Route("/")]
 [Route("/" + Route)]
-public sealed partial class Home : PageComponent, IAreaManagement
+public sealed partial class Table : PageComponent, IAreaManagement // IAreaWeb, IAreaManager, IAreaManagement, IAreaDiagnostics
 {
-    public const string Route = "Home";
+    public const string Route = "Table";
 
     protected override void OnInitialized()
     {

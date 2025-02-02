@@ -1,7 +1,7 @@
 ﻿using MudBlazor;
 using MudBlazor.Services;
+using MudBlazor.Translations;
 using Zonit.Extensions;
-using Zonit.Services.Dashboard.Options;
 using Zonit.Services.Dashboard.Repositories;
 using Zonit.Services.Dashboard.Services;
 
@@ -14,10 +14,10 @@ public static class ServiceCollectionExtensions
         services.AddHttpContextAccessor();
 
         services.AddCulturesExtension();
-        services.AddIdentityExtension();            // Fixed
+        services.AddIdentityExtension();
         services.AddCookiesExtension();
-        services.AddOrganizationsExtension();       // Fixed
-        services.AddProjectsExtension();            // Fixed
+        services.AddOrganizationsExtension();
+        services.AddProjectsExtension();
         services.AddNavigationsExtension();
 
         services.AddAntiforgery();
@@ -46,9 +46,7 @@ public static class ServiceCollectionExtensions
             //config.SnackbarConfiguration.HideTransitionDuration = 500;
             //config.SnackbarConfiguration.ShowTransitionDuration = 500;
             //config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
-        });
-
-        services.AddMudServices();
+        }).AddMudTranslations();
 
         services.AddScoped<ISettingsManager, SettingsRepository>();
         services.AddScoped<ISettingsProvider, SettingsService>();

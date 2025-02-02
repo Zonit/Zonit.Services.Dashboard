@@ -8,6 +8,7 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
 		<PackageReference Include="MudBlazor" />
+		<PackageReference Include="MudBlazor.Translations" />
 		<PackageReference Include="Zonit.Extensions.Cultures" />
 		<PackageReference Include="Zonit.Extensions.Identity" />
 		<PackageReference Include="Zonit.Extensions.Organizations" />

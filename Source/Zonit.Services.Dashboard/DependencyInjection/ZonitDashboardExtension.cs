@@ -12,8 +12,6 @@ public sealed class ZonitDashboardExtension : ComponentBase, IDisposable
     [Inject]
     PersistentComponentState ApplicationState { get; set; } = default!;
 
-    DashboardOptions DashboardOptions { get; set; } = null!;
-
     PersistingComponentStateSubscription persistingSubscription;
 
     TransferModel Transfer { get; set; } = null!;
