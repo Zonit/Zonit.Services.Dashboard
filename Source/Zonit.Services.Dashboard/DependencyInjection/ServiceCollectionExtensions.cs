@@ -2,6 +2,7 @@
 using MudBlazor.Services;
 using MudBlazor.Translations;
 using Zonit.Extensions;
+using Zonit.Services.Dashboard.Data;
 using Zonit.Services.Dashboard.Repositories;
 using Zonit.Services.Dashboard.Services;
 
@@ -50,6 +51,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ISettingsManager, SettingsRepository>();
         services.AddScoped<ISettingsProvider, SettingsService>();
+
+        services.AddHostedService<CultureData>();
 
         return services;
     }

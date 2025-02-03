@@ -38,6 +38,12 @@ public class Program
             logging.AddConsole();
         });
 
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("AllowManagement", policy =>
+                policy.RequireAuthenticatedUser().RequireRole("Worker2"))
+            .AddPolicy("AllowDiagnostic", policy =>
+                policy.RequireAuthenticatedUser().RequireRole("Developer"));
+
         StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);
 
         var app = builder.Build();
@@ -67,11 +73,13 @@ public class Program
         {
             Directory = "management",
             Title = "Management",
+            Permission = "AllowManagement",
         });
         app.UseDashboardServices<IAreaDiagnostic>(new DashboardOptions
         {
             Directory = "diagnostic",
             Title = "Diagnostic",
+            Permission = "AllowDiagnostic",
         });
 
         app.Run();

@@ -9,6 +9,8 @@ public class DashboardOptions
 
 
 
+    public string? Permission { get; set; }
+
     public bool EnableAntiforgery { get; init; } = true;
 
 

@@ -28,7 +28,7 @@ public static class AppMiddlewareExtensions
             app.UsePathBase("/" + options.Directory + "/");
             app.UseStaticFiles();
             app.UseRouting();
-
+            //app.UseAuthorization();
             app.UseAntiforgery();
 
             app.UseStatusCodePages(context =>
@@ -77,15 +77,14 @@ public static class AppMiddlewareExtensions
                 var typesMethod = routeInstance?.GetType().GetMethod("Types");
                 var assemblies = (typesMethod?.Invoke(routeInstance, null) as IEnumerable<Assembly>)?.ToArray() ?? [];
 
-                //Console.WriteLine($"========== ASSEMBLIES {options.Title} ==========");
-                //foreach (var assembly in assemblies)
-                //{
-                //    Console.WriteLine(assembly.FullName);
-                //}
-
-                endpoints.MapRazorComponents<App>()
+                var razor = endpoints.MapRazorComponents<App>()
                     .AddInteractiveServerRenderMode()
                     .AddAdditionalAssemblies(assemblies);
+
+                // Dodanie wymaganej autoryzacji
+                if (options.Permission is not null)
+                    razor.RequireAuthorization(options.Permission);
+
             });
         });
 

@@ -24,9 +24,6 @@
 <MudPopoverProvider />
 <MudSnackbarProvider />
 
-@* <AuthorizeView>
-    <Authorized Context="user"> *@
-
 <MudRTLProvider RightToLeft="RightToLeft">
     <MudLayout>
 
@@ -77,19 +74,19 @@
                         <MudDivider Class="my-2" />
                     }
 
-                    <Zonit.Services.Dashboard.Areas.Dashboard.Components.ChangeOrganization />
-                    <Zonit.Services.Dashboard.Areas.Dashboard.Components.ChangeProjects />
-                    <Zonit.Services.Dashboard.Areas.Dashboard.Components.ChangeCulture />
+                    <ChangeOrganization />
+                    <ChangeProjects />
+                    <ChangeCulture />
 
                     <Nav AreaType="AreaType" Position="right" />
 
                     <MudDivider Class="my-2" />
 
-@*                     <AuthorizeView Policy="AllowManagement">
+                    <AuthorizeView Policy="AllowManagement">
                         <MudTooltip Text="Management" Arrow="true" Placement="Placement.Bottom">
                             <MudIconButton Href="/Management" Icon="@Icons.Material.Rounded.Dashboard" Color="Color.Inherit" />
                         </MudTooltip>
-                    </AuthorizeView> *@
+                    </AuthorizeView>
 
                 </MudNavMenu>
             </MudDrawer>
@@ -104,13 +101,6 @@
 
     </MudLayout>
 </MudRTLProvider>
-@*     </Authorized>
-
-    <NotAuthorized>
-        Zaloguj się...
-    </NotAuthorized>
-</AuthorizeView> *@
-
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.
@@ -141,6 +131,18 @@
             Surface = "#242526",
             TextPrimary = "#E4E6EB"
         },
+
+        Typography = new Typography()
+        {
+            H1 = new H1Typography()
+            {
+                FontFamily = new[] { "Roboto", "Helvetica", "Arial", "sans-serif" },
+                FontSize = "1.25rem",
+                FontWeight = "500",
+                LineHeight = "1.6",
+                LetterSpacing = ".0075em"
+            }
+        }
 
         // LayoutProperties = new LayoutProperties()
         // {
