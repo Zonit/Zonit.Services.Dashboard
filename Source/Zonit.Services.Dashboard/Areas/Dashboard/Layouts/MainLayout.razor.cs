@@ -4,7 +4,6 @@ using MudBlazor;
 using MudBlazor.Services;
 using Zonit.Extensions.Website;
 using Zonit.Extensions.Website.Abstractions.Navigations.Types;
-using Zonit.Services.Dashboard.Options;
 using Zonit.Services.Dashboard.Repositories;
 using Zonit.Services.Dashboard.Services;
 
@@ -22,9 +21,14 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
     [Inject]
     ISettingsManager Settings { get; set; } = default!;
 
+    [Inject]
+    IBreadcrumbsProvider BreadcrumbsProvider { get; set; } = default!;
+
     AreaType AreaType { get; set; }
 
     Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+    List<BreadcrumbItem>? _breadcrumbItems = null;
 
     ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
     {
@@ -53,7 +57,27 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
             AreaType = AreaType.Management;
         else if (Settings.Settings.Directory.ToLower() == "diagnostic")
             AreaType = AreaType.Diagnostic;
+
+        BreadcrumbsProvider.OnChange += () => 
+        {
+            var g = BreadcrumbsProvider.Get();
+            if (g is not null)
+            {
+                _breadcrumbItems = [];
+                foreach (var b in g)
+                {
+                    _breadcrumbItems.Add(new(b.Text, b.Href, b.Disabled, b.Icon));
+                }
+            }
+            else
+            {
+                _breadcrumbItems = null;
+            }
+            StateHasChanged();
+        };
     }
+
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -64,7 +88,12 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
     }
 
     public async ValueTask DisposeAsync()
-        => await BrowserViewportService.UnsubscribeAsync(this);
+    {
+        Culture.OnChange -= StateHasChanged;
+        BreadcrumbsProvider.OnChange -= StateHasChanged;
+
+        await BrowserViewportService.UnsubscribeAsync(this); 
+    }
 
     async Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs browserViewportEventArgs)
     {

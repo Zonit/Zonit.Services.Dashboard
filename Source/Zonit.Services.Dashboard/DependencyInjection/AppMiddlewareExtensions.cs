@@ -28,7 +28,6 @@ public static class AppMiddlewareExtensions
             app.UsePathBase("/" + options.Directory + "/");
             app.UseStaticFiles();
             app.UseRouting();
-            //app.UseAuthorization();
             app.UseAntiforgery();
 
             app.UseStatusCodePages(context =>

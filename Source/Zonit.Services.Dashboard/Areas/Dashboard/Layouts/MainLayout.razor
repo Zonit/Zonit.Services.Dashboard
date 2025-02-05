@@ -27,7 +27,7 @@
 <MudRTLProvider RightToLeft="RightToLeft">
     <MudLayout>
 
-        <Navbar MudThemeProvider=@_mudThemeProvider @bind-DrawerOpen=@_drawerOpen @bind-DrawerRightOpen=@_drawerRightOpen @bind-DarkMode=@_isDarkMode Width="@_width" Hegith="@_height" />
+        <Navbar MudThemeProvider=@_mudThemeProvider Breadcrumbs=@_breadcrumbItems @bind-DrawerOpen=@_drawerOpen @bind-DrawerRightOpen=@_drawerRightOpen @bind-DarkMode=@_isDarkMode Width="@_width" Hegith="@_height" />
 
         <MudSwipeArea OnSwipeEnd="@OnSwipe" Style="width: 100%;">
             <MudDrawer @bind-Open="_drawerOpen" Variant="_drawerVariant" OpenMiniOnHover="_drawerOpenMin" Anchor="Anchor.Start" Elevation="2">
@@ -160,8 +160,6 @@
 
     bool RightToLeft = false;
 
-    public void Dispose()
-        => Culture.OnChange -= StateHasChanged;
 
     public void OnSwipe(SwipeEventArgs args)
     {

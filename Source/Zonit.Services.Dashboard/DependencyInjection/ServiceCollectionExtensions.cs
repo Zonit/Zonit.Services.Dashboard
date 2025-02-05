@@ -21,6 +21,8 @@ public static class ServiceCollectionExtensions
         services.AddProjectsExtension();
         services.AddNavigationsExtension();
 
+        services.AddBreadcrumbsExtension();
+
         services.AddAntiforgery();
 
         services

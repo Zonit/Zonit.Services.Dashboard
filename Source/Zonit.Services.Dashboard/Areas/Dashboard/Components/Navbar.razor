@@ -9,6 +9,7 @@
 
 <MudAppBar Elevation="1" Style="z-index: 1000;">
     <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+    <MudBreadcrumbs Items="Breadcrumbs"></MudBreadcrumbs>
     <MudSpacer />
     <MudTooltip Text=@Culture.Translate(_darkModeTooltip) Placement="Placement.Bottom">
         <MudIconButton Icon=@_darkModeIcon Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DarkTheme())" />
@@ -43,6 +44,9 @@
 
     [Parameter]
     public int Hegith { get; set; }
+
+    [Parameter]
+    public List<BreadcrumbItem> Breadcrumbs { get; set; }
 
     bool? _darkTheme;
     string _darkModeIcon = Icons.Material.Filled.WbSunny;
