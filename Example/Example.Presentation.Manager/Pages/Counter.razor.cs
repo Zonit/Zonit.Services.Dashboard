@@ -13,8 +13,8 @@ public sealed partial class Counter : PageComponent, IAreaManager
 
     public override List<BreadcrumbsModel>? Breadcrumbs =>
     [
-        new("Home", "/"),
-        new("Counter", "/Counter"),
+        new("Home", "Home"),
+        new("Counter", "Counter"),
     ];
 
     protected override void OnInitialized()

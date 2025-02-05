@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Zonit.Extensions.Website;
 
 namespace Zonit.Services.Dashboard.Services;
 
@@ -9,7 +10,7 @@ public partial class AssemblyScannerService<T> where T : class
         return AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !string.Equals(a.FullName, "Microsoft.Data.SqlClient, Version=5.0.0.0, Culture=neutral, PublicKeyToken=23ec7fc2d6eaa4a5", StringComparison.OrdinalIgnoreCase))
             .SelectMany(a => a.GetTypes())
-            .Where(t => !t.IsAbstract && typeof(T).IsAssignableFrom(t))
+            .Where(t => !t.IsAbstract && (typeof(T).IsAssignableFrom(t) || typeof(IAreaDashboard).IsAssignableFrom(t)))
             .Select(t => t.Assembly)
             .Distinct();
     }

@@ -40,7 +40,7 @@ public class Program
 
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy("AllowManagement", policy =>
-                policy.RequireAuthenticatedUser().RequireRole("Worker2"))
+                policy.RequireAuthenticatedUser().RequireRole("Worker"))
             .AddPolicy("AllowDiagnostic", policy =>
                 policy.RequireAuthenticatedUser().RequireRole("Developer"));
 

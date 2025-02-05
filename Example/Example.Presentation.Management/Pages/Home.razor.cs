@@ -12,6 +12,11 @@ public sealed partial class Home : PageComponent, IAreaManagement
 {
     public const string Route = "Home";
 
+    public override List<BreadcrumbsModel>? Breadcrumbs =>
+    [
+        new("Home", "Home", true),
+    ];
+
     protected override void OnInitialized()
     {
         base.OnInitialized();

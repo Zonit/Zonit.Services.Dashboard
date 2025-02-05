@@ -30,6 +30,6 @@
     <PackageVersion Include="Zonit.Extensions.Organizations" Version="0.1.7" />
     <PackageVersion Include="Zonit.Extensions.Organizations.Abstractions" Version="0.1.7" />
     <PackageVersion Include="Zonit.Extensions.Projects" Version="0.1.4" />
-    <PackageVersion Include="Zonit.Extensions.Website" Version="0.0.38" />
+    <PackageVersion Include="Zonit.Extensions.Website" Version="0.0.40" />
   </ItemGroup>
 </Project>
