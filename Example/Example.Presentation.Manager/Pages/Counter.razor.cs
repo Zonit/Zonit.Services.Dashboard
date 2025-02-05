@@ -11,7 +11,7 @@ public sealed partial class Counter : PageComponent, IAreaManager
 {
     public const string Route = "Counter";
 
-    public override List<BreadcrumbsModel>? Breadcrumbs =>
+    protected override List<BreadcrumbsModel>? Breadcrumbs =>
     [
         new("Home", "Home"),
         new("Counter", "Counter"),

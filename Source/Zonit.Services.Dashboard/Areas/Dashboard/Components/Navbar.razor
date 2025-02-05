@@ -2,20 +2,45 @@
 @using Zonit.Extensions.Website
 @using Data
 
+@using Zonit.Extensions.Projects
+@using Zonit.Extensions.Organizations
+
 @implements IDisposable
 
 @inject ICultureProvider Culture
 @inject ICookieProvider Cookie
 
+@inject ICatalogProvider Catalog
+@inject IWorkspaceProvider Workspace
+
 <MudAppBar Elevation="1" Style="z-index: 1000;">
     <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-    <MudBreadcrumbs Items="Breadcrumbs"></MudBreadcrumbs>
+
+    <MudBreadcrumbs Items="Breadcrumbs">
+        <ItemTemplate Context="item">
+            @if (Catalog.Project is not null && item.Href == "Catalog")
+            {
+                <MudLink Href="@item.Href">@Catalog.Project.Name</MudLink>
+            }
+            else if (Workspace.Organization is not null && item.Href == "Workspace")
+            {
+                <MudLink Href="@item.Href">@Workspace.Organization.Name</MudLink>
+            }
+            else
+            {
+                <MudLink Href="@item.Href">@Culture.Translate(item.Text)</MudLink>
+            }
+        </ItemTemplate>
+    </MudBreadcrumbs>
+
     <MudSpacer />
     <MudTooltip Text=@Culture.Translate(_darkModeTooltip) Placement="Placement.Bottom">
         <MudIconButton Icon=@_darkModeIcon Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DarkTheme())" />
     </MudTooltip>
     <MudIconButton Icon="@IconData.User" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerRightToggle())" />
 </MudAppBar>
+
+
 
 @code {
     [Parameter, EditorRequired]

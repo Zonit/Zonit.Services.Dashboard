@@ -9,4 +9,12 @@ namespace Example.Presentation.Manager.Pages;
 public sealed partial class Organizations : PageComponent, IAreaManager
 {
     public const string Route = "Organizations";
+
+    protected override List<BreadcrumbsModel>? Breadcrumbs =>
+    [
+        new("Home", "Home"),
+        new WorkspaceBreadcrumbs(),
+        new("Details", "#", true),
+    ];
+
 }

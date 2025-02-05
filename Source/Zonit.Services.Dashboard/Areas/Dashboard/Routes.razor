@@ -4,17 +4,10 @@
 <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="@Assemblies">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layouts.MainLayout)" >
-            <NotAuthorized>
-                
+            <NotAuthorized>  
                 <MudContainer>
-                    <MudCard>
-                        <MudCardHeader><MudText Typo="Typo.h6">Not authorized</MudText></MudCardHeader>
-                        <MudCardContent>
-                            <p>You are not authorized to access this resource.</p>
-                        </MudCardContent>
-                    </MudCard>
+                    <Zonit.Services.Dashboard.Areas.Dashboard.Pages.Errors._401 />
                 </MudContainer>
-
             </NotAuthorized>
         </AuthorizeRouteView>
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
