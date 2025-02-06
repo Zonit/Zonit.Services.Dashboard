@@ -7,9 +7,17 @@ public class DashboardOptions
     public string Directory { get; set; } = "Dashboard";
     public string Title { get; set; } = "Dashboard";
 
-
-
+    /// <summary>
+    /// Required rights policy
+    /// </summary>
     public string? Permission { get; set; }
+
+    /// <summary>
+    /// Custom snippet for the dashboard
+    /// </summary>
+    public string? CustomSnippet { get; set; }
+
+
 
     public bool EnableAntiforgery { get; init; } = true;
 
