@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using System.Reflection;
+﻿using System.Reflection;
 using Zonit.Extensions;
 using Zonit.Extensions.Website;
 using Zonit.Services.Dashboard.Areas.Dashboard;
@@ -13,7 +12,7 @@ public static class AppMiddlewareExtensions
 {
     public static IApplicationBuilder UseDashboardServices<T>(this WebApplication builder, DashboardOptions options) where T : IArea
     {
-        builder.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/" + options.Directory), app =>
+        builder.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/" + options.Directory, StringComparison.OrdinalIgnoreCase), app =>
         {
             app.Use(async (context, next) =>
             {
@@ -51,10 +50,6 @@ public static class AppMiddlewareExtensions
                         response.Redirect($"{pathBase}/Errors/500");
                         break;
                 }
-
-                //response.Redirect("Errors/401");
-                //response.HttpContext.Request.Path = "/Errors/403";
-                //response.WriteAsync("Error 403 - Forbidden");
 
                 return Task.CompletedTask;
             });

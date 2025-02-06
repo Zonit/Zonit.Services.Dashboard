@@ -4,7 +4,12 @@ namespace Zonit.Services.Dashboard.Options;
 
 public class DashboardOptions
 {
-    public string Directory { get; set; } = "Dashboard";
+    private string _directory = "dashboard";
+    public string Directory
+    {
+        get => _directory.ToLower();
+        set => _directory = value ?? string.Empty;
+    }
     public string Title { get; set; } = "Dashboard";
 
     /// <summary>
