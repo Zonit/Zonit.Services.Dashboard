@@ -1,6 +1,6 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider Theme="MyCustomTheme" />
+<MudThemeProvider Theme="Theme" />
 <MudDialogProvider />
 <MudPopoverProvider />
 <MudSnackbarProvider />
@@ -14,7 +14,7 @@
 </MudLayout>
 
 @code {
-    MudTheme MyCustomTheme = new()
+    MudTheme Theme = new()
     {
         PaletteLight = new()
         {
