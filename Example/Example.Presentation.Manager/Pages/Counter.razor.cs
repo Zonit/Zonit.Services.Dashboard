@@ -7,9 +7,9 @@ namespace Example.Presentation.Manager.Pages;
 
 [Authorize]
 [Route("/" + Route)]
-public sealed partial class Counter : PageComponent, IAreaManager
+public sealed partial class Counter : PageBase, IAreaManager
 {
-    public const string Route = "Counter";
+    public const string Route = "counter";
 
     protected override List<BreadcrumbsModel>? Breadcrumbs =>
     [

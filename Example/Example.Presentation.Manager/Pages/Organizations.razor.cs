@@ -6,9 +6,9 @@ using Zonit.SDK.Website;
 namespace Example.Presentation.Manager.Pages;
 
 [Route("/" + Route), Authorize]
-public sealed partial class Organizations : PageComponent, IAreaManager
+public sealed partial class Organizations : PageBase, IAreaManager
 {
-    public const string Route = "Organizations";
+    public const string Route = "organizations";
 
     protected override List<BreadcrumbsModel>? Breadcrumbs =>
     [

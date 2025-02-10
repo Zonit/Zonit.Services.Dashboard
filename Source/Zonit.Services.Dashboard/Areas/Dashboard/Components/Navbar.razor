@@ -20,11 +20,11 @@
         <ItemTemplate Context="item">
             @if (Catalog.Project is not null && item.Href == "Catalog")
             {
-                <MudLink Href="@item.Href">@Catalog.Project.Name</MudLink>
+                <MudLink Href="projects">@Catalog.Project.Name</MudLink>
             }
             else if (Workspace.Organization is not null && item.Href == "Workspace")
             {
-                <MudLink Href="@item.Href">@Workspace.Organization.Name</MudLink>
+                <MudLink Href="organizations">@Workspace.Organization.Name</MudLink>
             }
             else
             {

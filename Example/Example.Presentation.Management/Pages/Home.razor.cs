@@ -8,9 +8,9 @@ namespace Example.Presentation.Management.Pages;
 [Authorize]
 [Route("/")]
 [Route("/" + Route)]
-public sealed partial class Home : PageComponent, IAreaManagement
+public sealed partial class Home : PageBase, IAreaManagement
 {
-    public const string Route = "Home";
+    public const string Route = "home";
 
     protected override List<BreadcrumbsModel>? Breadcrumbs =>
     [
