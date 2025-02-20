@@ -20,11 +20,23 @@
         <ItemTemplate Context="item">
             @if (Catalog.Project is not null && item.Href == "Catalog")
             {
-                <MudLink Href="projects">@Catalog.Project.Name</MudLink>
+                @* <MudLink Href="projects">@Catalog.Project.Name</MudLink> *@
+                <MudChip Href="projects" Variant="Variant.Outlined" Label="true" Color="Color.Transparent" SelectedColor="Color.Transparent" Size="Size.Small" T="string">
+                    <AvatarContent>
+                        <MudAvatar Color="Color.Tertiary">@Catalog.Project.Name[0]</MudAvatar>
+                    </AvatarContent>
+                    <ChildContent>@Catalog.Project.Name</ChildContent>
+                </MudChip>
             }
             else if (Workspace.Organization is not null && item.Href == "Workspace")
             {
-                <MudLink Href="organizations">@Workspace.Organization.Name</MudLink>
+                @* <MudLink Href="organizations">@Workspace.Organization.Name</MudLink> *@
+                <MudChip Href="organizations" Variant="Variant.Outlined" Label="true" Color="Color.Transparent" SelectedColor="Color.Transparent" Size="Size.Small" T="string">
+                    <AvatarContent>
+                        <MudAvatar Color="Color.Warning">@Workspace.Organization.Name[0]</MudAvatar>
+                    </AvatarContent>
+                    <ChildContent>@Workspace.Organization.Name</ChildContent>
+                </MudChip>
             }
             else
             {

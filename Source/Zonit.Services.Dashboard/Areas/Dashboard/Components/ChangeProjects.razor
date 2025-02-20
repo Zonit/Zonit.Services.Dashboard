@@ -9,27 +9,20 @@
 
 @if (Catalog.Project is not null)
 {
-
-    @*     <MudAvatar Color="Color.Surface" Rounded="true" Size="Size.Small">
-        @Workspace.Organization.Name[0]
-    </MudAvatar> *@
-
-@*     <MudTooltip Text="@Culture.Translate("Change projects")" Arrow="true" Placement="Placement.Top" RootStyle="width: 100%;">
-        <MudButton Variant="Variant.Text" FullWidth=true OnClick="OpenDrawer">@Catalog.Project.Name</MudButton>
-    </MudTooltip> *@
-
-@*     <MudStack Justify="Justify.Center" Row="true">
-        <div>
-            <MudAvatar Color="Color.Surface" Rounded="true" Style="height: 100%">
-                @Catalog.Project.Name[0]
-            </MudAvatar>
-        </div>
-        <div> *@
-            <MudTooltip Text="@Culture.Translate("Change organizations")" Arrow="true" Placement="Placement.Top" RootStyle="width: 100%;">
-                <MudButton Variant="Variant.Text" FullWidth=true OnClick="OpenDrawer">@Catalog.Project.Name</MudButton>
-            </MudTooltip>
-@*         </div>
-    </MudStack> *@
+    <MudTooltip Text="@Culture.Translate("Change projects")" Arrow="true" Placement="Placement.Top" RootStyle="width: 100%;">
+        <MudButton Variant="Variant.Text" FullWidth="true" OnClick="OpenDrawer" Class="d-flex justify-center">
+            <MudGrid Justify="Justify.Center">
+                <MudItem xs="2">
+                    <MudAvatar Color="Color.Tertiary" Rounded="true" Size="Size.Small">
+                        @Catalog.Project.Name[0]
+                    </MudAvatar>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Style="font-size: 14px; font-family: 'Roboto', sans-serif; font-weight: 500; letter-spacing: 0.4px; text-transform: capitalize;">@Catalog.Project.Name.ToUpper()</MudText>
+                </MudItem>
+            </MudGrid>
+        </MudButton>
+    </MudTooltip>
 
     <MudDivider Class="my-2" />
 

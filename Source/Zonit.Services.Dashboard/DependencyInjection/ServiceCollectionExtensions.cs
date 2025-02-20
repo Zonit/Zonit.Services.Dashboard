@@ -44,10 +44,10 @@ public static class ServiceCollectionExtensions
             config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.TopCenter;
             //config.SnackbarConfiguration.PreventDuplicates = false;
             //config.SnackbarConfiguration.NewestOnTop = false;
-            //config.SnackbarConfiguration.ShowCloseIcon = true;
-            //config.SnackbarConfiguration.VisibleStateDuration = 10000;
-            //config.SnackbarConfiguration.HideTransitionDuration = 500;
-            //config.SnackbarConfiguration.ShowTransitionDuration = 500;
+            config.SnackbarConfiguration.ShowCloseIcon = true;
+            config.SnackbarConfiguration.VisibleStateDuration = 3000;
+            config.SnackbarConfiguration.HideTransitionDuration = 300;
+            config.SnackbarConfiguration.ShowTransitionDuration = 400;
             //config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
         }).AddMudTranslations();
 

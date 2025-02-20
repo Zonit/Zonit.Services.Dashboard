@@ -7,12 +7,22 @@
 
 @if(CultureManager.SupportedCultures is not null)
 {
-
     <MudTooltip Text="@Culture.Translate("Change language")" Arrow="true" Placement="Placement.Top" RootStyle="width: 100%;">
-        <MudButton Variant="Variant.Text" StartIcon="@currentLanguage.IconFlag" FullWidth=true OnClick="OpenDrawer">@Culture.Translate(currentLanguage.EnglishName)</MudButton>
+        <MudButton Variant="Variant.Text" FullWidth="true" OnClick="OpenDrawer" Class="d-flex justify-center">
+            <MudGrid Justify="Justify.Center">
+                <MudItem xs="2">
+                    @* <MudAvatar Color="Color.Transparent" Rounded="true" Variant="Variant.Text" Size="Size.Small" > *@
+                        <MudIcon Color="Color.Dark" Icon="@currentLanguage.IconFlag" Size="Size.Small" />
+                    @* </MudAvatar> *@
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Style="font-size: 14px; font-family: 'Roboto', sans-serif; font-weight: 500; letter-spacing: 0.4px; text-transform: capitalize;">@Culture.Translate(currentLanguage.EnglishName).ToUpper()</MudText>
+                </MudItem>
+            </MudGrid>
+        </MudButton>
     </MudTooltip>
 
-    <MudDivider Class="my-2" />
+    <MudDivider Class="mt-1 mb-2" />
 
     <MudDrawer @bind-Open="@open" Width="300px" Height="100%" Anchor="Anchor.End" Elevation="3" Variant="@DrawerVariant.Temporary" Class="z-index: 99999999">
         <MudDrawerHeader>
