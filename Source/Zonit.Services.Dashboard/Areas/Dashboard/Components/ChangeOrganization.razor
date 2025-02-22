@@ -12,14 +12,19 @@
 {
     <MudTooltip Text="@Culture.Translate("Change organizations")" Arrow="true" Placement="Placement.Top" RootStyle="width: 100%;">
         <MudButton Variant="Variant.Text" FullWidth="true" OnClick="OpenDrawer" Class="d-flex justify-center">
-            <MudGrid Justify="Justify.Center">
-                <MudItem xs="2">
+            <MudGrid Justify="Justify.Center" AlignItems="Center">
+                <MudItem xs="2" Class="d-flex align-center">
                     <MudAvatar Color="Color.Warning" Rounded="true" Size="Size.Small">
                         @Workspace.Organization.Name[0]
                     </MudAvatar>
                 </MudItem>
-                <MudItem xs="6">
-                    <MudText Style="font-size: 14px; font-family: 'Roboto', sans-serif; font-weight: 500; letter-spacing: 0.4px; text-transform: capitalize;">@Workspace.Organization.Name.ToUpper()</MudText>
+                <MudItem xs="6" Class="d-flex flex-column align-center">
+                    <MudText Style="font-size: 10px; font-family: 'Roboto', sans-serif; font-weight: 400; letter-spacing: 0.5px; text-transform: uppercase; color: gray;">
+                        @Culture.Translate("Organization")
+                    </MudText>
+                    <MudText Style="font-size: 14px; font-family: 'Roboto', sans-serif; font-weight: 500; letter-spacing: 0.4px; text-transform: capitalize;">
+                        @Workspace.Organization.Name.ToUpper()
+                    </MudText>
                 </MudItem>
             </MudGrid>
         </MudButton>
