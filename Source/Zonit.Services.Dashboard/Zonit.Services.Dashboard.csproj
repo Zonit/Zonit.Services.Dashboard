@@ -13,7 +13,6 @@
 		<PackageReference Include="Zonit.Extensions.Cultures" />
 		<PackageReference Include="Zonit.Extensions.Identity" />
 		<PackageReference Include="Zonit.Extensions.Organizations" />
-		<PackageReference Include="Zonit.Extensions.Organizations.Abstractions" />
 		<PackageReference Include="Zonit.Extensions.Projects" />
 		<PackageReference Include="Zonit.Extensions.Website" />
 	</ItemGroup>
