@@ -7,6 +7,7 @@ using Zonit.Extensions.Projects;
 using Zonit.Extensions.Website;
 using Zonit.Services;
 using Zonit.Services.Dashboard.DependencyInjection;
+using Zonit.Services.Dashboard.Domain.Types;
 using Zonit.Services.Dashboard.Options;
 
 namespace Example;
@@ -68,18 +69,21 @@ public class Program
         {
             Directory = "Manager",
             Title = "Manager",
+            Extensions = [ Extensions.Identity, Extensions.Cultures, Extensions.Projects, Extensions.Organizations, Extensions.Wallets, Extensions.SocialMedia ],
         });
         app.UseDashboardServices<IAreaManagement>(new DashboardOptions
         {
             Directory = "management",
             Title = "Management",
             Permission = "AllowManagement",
+            Extensions = [ Extensions.Identity, Extensions.Cultures ],
         });
         app.UseDashboardServices<IAreaDiagnostic>(new DashboardOptions
         {
             Directory = "diagnostic",
             Title = "Diagnostic",
             Permission = "AllowDiagnostic",
+            Extensions = [],
         });
 
         app.Run();

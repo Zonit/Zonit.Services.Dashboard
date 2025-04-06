@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example.Presentation.Manage
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example.Presentation.Management", "Example\Example.Presentation.Management\Example.Presentation.Management.csproj", "{1BE7F607-8E93-472B-B5BD-105717BEFDE6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zonit.Services.Dashboard.Domain", "Source\Zonit.Services.Dashboard.Domain\Zonit.Services.Dashboard.Domain.csproj", "{C06B0B22-9A31-49F2-A8C1-38A1C8392D8F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +45,10 @@ Global
 		{1BE7F607-8E93-472B-B5BD-105717BEFDE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1BE7F607-8E93-472B-B5BD-105717BEFDE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1BE7F607-8E93-472B-B5BD-105717BEFDE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C06B0B22-9A31-49F2-A8C1-38A1C8392D8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C06B0B22-9A31-49F2-A8C1-38A1C8392D8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C06B0B22-9A31-49F2-A8C1-38A1C8392D8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C06B0B22-9A31-49F2-A8C1-38A1C8392D8F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -52,5 +58,6 @@ Global
 		{1BFF3CCA-CE39-4E6F-9695-C6D298E3F5D0} = {F2D70D60-906D-400C-9C6A-624E97F7526D}
 		{A94AC45C-630F-4789-A574-A993957148B2} = {F2D70D60-906D-400C-9C6A-624E97F7526D}
 		{1BE7F607-8E93-472B-B5BD-105717BEFDE6} = {F2D70D60-906D-400C-9C6A-624E97F7526D}
+		{C06B0B22-9A31-49F2-A8C1-38A1C8392D8F} = {ED90C6A7-8BCA-4E94-BCDF-5F96F0EB4697}
 	EndGlobalSection
 EndGlobal

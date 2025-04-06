@@ -21,4 +21,8 @@
 	  <Folder Include="Middlewares\" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\Zonit.Services.Dashboard.Domain\Zonit.Services.Dashboard.Domain.csproj" />
+	</ItemGroup>
+
 </Project>

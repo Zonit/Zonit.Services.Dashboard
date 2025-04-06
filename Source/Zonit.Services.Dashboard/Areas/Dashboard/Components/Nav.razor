@@ -12,21 +12,30 @@
 {
     @foreach (var nav in NavItems)
     {
-        @if (nav.Children is null && nav.Link is not null)
-        {
-            <MudNavLink Href="@nav.Link.Url" Match="NavLinkMatch.Prefix" Target="@nav.Link.Target" Icon="@nav.Icon">
-                <div style="padding-left: 12px">@Culture.Translate(nav.Title)</div>
-            </MudNavLink>
-        }
-        else if (nav.Children is not null)
-        {
-            <MudNavGroup Title="@Culture.Translate(nav.Title)" Icon="@nav.Icon" Expanded=@nav.Expanded>
-                @foreach (var link in nav.Children.OrderBy(x => x.Order).ToList())
-                {
-                    <MudNavLink Href="@link.Url" Match="@(link.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)" Target="@link.Target" Icon="@link.Icon">@Culture.Translate(link.Title)</MudNavLink>
-                }
-            </MudNavGroup>
-        }
+        <AuthorizeView Policy="@nav.Permission" Context="navContext">
+            @if (nav.Children is null && nav.Link is not null)
+            {
+                <MudNavLink Href="@nav.Link.Url" Match="NavLinkMatch.Prefix" Target="@nav.Link.Target" Icon="@nav.Icon">
+                    <div style="padding-left: 12px">@Culture.Translate(nav.Title)</div>
+                </MudNavLink>
+            }
+            else if (nav.Children is not null)
+            {
+                <MudNavGroup Title="@Culture.Translate(nav.Title)" Icon="@nav.Icon" Expanded=@nav.Expanded>
+                    @foreach (var link in nav.Children.OrderBy(x => x.Order).ToList())
+                    {
+                        <AuthorizeView Policy="@link.Permission" Context="linkContext">
+                            <MudNavLink Href="@link.Url" Match="@(link.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)" Target="@link.Target" Icon="@link.Icon">@Culture.Translate(link.Title)</MudNavLink>
+                        </AuthorizeView>
+                    }
+                </MudNavGroup>
+            }
+        </AuthorizeView>
+    }
+
+    if(NavItems.Count > 0)
+    {
+        <MudDivider Class="my-2" />
     }
 }
 
