@@ -27,7 +27,7 @@
     <PackageVersion Include="MudBlazor.Translations" Version="2.3.0" />
     <PackageVersion Include="Zonit.Extensions.Cultures" Version="0.1.2" />
     <PackageVersion Include="Zonit.Extensions.Identity" Version="0.1.6" />
-    <PackageVersion Include="Zonit.Extensions.Organizations" Version="0.1.7" />
+    <PackageVersion Include="Zonit.Extensions.Organizations" Version="0.1.8" />
     <PackageVersion Include="Zonit.Extensions.Projects" Version="0.1.4" />
     <PackageVersion Include="Zonit.Extensions.Website" Version="0.0.41" />
   </ItemGroup>
