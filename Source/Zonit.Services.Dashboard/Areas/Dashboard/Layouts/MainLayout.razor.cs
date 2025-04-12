@@ -77,8 +77,6 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
         };
     }
 
-
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)

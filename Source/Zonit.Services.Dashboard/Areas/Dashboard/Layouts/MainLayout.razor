@@ -1,10 +1,5 @@
 ﻿@inherits LayoutComponentBase
 
-@using System.Text.Json
-@using System.Text.Json.Serialization
-
-@using Zonit.Extensions.Cultures.Repositories
-@using Zonit.Extensions.Cultures
 @using Zonit.Extensions.Identity
 @using Zonit.Extensions.Website.Abstractions.Navigations.Types
 
@@ -12,13 +7,7 @@
 
 @using Data
 
-@inject NavigationManager NavigationManager
-@* @inject AuthenticationStateProvider AuthenticationStateProvider *@
-
-@inject IJSRuntime JSRuntime
 @inject ICultureProvider Culture
-@inject ICultureManager CultureRepository
-@inject ICookieProvider Cookie
 @inject IAuthenticatedProvider Authenticated
 
 <MudThemeProvider Theme="MyCustomTheme" @ref="@_mudThemeProvider" IsDarkMode="_isDarkMode" />  @* @bind-IsDarkMode="@_isDarkMode" *@
@@ -31,7 +20,7 @@
 
         <Navbar MudThemeProvider=@_mudThemeProvider Breadcrumbs=@_breadcrumbItems @bind-DrawerOpen=@_drawerOpen @bind-DrawerRightOpen=@_drawerRightOpen @bind-DarkMode=@_isDarkMode Width="@_width" Hegith="@_height" />
 
-        <MudSwipeArea OnSwipeEnd="@OnSwipe" Style="width: 100%;">
+        <MudSwipeArea OnSwipeEnd="@OnSwipe" Style="width: 100%; touch-action: pan-y" PreventDefault="false">
             <MudDrawer @bind-Open="_drawerOpen" Variant="_drawerVariant" OpenMiniOnHover="_drawerOpenMin" Anchor="Anchor.Start" Elevation="2">
                 <MudDrawerHeader>
                     <a Href="/">
@@ -148,13 +137,6 @@
                 LetterSpacing = ".0075em"
             }
         },
-
-
-        // LayoutProperties = new LayoutProperties()
-        // {
-        //     DrawerWidthLeft = "260px",
-        //     DrawerWidthRight = "300px"
-        // }
     };
 
     bool _drawerOpen = true;
@@ -166,18 +148,41 @@
 
     bool RightToLeft = false;
 
-
     public void OnSwipe(SwipeEventArgs args)
     {
-        if (args.SwipeDirection == SwipeDirection.LeftToRight && !_drawerOpen)
+        // Sprawdzamy tylko dla urządzeń mobilnych
+        if (_width >= 1024) 
+            return;
+        
+        if (args.SwipeDirection == SwipeDirection.LeftToRight)
         {
-            _drawerOpen = true;
-            StateHasChanged();
+            // Jeśli przesunięcie jest z lewej do prawej
+            if (!_drawerOpen)
+            {
+                // Jeśli lewy panel jest zamknięty, otwieramy go
+                _drawerOpen = true;
+                _drawerRightOpen = false; // Zamykamy prawy panel, jeśli lewy jest otwierany
+            }
+            else
+            {
+                // Jeśli lewy panel jest już otwarty, zamykamy go
+                _drawerOpen = false;
+            }
         }
-        else if (args.SwipeDirection == SwipeDirection.RightToLeft && _drawerOpen)
+        else if (args.SwipeDirection == SwipeDirection.RightToLeft)
         {
-            _drawerOpen = false;
-            StateHasChanged();
+            // Jeśli przesunięcie jest z prawej do lewej
+            if (!_drawerRightOpen)
+            {
+                // Jeśli prawy panel jest zamknięty, otwieramy go
+                _drawerRightOpen = true;
+                _drawerOpen = false; // Zamykamy lewy panel, jeśli prawy jest otwierany
+            }
+            else
+            {
+                // Jeśli prawy panel jest już otwarty, zamykamy go
+                _drawerRightOpen = false;
+            }
         }
     }
 }
