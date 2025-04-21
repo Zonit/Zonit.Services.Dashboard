@@ -92,10 +92,13 @@ jobs:
                 BODY="NuGet run did not output package updates, but there are file changes."
             fi
 
+            # Tylko escape dla % (to potrzebne w GitHub Actions)
             BODY="${BODY//'%'/'%25'}"
-            BODY="${BODY//$'\n'/'%0A'}"
-            BODY="${BODY//$'\r'/'%0D'}"
-            echo "body=$BODY" >> $GITHUB_OUTPUT
+
+            echo "body<<EOF" >> $GITHUB_OUTPUT
+            echo "$BODY" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
 
       - name: Create Pull Request
         if: steps.git-check.outputs.changed == 'true'
