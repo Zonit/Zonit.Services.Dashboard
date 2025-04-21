@@ -48,7 +48,7 @@ jobs:
 
       - name: Update packages using dotnet-outdated
         run: |
-          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore
+          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore | tee dotnet_outdated.log
 
       - name: Check for changes
         id: git-check
@@ -61,17 +61,13 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Get NuGet diff for PR body
-        id: get-nuget-changes
+      - name: Get NuGet diff for PR body (with logs)
         if: steps.git-check.outputs.changed == 'true'
         run: |
-          set +e  # <= NIE przerywaj skryptu na errorach!
           echo "### NuGet package updates" > nuget_changes.md
           found=0
-          # Znajdź wszystkie zaktualizowane projekty (możesz dodać inne typy plików jak trzeba):
-          projfiles=$(git diff --name-only | grep -E '\.(csproj|fsproj|vbproj|props)$' || true)
-          for prj in $projfiles; do
-            pkg_diff=$(git diff "$prj" | grep -E '^[+-].*PackageReference' | grep -v 'Include="Microsoft\.NET' || true)
+          for prj in $(git diff --name-only | grep -E '\.(csproj|fsproj|vbproj|props)$' || true); do
+            pkg_diff=$(git diff "$prj" | grep -E '^[+-].*PackageReference|^[+-].*<PackageVersion' | grep -v 'Include="Microsoft\.NET' || true)
             if [[ -n "$pkg_diff" ]]; then
               found=1
               echo "" >> nuget_changes.md
@@ -84,9 +80,14 @@ jobs:
           if [ $found -eq 0 ]; then
             echo "_No NuGet changes detected._" >> nuget_changes.md
           fi
-          exit 0  # <= gwarantuje, że nawet jak for się nie wykonał, job zakończy się sukcesem
 
-      # Uwaga: nie wypychaj ani nie komituj zmian sam - robi to poniższa akcja
+          # --- Dodaj logi jako zwijany blok ---
+          echo -e "\n<details>\n<summary>dotnet outdated log</summary>\n" >> nuget_changes.md
+          echo '```text' >> nuget_changes.md
+          cat dotnet_outdated.log >> nuget_changes.md
+          echo '```' >> nuget_changes.md
+          echo "</details>" >> nuget_changes.md
+
       - name: Create Pull Request
         if: steps.git-check.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v6
@@ -95,16 +96,6 @@ jobs:
           commit-message: "[Task] Automated NuGet package update"
           branch: auto/update-nuget-packages
           base: master
-          delete-branch: true                 # Ustawione: usunie branch po zmergowaniu PR
+          delete-branch: true
           labels: automated-task
-          body: |
-            This pull request was created automatically by a scheduled GitHub Actions workflow.
-
-            **Summary of NuGet package updates:**
-            ```markdown
-            ${{ steps.get-nuget-changes.outputs.body || fromJson('{"body":""}').body }}
-            ```
-            > This PR is fully automated and marked with the `automated-task` label for further automation.
-
-          # Poprawka: przekazujemy wygenerowane body jako plik
           body-path: nuget_changes.md
