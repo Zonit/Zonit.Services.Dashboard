@@ -6,8 +6,8 @@ using Zonit.Extensions.Organizations;
 using Zonit.Extensions.Projects;
 using Zonit.Extensions.Website;
 using Zonit.Services;
+using Zonit.Services.Dashboard;
 using Zonit.Services.Dashboard.DependencyInjection;
-using Zonit.Services.Dashboard.Domain.Types;
 using Zonit.Services.Dashboard.Options;
 
 namespace Example;

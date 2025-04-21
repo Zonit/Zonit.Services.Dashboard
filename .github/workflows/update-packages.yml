@@ -2,13 +2,17 @@ name: Update NuGet Packages
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Ka¿dego dnia o 2:00 w nocy UTC
-  workflow_dispatch:      # Równie¿ manualnie
+    - cron: '0 2 * * *'  # Codziennie o 2:00 w nocy UTC
+  workflow_dispatch:
 
 jobs:
   update-packages:
     runs-on: ubuntu-latest
-    
+
+    strategy:
+      matrix:
+        dotnet-version: ['8.0.x', '9.0.x']
+
     permissions:
       contents: write
       pull-requests: write
@@ -20,16 +24,25 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: |
-            8.0.x
-            9.0.x
+          dotnet-version: ${{ matrix.dotnet-version }}
 
       - name: Install dotnet-outdated tool
         run: dotnet tool install --global dotnet-outdated-tool
 
-      - name: Update packages in Directory.Packages.props
+      - name: Find solution file
+        id: find-sln
         run: |
-          dotnet outdated ./Source/Directory.Packages.props --upgrade --no-restore --output outdated.txt
+          slnfile=$(find . -maxdepth 1 -name '*.sln' | head -n 1)
+          if [[ -z "$slnfile" ]]; then
+            echo "No solution file found!" >&2
+            exit 1
+          fi
+          echo "sln=$slnfile" >> $GITHUB_OUTPUT
+          echo "Using solution: $slnfile"
+
+      - name: Update packages using dotnet-outdated
+        run: |
+          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore --output outdated.txt || true
 
       - name: Check if something changed
         id: git-check
@@ -47,25 +60,26 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git checkout -b auto/update-nuget-packages
-          git add Source/Directory.Packages.props
-          git add outdated.txt
-          git commit -m "chore: update NuGet packages in Directory.Packages.props"
+          branch="auto/update-nuget-packages-dotnet${{ matrix.dotnet-version }}"
+          git checkout -b "$branch"
+          git add .
+          git commit -m "chore: update NuGet packages (dotnet ${{ matrix.dotnet-version }})"
 
       - name: Push changes to remote
         if: steps.git-check.outputs.changed == 'true'
         run: |
-          git push --set-upstream origin auto/update-nuget-packages
+          branch="auto/update-nuget-packages-dotnet${{ matrix.dotnet-version }}"
+          git push --set-upstream origin "$branch"
 
       - name: Create Pull Request
         if: steps.git-check.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: auto/update-nuget-packages
-          title: "chore: Update NuGet packages in Directory.Packages.props"
+          branch: auto/update-nuget-packages-dotnet${{ matrix.dotnet-version }}
+          title: "chore: Update NuGet packages (dotnet ${{ matrix.dotnet-version }})"
           body: |
-            This PR updates NuGet packages in `Directory.Packages.props`.
+            This PR updates NuGet packages in your `.props` and `.csproj` files for .NET ${{ matrix.dotnet-version }}.
 
             **Changelog:**  
             <details>
