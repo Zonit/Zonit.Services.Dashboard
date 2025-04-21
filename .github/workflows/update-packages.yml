@@ -48,7 +48,7 @@ jobs:
 
       - name: Update packages using dotnet-outdated
         run: |
-          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore || true
+          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore
 
       - name: Check for changes
         id: git-check
@@ -67,7 +67,7 @@ jobs:
         run: |
           echo "### NuGet package updates" > nuget_changes.md
           found=0
-          git diff --name-only | grep -E '\.(csproj|fsproj|vbproj)$' | while read prj; do
+          git diff --name-only | grep -E '\.(csproj|fsproj|vbproj|props)$' | while read prj; do
             pkg_diff=$(git diff "$prj" | grep -E '^[+-].*PackageReference' | grep -v 'Include="Microsoft\.NET')
             if [[ -n "$pkg_diff" ]]; then
               found=1
@@ -82,20 +82,7 @@ jobs:
             echo "_No NuGet changes detected._" >> nuget_changes.md
           fi
 
-      - name: Prepare branch and commit
-        if: steps.git-check.outputs.changed == 'true'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git branch -D auto/update-nuget-packages 2>/dev/null || true
-          git fetch origin master
-          git checkout master
-          git pull
-          git checkout -b auto/update-nuget-packages
-          git add .
-          git commit -m "[Task] Automated NuGet package update" || echo "No changes to commit"
-          git push origin auto/update-nuget-packages --force-with-lease
-
+      # Uwaga: nie wypychaj ani nie komituj zmian sam - robi to poniższa akcja
       - name: Create Pull Request
         if: steps.git-check.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v6
@@ -104,12 +91,16 @@ jobs:
           commit-message: "[Task] Automated NuGet package update"
           branch: auto/update-nuget-packages
           base: master
-          delete-branch: true
+          delete-branch: true                 # Ustawione: usunie branch po zmergowaniu PR
           labels: automated-task
           body: |
             This pull request was created automatically by a scheduled GitHub Actions workflow.
 
             **Summary of NuGet package updates:**
-            $(cat nuget_changes.md)
-
+            ```markdown
+            ${{ steps.get-nuget-changes.outputs.body || fromJson('{"body":""}').body }}
+            ```
             > This PR is fully automated and marked with the `automated-task` label for further automation.
+
+          # Poprawka: przekazujemy wygenerowane body jako plik
+          body-path: nuget_changes.md
