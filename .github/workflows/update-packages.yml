@@ -7,25 +7,24 @@ on:
 
 jobs:
   update-packages:
-    if: github.ref == 'refs/heads/master'
+    # Uruchamiaj tylko na main!
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
 
     steps:
-      # Safeguard, workflow działa TYLKO na master
-      - name: Fail if not on master branch
-        if: github.ref != 'refs/heads/master'
+      - name: Fail if not on main
+        if: github.ref != 'refs/heads/main'
         run: |
-          echo "This workflow must run only on the master branch!"
+          echo "This workflow must run only on main branch!"
           exit 1
 
-      # Checkout zawsze na master
-      - name: Checkout master
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: main
           fetch-depth: 0
 
       - name: Setup .NET 8 and 9 SDKs
@@ -64,7 +63,6 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      # Wyciągnij różnice do PR-body (czytelny diff!)
       - name: Get NuGet diff for PR body
         id: get-nuget-changes
         if: steps.git-check.outputs.changed == 'true'
@@ -86,22 +84,20 @@ jobs:
             echo "_No NuGet changes detected._" >> nuget_changes.md
           fi
 
-      # Tworzymy PR-ową gałąź od świeżego mastera (wyczyść stary branch jeśli był)
-      - name: Recreate PR branch from latest master
+      - name: Prepare branch and commit
         if: steps.git-check.outputs.changed == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git branch -D auto/update-nuget-packages 2>/dev/null || true
-          git fetch origin master
-          git checkout master
+          git fetch origin main
+          git checkout main
           git pull
           git checkout -b auto/update-nuget-packages
           git add .
           git commit -m "[Task] Automated NuGet package update" || echo "No changes to commit"
           git push origin auto/update-nuget-packages --force-with-lease
 
-      # Automatyczne PR do master z tej zmiany
       - name: Create Pull Request
         if: steps.git-check.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v6
@@ -109,7 +105,7 @@ jobs:
           title: "[Task] Automated NuGet package update"
           commit-message: "[Task] Automated NuGet package update"
           branch: auto/update-nuget-packages
-          base: master
+          base: main
           delete-branch: true
           labels: automated-task
           body: |
