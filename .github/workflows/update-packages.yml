@@ -46,9 +46,9 @@ jobs:
           echo "sln=$slnfile" >> $GITHUB_OUTPUT
           echo "Found solution: $slnfile"
 
-      - name: Update packages using dotnet-outdated
+      - name: Update packages using dotnet-outdated (with JSON)
         run: |
-          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore | tee dotnet_outdated.log
+          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore --output outdated_result.json --output-format json | tee dotnet_outdated.log
 
       - name: Check for changes
         id: git-check
@@ -61,27 +61,21 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Get NuGet diff for PR body (with logs)
+      - name: Generate NuGet update summary markdown
         if: steps.git-check.outputs.changed == 'true'
         run: |
           echo "### NuGet package updates" > nuget_changes.md
-          found=0
-          for prj in $(git diff --name-only | grep -E '\.(csproj|fsproj|vbproj|props)$' || true); do
-            pkg_diff=$(git diff "$prj" | grep -E '^[+-].*PackageReference|^[+-].*<PackageVersion' | grep -v 'Include="Microsoft\.NET' || true)
-            if [[ -n "$pkg_diff" ]]; then
-              found=1
-              echo "" >> nuget_changes.md
-              echo "**\`$prj\`**" >> nuget_changes.md
-              echo '```diff' >> nuget_changes.md
-              echo "$pkg_diff" >> nuget_changes.md
-              echo '```' >> nuget_changes.md
+          if [ -f outdated_result.json ]; then
+            updates=$(jq -r '.projects[].dependencies[] | select(.latest_version != .resolved_version) | "- `" + .name + "`: " + .resolved_version + " → " + .latest_version' outdated_result.json)
+            if [ -z "$updates" ]; then
+              echo "_No NuGet updates detected._" >> nuget_changes.md
+            else
+              echo "$updates" >> nuget_changes.md
             fi
-          done
-          if [ $found -eq 0 ]; then
-            echo "_No NuGet changes detected._" >> nuget_changes.md
+          else
+            echo "_dotnet outdated did not produce JSON results._" >> nuget_changes.md
           fi
 
-          # --- Dodaj logi jako zwijany blok ---
           echo -e "\n<details>\n<summary>dotnet outdated log</summary>\n" >> nuget_changes.md
           echo '```text' >> nuget_changes.md
           cat dotnet_outdated.log >> nuget_changes.md
