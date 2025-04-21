@@ -110,6 +110,17 @@ internal class NavData(INavigationProvider _navigation) : IHostedService
             ]
         });
 
+        _navigation.Add(new()
+        {
+            Title = "Management",
+            Area = AreaType.Manager,
+            Position = "right",
+            Order = int.MaxValue,
+            Icon = IconData.GiftIcon,
+            Link = new("Management", "/management"),
+            Permission = "AllowManagement"
+        });
+
         return Task.CompletedTask;
     }
 

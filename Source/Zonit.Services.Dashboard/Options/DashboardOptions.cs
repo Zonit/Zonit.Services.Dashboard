@@ -18,17 +18,18 @@ public class DashboardOptions
     public string? Permission { get; set; }
 
     /// <summary>
-    /// Custom snippet for the dashboard
+    /// List of active extensions
     /// </summary>
     public string? CustomSnippet { get; set; }
+
+    /// <summary>
+    /// Enabled Extensions
+    /// </summary>
+    public string[] Extensions { get; set; } = [];
 
 
 
     public bool EnableAntiforgery { get; init; } = true;
-
-
-
-
     public string ThemeColor { get; set; } = "#ff6100";
     public string FavIcon { get; set; } = "favicon.svg";
 }

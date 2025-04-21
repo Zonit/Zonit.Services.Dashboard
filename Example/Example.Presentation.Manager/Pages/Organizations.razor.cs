@@ -15,6 +15,10 @@ public sealed partial class Organizations : PageBase, IAreaManager
         new("Home", "Home"),
         new WorkspaceBreadcrumbs(),
         new("Details", "#", true),
+        new("Details", "#", true),
+        new("Details", "#", true),
+        new("Details", "#", true),
+        new("Details", "#", true),
     ];
 
 }

@@ -1,0 +1,22 @@
+﻿@using Zonit.Services.Dashboard.Options;
+@using Zonit.Services.Dashboard.Repositories;
+
+@inject ISettingsManager Settings
+
+@if (isEnabled)
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public string Name { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool isEnabled;
+
+    protected override void OnInitialized()
+    {
+        // Sprawdzamy, czy Extension jest aktywne
+        isEnabled = Settings.Settings.Extensions.Contains(Name, StringComparer.OrdinalIgnoreCase);
+    }
+}
