@@ -7,24 +7,22 @@ on:
 
 jobs:
   update-packages:
-    # Uruchamiaj tylko na main!
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
 
     steps:
-      - name: Fail if not on main
-        if: github.ref != 'refs/heads/main'
+      - name: Fail if not on master
+        if: github.ref != 'refs/heads/master'
         run: |
-          echo "This workflow must run only on main branch!"
+          echo "This workflow must run only on master branch!"
           exit 1
 
-      - name: Checkout main
+      - name: Checkout master
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: master
           fetch-depth: 0
 
       - name: Setup .NET 8 and 9 SDKs
@@ -90,8 +88,8 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git branch -D auto/update-nuget-packages 2>/dev/null || true
-          git fetch origin main
-          git checkout main
+          git fetch origin master
+          git checkout master
           git pull
           git checkout -b auto/update-nuget-packages
           git add .
@@ -105,7 +103,7 @@ jobs:
           title: "[Task] Automated NuGet package update"
           commit-message: "[Task] Automated NuGet package update"
           branch: auto/update-nuget-packages
-          base: main
+          base: master
           delete-branch: true
           labels: automated-task
           body: |
