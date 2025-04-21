@@ -28,6 +28,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{FFF66721-3989-4969-951B-95B86607EC0E}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\update-packages.yml = .github\workflows\update-packages.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
