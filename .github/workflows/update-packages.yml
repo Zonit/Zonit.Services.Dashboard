@@ -65,10 +65,13 @@ jobs:
         id: get-nuget-changes
         if: steps.git-check.outputs.changed == 'true'
         run: |
+          set +e  # <= NIE przerywaj skryptu na errorach!
           echo "### NuGet package updates" > nuget_changes.md
           found=0
-          git diff --name-only | grep -E '\.(csproj|fsproj|vbproj|props)$' | while read prj; do
-            pkg_diff=$(git diff "$prj" | grep -E '^[+-].*PackageReference' | grep -v 'Include="Microsoft\.NET')
+          # Znajdź wszystkie zaktualizowane projekty (możesz dodać inne typy plików jak trzeba):
+          projfiles=$(git diff --name-only | grep -E '\.(csproj|fsproj|vbproj|props)$' || true)
+          for prj in $projfiles; do
+            pkg_diff=$(git diff "$prj" | grep -E '^[+-].*PackageReference' | grep -v 'Include="Microsoft\.NET' || true)
             if [[ -n "$pkg_diff" ]]; then
               found=1
               echo "" >> nuget_changes.md
@@ -81,6 +84,7 @@ jobs:
           if [ $found -eq 0 ]; then
             echo "_No NuGet changes detected._" >> nuget_changes.md
           fi
+          exit 0  # <= gwarantuje, że nawet jak for się nie wykonał, job zakończy się sukcesem
 
       # Uwaga: nie wypychaj ani nie komituj zmian sam - robi to poniższa akcja
       - name: Create Pull Request
