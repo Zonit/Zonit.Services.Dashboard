@@ -80,17 +80,16 @@ jobs:
         run: |
             changes=$(grep -E ' -> ' outdated.log | grep -vE '^\s*$|^\[' | awk '{$1=$1};1' | sort | uniq)
             if [[ -n "$changes" ]]; then
-                BODY="**The following NuGet packages were updated:**"$'\n'
+                BODY="### The following NuGet packages were updated:"
                 while IFS= read -r line; do
                 name=$(echo "$line" | awk '{print $1}')
                 from=$(echo "$line" | awk '{print $2}')
                 to=$(echo "$line" | awk '{print $4}')
-                BODY+=" - **$name**: \`$from\` ~~→~~ \`$to\`"$'\n'
+                BODY+=$'\n'" - **$name**: \`$from\` ~~→~~ \`$to\`"
                 done <<< "$changes"
             else
                 BODY="NuGet run did not output package updates, but there are file changes."
             fi
-            # Zamiana rzeczywistych nowych linii na %0A
             BODY="${BODY//'%'/'%25'}"
             BODY="${BODY//$'\n'/'%0A'}"
             BODY="${BODY//$'\r'/'%0D'}"
