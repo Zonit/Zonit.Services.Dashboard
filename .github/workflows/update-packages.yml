@@ -7,112 +7,115 @@ on:
 
 jobs:
   update-packages:
-    # URUCHAMIAJ TEN WORKFLOW TYLKO NA main!!
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
 
     steps:
-    - name: Fail if not on main
-      if: github.ref != 'refs/heads/main'
-      run: |
-        echo "This workflow must run only on the main branch!"
-        exit 1
-
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        ref: main
-        fetch-depth: 0
-
-    - name: Setup .NET 8 and 9 SDKs
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: |
-          8.0.x
-          9.0.x
-
-    - name: Install dotnet-outdated tool
-      run: dotnet tool install --global dotnet-outdated-tool
-
-    - name: Find solution file
-      id: find-sln
-      run: |
-        slnfile=$(find . -maxdepth 1 -name '*.sln' | head -n 1)
-        if [[ -z "$slnfile" ]]; then
-          echo "No solution file found!"
+      # Safeguard, workflow działa TYLKO na master
+      - name: Fail if not on master branch
+        if: github.ref != 'refs/heads/master'
+        run: |
+          echo "This workflow must run only on the master branch!"
           exit 1
-        fi
-        echo "sln=$slnfile" >> $GITHUB_OUTPUT
-        echo "Found solution: $slnfile"
 
-    - name: Update packages using dotnet-outdated
-      run: |
-        dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore || true
+      # Checkout zawsze na master
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
 
-    - name: Check for changes
-      id: git-check
-      run: |
-        if [[ -z "$(git status --porcelain)" ]]; then
-          echo "No changes to commit"
-          echo "changed=false" >> $GITHUB_OUTPUT
-        else
-          echo "Changes detected"
-          echo "changed=true" >> $GITHUB_OUTPUT
-        fi
+      - name: Setup .NET 8 and 9 SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
 
-    - name: Get NuGet diff for PR body
-      id: get-nuget-changes
-      if: steps.git-check.outputs.changed == 'true'
-      run: |
-        echo "### NuGet package updates" > nuget_changes.md
-        found=0
-        git diff --name-only | grep -E '\.(csproj|fsproj|vbproj)$' | while read prj; do
-          pkg_diff=$(git diff "$prj" | grep -E '^[+-].*PackageReference' | grep -v 'Include="Microsoft\.NET')
-          if [[ -n "$pkg_diff" ]]; then
-            found=1
-            echo "" >> nuget_changes.md
-            echo "**\`$prj\`**" >> nuget_changes.md
-            echo '```diff' >> nuget_changes.md
-            echo "$pkg_diff" >> nuget_changes.md
-            echo '```' >> nuget_changes.md
+      - name: Install dotnet-outdated tool
+        run: dotnet tool install --global dotnet-outdated-tool
+
+      - name: Find solution file
+        id: find-sln
+        run: |
+          slnfile=$(find . -maxdepth 1 -name '*.sln' | head -n 1)
+          if [[ -z "$slnfile" ]]; then
+            echo "No solution file found!"
+            exit 1
           fi
-        done
-        if [ $found -eq 0 ]; then
-          echo "_No NuGet changes detected._" >> nuget_changes.md
-        fi
+          echo "sln=$slnfile" >> $GITHUB_OUTPUT
+          echo "Found solution: $slnfile"
 
-    - name: Recreate PR branch from latest main
-      if: steps.git-check.outputs.changed == 'true'
-      run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
+      - name: Update packages using dotnet-outdated
+        run: |
+          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore || true
 
-        # Usuń PR-ową branch lokalnie jeśli istnieje, na wszelki wypadek (gdy rerun)
-        git branch -D auto/update-nuget-packages 2>/dev/null || true
-        git fetch origin main
-        git checkout main
-        git pull
-        git checkout -b auto/update-nuget-packages
-        git add .
-        git commit -m "[Task] Automated NuGet package update" || echo "No changes to commit"
-        git push origin auto/update-nuget-packages --force-with-lease
+      - name: Check for changes
+        id: git-check
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "No changes to commit"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
 
-    - name: Create Pull Request
-      if: steps.git-check.outputs.changed == 'true'
-      uses: peter-evans/create-pull-request@v6
-      with:
-        title: "[Task] Automated NuGet package update"
-        commit-message: "[Task] Automated NuGet package update"
-        branch: auto/update-nuget-packages
-        delete-branch: true
-        labels: automated-task
-        body: |
-          This pull request was created automatically by a scheduled GitHub Actions workflow.
+      # Wyciągnij różnice do PR-body (czytelny diff!)
+      - name: Get NuGet diff for PR body
+        id: get-nuget-changes
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          echo "### NuGet package updates" > nuget_changes.md
+          found=0
+          git diff --name-only | grep -E '\.(csproj|fsproj|vbproj)$' | while read prj; do
+            pkg_diff=$(git diff "$prj" | grep -E '^[+-].*PackageReference' | grep -v 'Include="Microsoft\.NET')
+            if [[ -n "$pkg_diff" ]]; then
+              found=1
+              echo "" >> nuget_changes.md
+              echo "**\`$prj\`**" >> nuget_changes.md
+              echo '```diff' >> nuget_changes.md
+              echo "$pkg_diff" >> nuget_changes.md
+              echo '```' >> nuget_changes.md
+            fi
+          done
+          if [ $found -eq 0 ]; then
+            echo "_No NuGet changes detected._" >> nuget_changes.md
+          fi
 
-          **Summary of NuGet package updates:**
-          $(cat nuget_changes.md)
+      # Tworzymy PR-ową gałąź od świeżego mastera (wyczyść stary branch jeśli był)
+      - name: Recreate PR branch from latest master
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git branch -D auto/update-nuget-packages 2>/dev/null || true
+          git fetch origin master
+          git checkout master
+          git pull
+          git checkout -b auto/update-nuget-packages
+          git add .
+          git commit -m "[Task] Automated NuGet package update" || echo "No changes to commit"
+          git push origin auto/update-nuget-packages --force-with-lease
 
-          > This PR is fully automated and marked with the `automated-task` label for further automation.
+      # Automatyczne PR do master z tej zmiany
+      - name: Create Pull Request
+        if: steps.git-check.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "[Task] Automated NuGet package update"
+          commit-message: "[Task] Automated NuGet package update"
+          branch: auto/update-nuget-packages
+          base: master
+          delete-branch: true
+          labels: automated-task
+          body: |
+            This pull request was created automatically by a scheduled GitHub Actions workflow.
+
+            **Summary of NuGet package updates:**
+            $(cat nuget_changes.md)
+
+            > This PR is fully automated and marked with the `automated-task` label for further automation.
