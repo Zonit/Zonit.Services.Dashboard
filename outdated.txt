@@ -1,0 +1,136 @@
+{
+  "Projects": [
+    {
+      "Name": "Example.Presentation.Management",
+      "FilePath": "/home/runner/work/Zonit.Services.Dashboard/Zonit.Services.Dashboard/Example/Example.Presentation.Management/Example.Presentation.Management.csproj",
+      "TargetFrameworks": [
+        {
+          "Name": "net9.0",
+          "Dependencies": [
+            {
+              "Name": "Microsoft.AspNetCore.Components",
+              "ResolvedVersion": "9.0.1",
+              "LatestVersion": "9.0.4",
+              "UpgradeSeverity": "Patch"
+            },
+            {
+              "Name": "Microsoft.AspNetCore.Components.Web",
+              "ResolvedVersion": "9.0.1",
+              "LatestVersion": "9.0.4",
+              "UpgradeSeverity": "Patch"
+            },
+            {
+              "Name": "Microsoft.JSInterop",
+              "ResolvedVersion": "9.0.1",
+              "LatestVersion": "9.0.4",
+              "UpgradeSeverity": "Patch"
+            }
+          ]
+        },
+        {
+          "Name": "net8.0",
+          "Dependencies": [
+            {
+              "Name": "Microsoft.AspNetCore.Components",
+              "ResolvedVersion": "8.0.12",
+              "LatestVersion": "8.0.15",
+              "UpgradeSeverity": "Patch"
+            },
+            {
+              "Name": "Microsoft.AspNetCore.Components.Web",
+              "ResolvedVersion": "8.0.12",
+              "LatestVersion": "8.0.15",
+              "UpgradeSeverity": "Patch"
+            },
+            {
+              "Name": "Microsoft.JSInterop",
+              "ResolvedVersion": "8.0.12",
+              "LatestVersion": "8.0.15",
+              "UpgradeSeverity": "Patch"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "Example.Presentation.Manager",
+      "FilePath": "/home/runner/work/Zonit.Services.Dashboard/Zonit.Services.Dashboard/Example/Example.Presentation.Manager/Example.Presentation.Manager.csproj",
+      "TargetFrameworks": [
+        {
+          "Name": "net9.0",
+          "Dependencies": [
+            {
+              "Name": "Microsoft.AspNetCore.Components",
+              "ResolvedVersion": "9.0.1",
+              "LatestVersion": "9.0.4",
+              "UpgradeSeverity": "Patch"
+            },
+            {
+              "Name": "Microsoft.AspNetCore.Components.Web",
+              "ResolvedVersion": "9.0.1",
+              "LatestVersion": "9.0.4",
+              "UpgradeSeverity": "Patch"
+            },
+            {
+              "Name": "Microsoft.JSInterop",
+              "ResolvedVersion": "9.0.1",
+              "LatestVersion": "9.0.4",
+              "UpgradeSeverity": "Patch"
+            }
+          ]
+        },
+        {
+          "Name": "net8.0",
+          "Dependencies": [
+            {
+              "Name": "Microsoft.AspNetCore.Components",
+              "ResolvedVersion": "8.0.12",
+              "LatestVersion": "8.0.15",
+              "UpgradeSeverity": "Patch"
+            },
+            {
+              "Name": "Microsoft.AspNetCore.Components.Web",
+              "ResolvedVersion": "8.0.12",
+              "LatestVersion": "8.0.15",
+              "UpgradeSeverity": "Patch"
+            },
+            {
+              "Name": "Microsoft.JSInterop",
+              "ResolvedVersion": "8.0.12",
+              "LatestVersion": "8.0.15",
+              "UpgradeSeverity": "Patch"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "Zonit.Services.Dashboard",
+      "FilePath": "/home/runner/work/Zonit.Services.Dashboard/Zonit.Services.Dashboard/Source/Zonit.Services.Dashboard/Zonit.Services.Dashboard.csproj",
+      "TargetFrameworks": [
+        {
+          "Name": "net8.0",
+          "Dependencies": [
+            {
+              "Name": "MudBlazor",
+              "ResolvedVersion": "8.5.0",
+              "LatestVersion": "8.5.1",
+              "UpgradeSeverity": "Patch"
+            }
+          ]
+        },
+        {
+          "Name": "net9.0",
+          "Dependencies": [
+            {
+              "Name": "MudBlazor",
+              "ResolvedVersion": "8.5.0",
+              "LatestVersion": "8.5.1",
+              "UpgradeSeverity": "Patch"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
