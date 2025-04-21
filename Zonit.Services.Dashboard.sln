@@ -5,8 +5,6 @@ VisualStudioVersion = 17.12.35521.163
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zonit.Services.Dashboard", "Source\Zonit.Services.Dashboard\Zonit.Services.Dashboard.csproj", "{92597042-A0FC-4DC9-AC6F-BF7523ED2036}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Source\Example\Example.csproj", "{1BFF3CCA-CE39-4E6F-9695-C6D298E3F5D0}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{ED90C6A7-8BCA-4E94-BCDF-5F96F0EB4697}"
 	ProjectSection(SolutionItems) = preProject
 		Source\Directory.Packages.props = Source\Directory.Packages.props
@@ -25,6 +23,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zonit.Services.Dashboard.Do
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zonit.Services.Dashboard.Abstractions", "Source\Zonit.Services.Dashboard.Abstractions\Zonit.Services.Dashboard.Abstractions.csproj", "{E35B9D52-E87F-4CC7-A141-BCC49FF099DF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example\Example.csproj", "{F6642F69-9610-3B69-D069-AA90F8DABA6F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{FFF66721-3989-4969-951B-95B86607EC0E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,10 +39,6 @@ Global
 		{92597042-A0FC-4DC9-AC6F-BF7523ED2036}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{92597042-A0FC-4DC9-AC6F-BF7523ED2036}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{92597042-A0FC-4DC9-AC6F-BF7523ED2036}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1BFF3CCA-CE39-4E6F-9695-C6D298E3F5D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1BFF3CCA-CE39-4E6F-9695-C6D298E3F5D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1BFF3CCA-CE39-4E6F-9695-C6D298E3F5D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1BFF3CCA-CE39-4E6F-9695-C6D298E3F5D0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A94AC45C-630F-4789-A574-A993957148B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A94AC45C-630F-4789-A574-A993957148B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A94AC45C-630F-4789-A574-A993957148B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -55,16 +55,24 @@ Global
 		{E35B9D52-E87F-4CC7-A141-BCC49FF099DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E35B9D52-E87F-4CC7-A141-BCC49FF099DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E35B9D52-E87F-4CC7-A141-BCC49FF099DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6642F69-9610-3B69-D069-AA90F8DABA6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6642F69-9610-3B69-D069-AA90F8DABA6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6642F69-9610-3B69-D069-AA90F8DABA6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6642F69-9610-3B69-D069-AA90F8DABA6F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{92597042-A0FC-4DC9-AC6F-BF7523ED2036} = {ED90C6A7-8BCA-4E94-BCDF-5F96F0EB4697}
-		{1BFF3CCA-CE39-4E6F-9695-C6D298E3F5D0} = {F2D70D60-906D-400C-9C6A-624E97F7526D}
 		{A94AC45C-630F-4789-A574-A993957148B2} = {F2D70D60-906D-400C-9C6A-624E97F7526D}
 		{1BE7F607-8E93-472B-B5BD-105717BEFDE6} = {F2D70D60-906D-400C-9C6A-624E97F7526D}
 		{C06B0B22-9A31-49F2-A8C1-38A1C8392D8F} = {ED90C6A7-8BCA-4E94-BCDF-5F96F0EB4697}
 		{E35B9D52-E87F-4CC7-A141-BCC49FF099DF} = {ED90C6A7-8BCA-4E94-BCDF-5F96F0EB4697}
+		{F6642F69-9610-3B69-D069-AA90F8DABA6F} = {F2D70D60-906D-400C-9C6A-624E97F7526D}
+		{FFF66721-3989-4969-951B-95B86607EC0E} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B0FD65CD-40EC-4C5B-A170-6F8ED9AA60AC}
 	EndGlobalSection
 EndGlobal

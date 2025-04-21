@@ -7,6 +7,9 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\Example\Example.Presentation.Management\Example.Presentation.Management.csproj" />
 		<ProjectReference Include="..\..\Example\Example.Presentation.Manager\Example.Presentation.Manager.csproj" />
+		<ProjectReference Include="..\..\Source\Zonit.Services.Dashboard.Abstractions\Zonit.Services.Dashboard.Abstractions.csproj" />
+		<ProjectReference Include="..\..\Source\Zonit.Services.Dashboard.Domain\Zonit.Services.Dashboard.Domain.csproj" />
+		<ProjectReference Include="..\..\Source\Zonit.Services.Dashboard\Zonit.Services.Dashboard.csproj" />
 		<ProjectReference Include="..\Zonit.Services.Dashboard\Zonit.Services.Dashboard.csproj" />
 	</ItemGroup>
 
