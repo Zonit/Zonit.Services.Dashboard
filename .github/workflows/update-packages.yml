@@ -1,4 +1,4 @@
-name: Update NuGet Packages
+﻿name: Update NuGet Packages
 
 on:
   schedule:
@@ -39,7 +39,7 @@ jobs:
 
       - name: Update packages using dotnet-outdated
         run: |
-          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore --output outdated.txt || true
+          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore || true
 
       - name: Check for changes
         id: git-check
@@ -48,17 +48,49 @@ jobs:
             echo "No changes to commit"
             echo "changed=false" >> $GITHUB_OUTPUT
           else
-            echo "There are changes to commit"
+            echo "Changes detected"
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
+
+      - name: Get NuGet diff for PR body
+        id: get-nuget-changes
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          echo "### Package changes" > nuget_changes.md
+          git diff --cached --name-only | grep -E '\.(csproj|fsproj|vbproj)$' | while read prj; do
+            pkg_diff=$(git diff --cached "$prj" | grep -E '^[+-].*PackageReference' | grep -v 'Include="Microsoft\.NET')
+            if [[ -n "$pkg_diff" ]]; then
+              echo "" >> nuget_changes.md
+              echo "**\`$prj\`**" >> nuget_changes.md
+              echo '```diff' >> nuget_changes.md
+              echo "$pkg_diff" >> nuget_changes.md
+              echo '```' >> nuget_changes.md
+            fi
+          done
+          echo "" >> nuget_changes.md
+
+      - name: Commit changes
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git checkout -b auto/update-nuget-packages
+          git add .
+          git commit -m "[Task] Automated NuGet package update"
 
       - name: Create Pull Request
         if: steps.git-check.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
-          commit-message: 'chore: update NuGet packages'
+          title: "[Task] Automated NuGet package update"
+          commit-message: "[Task] Automated NuGet package update"
           branch: auto/update-nuget-packages
-          title: 'chore: update NuGet packages'
-          body: |
-            Automatyczna aktualizacja NuGet packages przez workflow GitHub Actions.
           delete-branch: true
+          labels: automated-task
+          body: |
+            This pull request was automatically created by a scheduled GitHub Actions workflow.
+
+            **Summary of package changes:**
+            $(cat nuget_changes.md)
+
+            > This PR is automatically generated and does not require human review, as indicated by the `automated-task` label.
