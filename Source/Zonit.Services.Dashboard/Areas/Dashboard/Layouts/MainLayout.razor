@@ -29,7 +29,7 @@
 
         <Navbar MudThemeProvider=@_mudThemeProvider Breadcrumbs=@_breadcrumbItems @bind-DrawerOpen=@_drawerOpen @bind-DrawerRightOpen=@_drawerRightOpen @bind-DarkMode=@_isDarkMode Width="@_width" Hegith="@_height" />
 
-        <MudSwipeArea OnSwipeEnd="@OnSwipe" Style="width: 100%;">
+        <MudSwipeArea OnSwipeEnd="@OnSwipe" Style="width: 100%; touch-action: pan-y" PreventDefault="false">
             <MudDrawer @bind-Open="_drawerOpen" Variant="_drawerVariant" OpenMiniOnHover="_drawerOpenMin" Anchor="Anchor.Start" Elevation="2">
                 <MudDrawerHeader>
                     <a Href="/">
