@@ -16,7 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: main        # <- change to 'master' if that's your default branch
+          ref: main
 
       - name: Setup .NET 8 and 9 SDKs
         uses: actions/setup-dotnet@v4
@@ -80,12 +80,11 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git fetch origin main                # <- change to 'master' if that's your default branch
-          git checkout main                    # <- change to 'master' if that's your default branch
-          git pull
+          git fetch origin main
           git checkout -B auto/update-nuget-packages
           git add .
-          git commit -m "[Task] Automated NuGet package update"
+          git commit -m "[Task] Automated NuGet package update" || echo "No changes to commit"
+          git push origin auto/update-nuget-packages --force-with-lease
 
       - name: Create Pull Request
         if: steps.git-check.outputs.changed == 'true'
