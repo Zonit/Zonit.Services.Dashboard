@@ -91,10 +91,10 @@ jobs:
             else
                 BODY="NuGet run did not output package updates, but there are file changes."
             fi
-            # Kodowanie znaków specjalnych:
+
             BODY="${BODY//'%'/'%25'}"
-            BODY="${BODY//$'\r'/'%0D'}"
             BODY="${BODY//$'\n'/'%0A'}"
+            BODY="${BODY//$'\r'/'%0D'}"
             echo "body=$BODY" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
