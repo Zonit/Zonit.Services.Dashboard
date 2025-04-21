@@ -47,7 +47,7 @@ jobs:
 
       - name: Update packages using dotnet-outdated
         run: |
-          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore | tee dotnet_outdated.log
+          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore | tee outdated.log
 
       - name: Check for changes
         id: git-check
@@ -60,16 +60,20 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Extract NuGet changes for PR
-        id: extract-nuget
+      - name: Prepare PR body with list of updated packages
+        id: pr-body
         if: steps.git-check.outputs.changed == 'true'
         run: |
-          changes=$(grep -E ' -> ' dotnet_outdated.log | grep -vE '^Analyzing| Upgrading | upgraded | Elapsed:' | awk '{$1=$1};1' | sed 's/^/ - /')
-          if [[ -z "$changes" ]]; then
-            echo "body=No NuGet updates detected." >> $GITHUB_OUTPUT
+          UPDATES=$(grep -E ' -> ' outdated.log | grep -vE '^\s*$|^\[' | sed 's/^/ - /')
+          if [[ -n "$UPDATES" ]]; then
+            BODY="The following NuGet packages were updated:\n$UPDATES"
           else
-            echo "body=Updated NuGet packages:\n$changes" >> $GITHUB_OUTPUT
+            BODY="NuGet run did not output package updates, but there are file changes."
           fi
+          BODY="${BODY//'%'/'%25'}"
+          BODY="${BODY//$'\n'/'%0A'}"
+          BODY="${BODY//$'\r'/'%0D'}"
+          echo "body=$BODY" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         if: steps.git-check.outputs.changed == 'true'
@@ -81,4 +85,4 @@ jobs:
           base: master
           delete-branch: true
           labels: automated-task
-          body: ${{ steps.extract-nuget.outputs.body }}
+          body: ${{ steps.pr-body.outputs.body }}
