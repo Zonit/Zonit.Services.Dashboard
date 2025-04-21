@@ -44,11 +44,10 @@ jobs:
             exit 1
           fi
           echo "sln=$slnfile" >> $GITHUB_OUTPUT
-          echo "Found solution: $slnfile"
 
-      - name: Update packages using dotnet-outdated (with JSON)
+      - name: Update packages using dotnet-outdated
         run: |
-          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore --output outdated_result.json --output-format json | tee dotnet_outdated.log
+          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore | tee dotnet_outdated.log
 
       - name: Check for changes
         id: git-check
@@ -61,26 +60,16 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Generate NuGet update summary markdown
+      - name: Extract NuGet changes for PR
+        id: extract-nuget
         if: steps.git-check.outputs.changed == 'true'
         run: |
-          echo "### NuGet package updates" > nuget_changes.md
-          if [ -f outdated_result.json ]; then
-            updates=$(jq -r '.projects[].dependencies[] | select(.latest_version != .resolved_version) | "- `" + .name + "`: " + .resolved_version + " → " + .latest_version' outdated_result.json)
-            if [ -z "$updates" ]; then
-              echo "_No NuGet updates detected._" >> nuget_changes.md
-            else
-              echo "$updates" >> nuget_changes.md
-            fi
+          changes=$(grep -E ' -> ' dotnet_outdated.log | grep -vE '^Analyzing| Upgrading | upgraded | Elapsed:' | awk '{$1=$1};1' | sed 's/^/ - /')
+          if [[ -z "$changes" ]]; then
+            echo "body=No NuGet updates detected." >> $GITHUB_OUTPUT
           else
-            echo "_dotnet outdated did not produce JSON results._" >> nuget_changes.md
+            echo "body=Updated NuGet packages:\n$changes" >> $GITHUB_OUTPUT
           fi
-
-          echo -e "\n<details>\n<summary>dotnet outdated log</summary>\n" >> nuget_changes.md
-          echo '```text' >> nuget_changes.md
-          cat dotnet_outdated.log >> nuget_changes.md
-          echo '```' >> nuget_changes.md
-          echo "</details>" >> nuget_changes.md
 
       - name: Create Pull Request
         if: steps.git-check.outputs.changed == 'true'
@@ -92,4 +81,4 @@ jobs:
           base: master
           delete-branch: true
           labels: automated-task
-          body-path: nuget_changes.md
+          body: ${{ steps.extract-nuget.outputs.body }}
