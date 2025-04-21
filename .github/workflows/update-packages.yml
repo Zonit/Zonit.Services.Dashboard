@@ -80,7 +80,7 @@ jobs:
         run: |
             changes=$(grep -E ' -> ' outdated.log | grep -vE '^\s*$|^\[' | awk '{$1=$1};1' | sort | uniq)
             if [[ -n "$changes" ]]; then
-                BODY="###The following NuGet packages were updated:"
+                BODY="### The following NuGet packages were updated:"
                 while IFS= read -r line; do
                 name=$(echo "$line" | awk '{print $1}')
                 from=$(echo "$line" | awk '{print $2}')
