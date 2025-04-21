@@ -66,4 +66,4 @@ jobs:
         if: steps.git-check.outputs.changed == 'true'
         run: |
           branch="auto/update-nuget-packages"
-          git push --set-upstream origin "$
+          git push --set-upstream origin "$branch"
