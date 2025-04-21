@@ -82,17 +82,19 @@ jobs:
             if [[ -n "$changes" ]]; then
                 BODY="### The following NuGet packages were updated:"
                 while IFS= read -r line; do
-                name=$(echo "$line" | awk '{print $1}')
-                from=$(echo "$line" | awk '{print $2}')
-                to=$(echo "$line" | awk '{print $4}')
-                BODY+="<br> - **$name**: \`$from\` ~~→~~ \`$to\`"
+                    name=$(echo "$line" | awk '{print $1}')
+                    from=$(echo "$line" | awk '{print $2}')
+                    to=$(echo "$line" | awk '{print $4}')
+                    BODY+="
+            - **$name**: \`$from\` ~~→~~ \`$to\`"
                 done <<< "$changes"
             else
                 BODY="NuGet run did not output package updates, but there are file changes."
             fi
-            # Kodowanie znaków specjalnych, (w zasadzie niepotrzebne przy <br>, ale nie zaszkodzi):
+            # Kodowanie znaków specjalnych:
             BODY="${BODY//'%'/'%25'}"
             BODY="${BODY//$'\r'/'%0D'}"
+            BODY="${BODY//$'\n'/'%0A'}"
             echo "body=$BODY" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
