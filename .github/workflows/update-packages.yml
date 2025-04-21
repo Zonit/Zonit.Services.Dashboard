@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main        # <- change to 'master' if that's your default branch
 
       - name: Setup .NET 8 and 9 SDKs
         uses: actions/setup-dotnet@v4
@@ -56,10 +58,12 @@ jobs:
         id: get-nuget-changes
         if: steps.git-check.outputs.changed == 'true'
         run: |
-          echo "### Package changes" > nuget_changes.md
-          git diff --cached --name-only | grep -E '\.(csproj|fsproj|vbproj)$' | while read prj; do
-            pkg_diff=$(git diff --cached "$prj" | grep -E '^[+-].*PackageReference' | grep -v 'Include="Microsoft\.NET')
+          echo "### NuGet package updates" > nuget_changes.md
+          found=0
+          git diff --name-only | grep -E '\.(csproj|fsproj|vbproj)$' | while read prj; do
+            pkg_diff=$(git diff "$prj" | grep -E '^[+-].*PackageReference' | grep -v 'Include="Microsoft\.NET')
             if [[ -n "$pkg_diff" ]]; then
+              found=1
               echo "" >> nuget_changes.md
               echo "**\`$prj\`**" >> nuget_changes.md
               echo '```diff' >> nuget_changes.md
@@ -67,14 +71,19 @@ jobs:
               echo '```' >> nuget_changes.md
             fi
           done
-          echo "" >> nuget_changes.md
+          if [ $found -eq 0 ]; then
+            echo "_No NuGet changes detected._" >> nuget_changes.md
+          fi
 
       - name: Commit changes
         if: steps.git-check.outputs.changed == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git checkout -b auto/update-nuget-packages
+          git fetch origin main                # <- change to 'master' if that's your default branch
+          git checkout main                    # <- change to 'master' if that's your default branch
+          git pull
+          git checkout -B auto/update-nuget-packages
           git add .
           git commit -m "[Task] Automated NuGet package update"
 
@@ -88,9 +97,9 @@ jobs:
           delete-branch: true
           labels: automated-task
           body: |
-            This pull request was automatically created by a scheduled GitHub Actions workflow.
+            This pull request was created automatically by a scheduled GitHub Actions workflow.
 
-            **Summary of package changes:**
+            **Summary of NuGet package updates:**
             $(cat nuget_changes.md)
 
-            > This PR is automatically generated and does not require human review, as indicated by the `automated-task` label.
+            > This PR is fully automated and marked with the `automated-task` label for further automation.
