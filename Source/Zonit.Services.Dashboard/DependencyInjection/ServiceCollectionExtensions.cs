@@ -56,6 +56,8 @@ public static class ServiceCollectionExtensions
 
         services.AddHostedService<CultureData>();
 
+        services.AddDashboardApplication();
+
         return services;
     }
 }

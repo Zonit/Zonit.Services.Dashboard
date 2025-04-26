@@ -4,13 +4,16 @@
 
 @inject ICatalogProvider Catalog
 @inject ICatalogManager CatalogManager
+
 @inject ICultureProvider Culture
 @inject NavigationManager NavigationManager
+
+@inject IExtensionManager ExtensionManager
 
 @if (Catalog.Project is not null)
 {
     <MudTooltip Text="@Culture.Translate("Change projects")" Arrow="true" Placement="Placement.Top" RootStyle="width: 100%;">
-        <MudButton Variant="Variant.Text" FullWidth="true" OnClick="OpenDrawer" Class="d-flex justify-center">
+        <MudButton Variant="Variant.Text" FullWidth="true" OnClick="@(() => ExtensionManager.Drawer(Extensions.Projects).Toggle())" Class="d-flex justify-center">
             <MudGrid Justify="Justify.Center" AlignItems="Center">
                 <MudItem xs="2" Class="d-flex align-center">
                     <MudAvatar Color="Color.Tertiary" Rounded="true" Size="Size.Small">
@@ -31,11 +34,13 @@
 
     <MudDivider Class="my-2" />
 
-    <MudDrawer @bind-Open="@open" Width="300px" Height="100%" Anchor="Anchor.End" Elevation="3" Variant="@DrawerVariant.Temporary" Class="z-index: 99999999">
+    <MudDrawer Open="@ExtensionManager.Drawer(Extensions.Projects).IsOpen"
+               OpenChanged="@(value => ExtensionManager.Drawer(Extensions.Projects).Set(value))"
+               Width="300px" Height="100%" Anchor="Anchor.End" Elevation="3" Variant="@DrawerVariant.Temporary" Class="z-index: 99999999">
         <MudDrawerHeader>
             <div Class="d-flex align-center justify-space-between flex-grow-1 gap-4">
                 <MudText Typo="Typo.h6">@Culture.Translate("Projects")</MudText>
-                <MudIconButton OnClick="@(() => OpenDrawer())"
+                <MudIconButton OnClick="@(() => ExtensionManager.Drawer(Extensions.Projects).Close())"
                                Icon=@Icons.Material.Filled.Close
                                aria-label="@Culture.Translate("Close")" />
             </div>
@@ -62,7 +67,7 @@
                         }
                     </MudList>
                 }
-                <MudDivider Class="my-2" />
+                <MudDivider Class="my-4" />
                 <MudButton FullWidth="true" OnClick="GoToManage">@Culture.Translate("Manage projects")</MudButton>
             </MudPaper>
         </MudNavMenu>
@@ -70,13 +75,14 @@
 }
 
 @code {
-    bool open;
     Guid selectedProject;
 
     protected override void OnInitialized()
     {
         Culture.OnChange += StateHasChanged;
         Catalog.OnChange += StateHasChanged;
+        ExtensionManager.Drawer(Extensions.Projects)
+            .OnChange += StateHasChanged;
 
         if (Catalog.Project is not null)
             selectedProject = Catalog.Project.Id;
@@ -86,14 +92,13 @@
     {
         Culture.OnChange -= StateHasChanged;
         Catalog.OnChange -= StateHasChanged;
+        ExtensionManager.Drawer(Extensions.Projects)
+            .OnChange -= StateHasChanged;
     }
-
-    void OpenDrawer()
-        => open = !open;
 
     void GoToManage()
     {
-        open = false;
+        ExtensionManager.Drawer(Extensions.Projects).Close();
         NavigationManager.NavigateTo("projects");
     }
 

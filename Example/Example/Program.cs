@@ -8,7 +8,6 @@ using Zonit.Extensions.Website;
 using Zonit.Services;
 using Zonit.Services.Dashboard;
 using Zonit.Services.Dashboard.DependencyInjection;
-using Zonit.Services.Dashboard.Options;
 
 namespace Example;
 

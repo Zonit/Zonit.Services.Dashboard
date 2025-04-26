@@ -1,6 +1,4 @@
-﻿using Zonit.Extensions.Website.Abstractions.Navigations.Types;
-
-namespace Zonit.Services.Dashboard.Options;
+﻿namespace Zonit.Services.Dashboard;
 
 public class DashboardOptions
 {

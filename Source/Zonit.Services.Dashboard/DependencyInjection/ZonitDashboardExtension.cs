@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Zonit.Services.Dashboard.Options;
+using Zonit.Services.Dashboard;
 using Zonit.Services.Dashboard.Repositories;
 
 namespace Zonit.Extensions;

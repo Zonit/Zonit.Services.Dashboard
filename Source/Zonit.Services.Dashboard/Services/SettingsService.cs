@@ -1,5 +1,4 @@
-﻿using Zonit.Services.Dashboard.Options;
-using Zonit.Services.Dashboard.Repositories;
+﻿using Zonit.Services.Dashboard.Repositories;
 
 namespace Zonit.Services.Dashboard.Services;
 

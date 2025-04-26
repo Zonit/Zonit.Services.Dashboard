@@ -1,6 +1,4 @@
-﻿using Zonit.Services.Dashboard.Options;
-
-namespace Zonit.Services.Dashboard.Repositories;
+﻿namespace Zonit.Services.Dashboard.Repositories;
 
 public interface ISettingsManager
 {
