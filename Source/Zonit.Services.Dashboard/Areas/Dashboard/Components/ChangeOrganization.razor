@@ -125,7 +125,7 @@
     void GoToManage(string url)
     {
         ExtensionManager.Drawer(Extensions.Organizations).Close();
-        NavigationManager.NavigateTo("organizations");
+        NavigationManager.NavigateTo(url);
     }
 
     public async Task SwitchAsync(Guid organizationId)
