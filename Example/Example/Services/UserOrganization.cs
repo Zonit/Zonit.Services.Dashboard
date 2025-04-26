@@ -1,4 +1,5 @@
 ﻿using Zonit.Extensions.Organizations;
+using Zonit.Extensions.Projects;
 
 namespace Example.Services;
 

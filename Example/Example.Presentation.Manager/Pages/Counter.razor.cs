@@ -14,6 +14,8 @@ public sealed partial class Counter : PageBase, IAreaManager
     protected override List<BreadcrumbsModel>? Breadcrumbs =>
     [
         new("Home", "Home"),
+        new WorkspaceBreadcrumbs(),
+        new CatalogBreadcrumbs(),
         new("Counter", "Counter"),
     ];
 

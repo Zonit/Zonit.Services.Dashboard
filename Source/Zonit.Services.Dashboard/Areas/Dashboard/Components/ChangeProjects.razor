@@ -1,9 +1,12 @@
 ﻿@using Zonit.Extensions.Projects
+@using Zonit.Extensions.Organizations
 
 @implements IDisposable
 
 @inject ICatalogProvider Catalog
 @inject ICatalogManager CatalogManager
+
+@inject IWorkspaceProvider Workspace
 
 @inject ICultureProvider Culture
 @inject NavigationManager NavigationManager
@@ -68,7 +71,7 @@
                     </MudList>
                 }
                 <MudDivider Class="my-4" />
-                <MudButton FullWidth="true" OnClick="GoToManage">@Culture.Translate("Manage projects")</MudButton>
+                <MudButton FullWidth="true" OnClick="@(() => GoToManage("projects"))">@Culture.Translate("Manage projects")</MudButton>
             </MudPaper>
         </MudNavMenu>
     </MudDrawer>
@@ -81,6 +84,7 @@
     {
         Culture.OnChange += StateHasChanged;
         Catalog.OnChange += StateHasChanged;
+        Workspace.OnChange += StateHasChanged;
         ExtensionManager.Drawer(Extensions.Projects)
             .OnChange += StateHasChanged;
 
@@ -92,14 +96,15 @@
     {
         Culture.OnChange -= StateHasChanged;
         Catalog.OnChange -= StateHasChanged;
+        Workspace.OnChange -= StateHasChanged;
         ExtensionManager.Drawer(Extensions.Projects)
             .OnChange -= StateHasChanged;
     }
 
-    void GoToManage()
+    void GoToManage(string url)
     {
         ExtensionManager.Drawer(Extensions.Projects).Close();
-        NavigationManager.NavigateTo("projects");
+        NavigationManager.NavigateTo(url);
     }
 
     public async Task SwitchAsync(Guid projectId)
