@@ -30,7 +30,7 @@
                 @* </MudChip> *@
 
                 <MudButton OnClick="@(() => ExtensionManager.Drawer(Extensions.Projects).Toggle())" Variant="Variant.Text" EndIcon="@IconData.ChevronExpand" Color="Color.Transparent" Size="Size.Small">
-                    <MudAvatar Size=Size.Small Rounded Color="Color.Warning" Class="mr-2">@Catalog.Project.Name[0]</MudAvatar>
+                    <MudAvatar Size=Size.Small Rounded Color="Color.Tertiary" Class="mr-2">@Catalog.Project.Name[0]</MudAvatar>
                     @Catalog.Project.Name
                 </MudButton>
             }
