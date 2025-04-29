@@ -1,4 +1,5 @@
-﻿using MudBlazor;
+﻿using Microsoft.Extensions.DependencyInjection;
+using MudBlazor;
 using MudBlazor.Services;
 using MudBlazor.Translations;
 using Zonit.Extensions;

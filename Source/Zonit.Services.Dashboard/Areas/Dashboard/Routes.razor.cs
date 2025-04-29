@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using System.Reflection;
 
 namespace Zonit.Services.Dashboard.Areas.Dashboard;

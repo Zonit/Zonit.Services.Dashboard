@@ -10,7 +10,7 @@
 @inject ICultureProvider Culture
 @inject IAuthenticatedProvider Authenticated
 
-<MudThemeProvider Theme="MyCustomTheme" @ref="@_mudThemeProvider" IsDarkMode="_isDarkMode" />  @* @bind-IsDarkMode="@_isDarkMode" *@
+<MudThemeProvider Theme="@Theme.MainLayout" @ref="@_mudThemeProvider" IsDarkMode="_isDarkMode" />  @* @bind-IsDarkMode="@_isDarkMode" *@
 <MudDialogProvider FullWidth="true" Position="DialogPosition.Center" MaxWidth="MaxWidth.ExtraSmall" CloseOnEscapeKey="true" />
 <MudPopoverProvider />
 <MudSnackbarProvider />
@@ -104,41 +104,6 @@
 
 
 @code {
-    MudTheme MyCustomTheme = new()
-    {
-        PaletteLight = new()
-        {
-            AppbarBackground = "#ffffff",
-            AppbarText = "#65676b",
-            Background = "#f0f2f5",
-            DrawerBackground = "#fdfdfd",
-            Surface = "#ffffff",
-            TextPrimary = "#050505",
-
-        },
-        PaletteDark = new()
-        {
-            AppbarBackground = "#242526",
-            AppbarText = "#b0b3b8",
-            Background = "#18191a",
-            DrawerBackground = "#212223",
-            Surface = "#242526",
-            TextPrimary = "#E4E6EB"
-        },
-
-        Typography = new Typography()
-        {
-            H1 = new H1Typography()
-            {
-                FontFamily = new[] { "Roboto", "Helvetica", "Arial", "sans-serif" },
-                FontSize = "1.25rem",
-                FontWeight = "500",
-                LineHeight = "1.6",
-                LetterSpacing = ".0075em"
-            }
-        },
-    };
-
     bool _drawerOpen = true;
     bool _drawerOpenMin = false;
     DrawerVariant _drawerVariant = DrawerVariant.Responsive;

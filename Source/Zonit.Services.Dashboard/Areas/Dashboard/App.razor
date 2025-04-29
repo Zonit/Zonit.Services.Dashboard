@@ -1,5 +1,6 @@
 ﻿@using System.Globalization
 @using System.Reflection
+@using Microsoft.AspNetCore.Http
 @using Zonit.Extensions.Cultures
 @using Zonit.Extensions.Website.Abstractions
 
@@ -16,6 +17,7 @@
 
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css?v=@(Assembly.GetAssembly(typeof(MudBlazor.AbstractLocalizationInterceptor))?.GetName().Version?.ToString())" rel="stylesheet" />
+    <link href="_content/Zonit.Services.Dashboard/css/theme.css" rel="stylesheet" />
 
     @* <title>@SettingsProvider.Settings.Title</title> *@
 
@@ -27,17 +29,6 @@
     <meta name="msapplication-TileColor" content="#ff6100">
 
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-
-    <style>
-        .nav-link-style {
-            font-size: 14px;
-            font-family: 'Roboto', sans-serif;
-            font-weight: 500;
-            letter-spacing: 0.4px;
-            text-transform: capitalize;
-            color: var(--mud-palette-text-primary);
-        }
-    </style>
 
     <ImportMap />
     <HeadOutlet @rendermode="@RenderMode.InteractiveServer" />

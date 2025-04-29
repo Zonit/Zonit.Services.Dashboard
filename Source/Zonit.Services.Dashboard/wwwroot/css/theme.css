@@ -1,0 +1,8 @@
+﻿.nav-link-style {
+    font-size: 14px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    text-transform: capitalize;
+    color: var(--mud-palette-text-primary);
+}
