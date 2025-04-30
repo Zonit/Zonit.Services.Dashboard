@@ -17,7 +17,7 @@
     <PackageVersion Include="Microsoft.JSInterop" Version="9.0.4" />
   </ItemGroup>
   <ItemGroup>
-    <PackageVersion Include="MudBlazor" Version="8.5.1" />
+    <PackageVersion Include="MudBlazor" Version="8.6.0" />
     <PackageVersion Include="Zonit.SDK.Website" Version="0.1.16" />
   </ItemGroup>
 </Project>
