@@ -1,0 +1,50 @@
+@page "/feedback-components"
+@rendermode InteractiveServer
+
+<PageTitle>Komponenty powiadomieñ</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h3">Komponenty powiadomieñ i sprzê¿enia zwrotnego</MudText>
+    <MudDivider Class="my-4" />
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Alerty</MudText>
+                <MudAlert Severity="Severity.Normal" Class="mb-2">To jest alert informacyjny</MudAlert>
+                <MudAlert Severity="Severity.Success" Class="mb-2">To jest alert sukcesu</MudAlert>
+                <MudAlert Severity="Severity.Warning" Class="mb-2">To jest alert ostrzegawczy</MudAlert>
+                <MudAlert Severity="Severity.Error">To jest alert b³êdu</MudAlert>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" Class="mt-4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Odznaki</MudText>
+                <MudBadge Content="5" Color="Color.Primary" Overlap="true" Class="ma-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Notifications" />
+                </MudBadge>
+                <MudBadge Content="99" Color="Color.Secondary" Overlap="true" Class="ma-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Email" />
+                </MudBadge>
+                <MudBadge Color="Color.Error" Overlap="true" Class="ma-4" Dot="true">
+                    <MudIcon Icon="@Icons.Material.Filled.Settings" />
+                </MudBadge>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" Class="mt-4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Postêp</MudText>
+                <MudProgressLinear Color="Color.Primary" Value="25" Class="mb-2" />
+                <MudProgressLinear Color="Color.Secondary" Value="50" Class="mb-2" />
+                <MudProgressLinear Color="Color.Tertiary" Value="75" Class="mb-2" />
+                <MudProgressCircular Color="Color.Info" Value="60" Size="Size.Large" />
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    // Kod tutaj
+}

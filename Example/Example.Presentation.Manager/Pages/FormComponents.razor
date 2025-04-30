@@ -1,0 +1,37 @@
+﻿@page "/form-components"
+@rendermode InteractiveServer
+
+<PageTitle>Komponenty formularzy</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h3">Komponenty formularzy</MudText>
+    <MudDivider Class="my-4"/>
+
+    <MudGrid>
+        <MudItem xs="12" sm="6">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Podstawowe pola tekstowe</MudText>
+                <MudTextField T=string Label="Standardowy" Variant="Variant.Text" />
+                <MudTextField T=string Label="Wypełniony" Variant="Variant.Filled" />
+                <MudTextField T=string Label="Obrysowany" Variant="Variant.Outlined" />
+                <MudTextField T=string Label="Z pomocniczym tekstem" HelperText="Pomocniczy tekst" />
+                <MudTextField T=string Label="Z ikoną" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Wybór i przełączniki</MudText>
+                <MudSelect T=string Label="Wybierz opcję" AnchorOrigin="Origin.BottomCenter">
+                    <MudSelectItem Value="1">Opcja 1</MudSelectItem>
+                    <MudSelectItem Value="2">Opcja 2</MudSelectItem>
+                    <MudSelectItem Value="3">Opcja 3</MudSelectItem>
+                </MudSelect>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    // Kod tutaj
+}

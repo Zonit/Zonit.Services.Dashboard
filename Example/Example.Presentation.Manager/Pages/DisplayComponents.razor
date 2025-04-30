@@ -1,0 +1,81 @@
+﻿@page "/display-components"
+@rendermode InteractiveServer
+
+<PageTitle>Komponenty wyświetlania danych</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h3">Komponenty wyświetlania danych</MudText>
+    <MudDivider Class="my-4"/>
+
+    <MudGrid>
+        <MudItem xs="12" sm="6">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Tabela</MudText>
+                <MudTable Items="@sampleData">
+                    <HeaderContent>
+                        <MudTh>ID</MudTh>
+                        <MudTh>Nazwa</MudTh>
+                        <MudTh>Wartość</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Id</MudTd>
+                        <MudTd>@context.Name</MudTd>
+                        <MudTd>@context.Value</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Lista</MudText>
+                <MudList T="string">
+                    <MudListItem Icon="@Icons.Material.Filled.Home" Text="Element 1" />
+                    <MudListItem Icon="@Icons.Material.Filled.Settings" Text="Element 2" />
+                    <MudListItem Icon="@Icons.Material.Filled.Person" Text="Element 3" />
+                </MudList>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid Class="mt-4">
+        <MudItem xs="12">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Karty</MudText>
+                <MudGrid>
+                    <MudItem xs="12" sm="4">
+                        <MudCard>
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6">Karta 1</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudText>To jest zawartość karty</MudText>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudButton Variant="Variant.Text" Color="Color.Primary">Akcja</MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<DataItem> sampleData = new List<DataItem>
+    {
+        new DataItem { Id = 1, Name = "Element 1", Value = 100 },
+        new DataItem { Id = 2, Name = "Element 2", Value = 200 },
+        new DataItem { Id = 3, Name = "Element 3", Value = 300 },
+    };
+
+    private class DataItem
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int Value { get; set; }
+    }
+}

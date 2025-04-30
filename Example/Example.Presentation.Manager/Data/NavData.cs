@@ -1,5 +1,6 @@
 ﻿using Example.Presentation.Manager.Pages;
 using Microsoft.Extensions.Hosting;
+using MudBlazor;
 using Zonit.Extensions.Website;
 using Zonit.Extensions.Website.Abstractions.Navigations.Types;
 
@@ -13,100 +14,63 @@ internal class NavData(INavigationProvider _navigation) : IHostedService
         {
             Title = "Home",
             Area = AreaType.Manager,
-            Order = 60,
-            Icon = IconData.GiftIcon,
-            Link = new("Home", "Home"),
+            Order = 10,
+            Icon = Icons.Material.Filled.Home,
+            Link = new("Home", "home"),
         });
-        _navigation.Add(new()
-        {
-            Title = "Home2",
-            Area = AreaType.Manager,
-            Order = 60,
-            Icon = IconData.GiftIcon,
-            Link = new("Home2", "Home2"),
-        });
+
         _navigation.Add(new()
         {
             Title = "Counter",
             Area = AreaType.Manager,
-            Order = 60,
-            Icon = IconData.GiftIcon,
+            Order = 20,
+            Icon = Icons.Material.Filled.ExposurePlus1,
             Link = new("Counter", Counter.Route),
         });
-        _navigation.Add(new()
-        {
-            Title = "claims-principle-data",
-            Area = AreaType.Manager,
-            Order = 60,
-            Icon = IconData.GiftIcon,
-            Link = new("claims-principle-data", "claims-principle-data"),
-        });
-        _navigation.Add(new()
-        {
-            Title = Organizations.Route,
-            Area = AreaType.Manager,
-            Order = 60,
-            Icon = IconData.OrganizationIcon,
-            Link = new(Organizations.Route, Organizations.Route),
-        });
 
         _navigation.Add(new()
         {
-            Title = "Wallet",
+            Title = "Komponenty MudBlazor",
             Area = AreaType.Manager,
-            Position = "right",
-            Order = 70,
+            Order = 30,
+            Icon = Icons.Material.Filled.ViewList,
             Expanded = true,
             Children = [
-                new(){
-                    Title = "Wallet information",
-                    Url = "Wallets",
-                    Order = 1,
-                    Icon = IconData.InformationIcon
-                },
-                new(){
-                    Title = "Transaction history",
-                    Url = "Wallets/Transactions",
-                    Order = 2,
-                    Icon = IconData.TransactionIcon
-                    },
                 new()
                 {
-                    Title = "Recharge history",
-                    Url = "Wallets/Recharge",
-                    Order = 3,
-                    Icon = IconData.RechargeIcon
-                    }
-            ]
-        });
-
-        _navigation.Add(new()
-        {
-            Title = "Wallet",
-            Area = AreaType.Manager,
-            Order = 70,
-            Expanded = true,
-            Icon = IconData.RechargeIcon,
-            Children = [
-                new(){
-                    Title = "Wallet information",
-                    Url = "Wallets",
-                    Order = 1,
-                    Icon = IconData.InformationIcon
+                    Title = "Formularze",
+                    Url = "form-components",
+                    Order = 10,
+                    Icon = Icons.Material.Filled.Description
                 },
-                new(){
-                    Title = "Transaction history",
-                    Url = "Wallets/Transactions",
-                    Order = 2,
-                    Icon = IconData.TransactionIcon
-                    },
                 new()
                 {
-                    Title = "Recharge history",
-                    Url = "Wallets/Recharge",
-                    Order = 3,
-                    Icon = IconData.RechargeIcon
-                    }
+                    Title = "Wyświetlanie danych",
+                    Url = "display-components",
+                    Order = 20,
+                    Icon = Icons.Material.Filled.TableChart
+                },
+                new()
+                {
+                    Title = "Nawigacja",
+                    Url = "navigation-components",
+                    Order = 30,
+                    Icon = Icons.Material.Filled.Menu
+                },
+                new()
+                {
+                    Title = "Powiadomienia",
+                    Url = "feedback-components",
+                    Order = 40,
+                    Icon = Icons.Material.Filled.Notifications
+                },
+                new()
+                {
+                    Title = "Przyciski i ikony",
+                    Url = "button-components",
+                    Order = 50,
+                    Icon = Icons.Material.Filled.TouchApp
+                }
             ]
         });
 

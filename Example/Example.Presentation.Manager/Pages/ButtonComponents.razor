@@ -1,0 +1,58 @@
+@page "/button-components"
+@rendermode InteractiveServer
+
+<PageTitle>Przyciski i ikony</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h3">Przyciski i ikony</MudText>
+    <MudDivider Class="my-4" />
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Warianty przycisków</MudText>
+                <div Class="d-flex flex-wrap gap-4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Wype³niony</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary">Obrysowany</MudButton>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary">Tekstowy</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" DisableElevation="true">Bez cienia</MudButton>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" Class="mt-4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Kolory przycisków</MudText>
+                <div Class="d-flex flex-wrap gap-4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Primary</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary">Secondary</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Tertiary">Tertiary</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Info">Info</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Success">Success</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Warning">Warning</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Error">Error</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Dark">Dark</MudButton>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" Class="mt-4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Ikony</MudText>
+                <div Class="d-flex flex-wrap gap-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Home" />
+                    <MudIcon Icon="@Icons.Material.Filled.Settings" Color="Color.Primary" />
+                    <MudIcon Icon="@Icons.Material.Filled.Favorite" Color="Color.Secondary" />
+                    <MudIcon Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Secondary" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    // Kod tutaj
+}

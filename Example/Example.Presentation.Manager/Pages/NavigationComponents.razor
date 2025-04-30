@@ -1,0 +1,58 @@
+@page "/navigation-components"
+@rendermode InteractiveServer
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+
+<PageTitle>Komponenty nawigacyjne</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h3">Komponenty nawigacyjne</MudText>
+    <MudDivider Class="my-4"/>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Menu</MudText>
+                <MudMenu Label="Rozwijane menu" Variant="Variant.Filled" Color="Color.Primary">
+                    <MudMenuItem>Opcja 1</MudMenuItem>
+                    <MudMenuItem>Opcja 2</MudMenuItem>
+                    <MudMenuItem>Opcja 3</MudMenuItem>
+                </MudMenu>
+            </MudPaper>
+        </MudItem>
+        
+        <MudItem xs="12" Class="mt-4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Zak³adki</MudText>
+                <MudTabs>
+                    <MudTabPanel Text="Zak³adka 1">
+                        <MudText>Zawartoœæ zak³adki 1</MudText>
+                    </MudTabPanel>
+                    <MudTabPanel Text="Zak³adka 2">
+                        <MudText>Zawartoœæ zak³adki 2</MudText>
+                    </MudTabPanel>
+                    <MudTabPanel Text="Zak³adka 3">
+                        <MudText>Zawartoœæ zak³adki 3</MudText>
+                    </MudTabPanel>
+                </MudTabs>
+            </MudPaper>
+        </MudItem>
+        
+        <MudItem xs="12" Class="mt-4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h5">Przyciski nawigacyjne</MudText>
+                <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary">
+                    <MudButton>Przycisk 1</MudButton>
+                    <MudButton>Przycisk 2</MudButton>
+                    <MudButton>Przycisk 3</MudButton>
+                </MudButtonGroup>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    // Kod tutaj
+}
+
+</MudContainer>
