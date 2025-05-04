@@ -1,5 +1,6 @@
 using Example.Components;
 using Example.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Zonit.Extensions.Identity;
 using Zonit.Extensions.Organizations;
@@ -16,6 +17,19 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        // Dodaj testow¹ autentykacjê.
+        builder.Services.AddAuthentication("Test")
+            .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>("Test", options => { });
+
+        // Ustaw domyœlne schematy autentykacji i wyzwania.
+        builder.Services.AddAuthorizationCore(options =>
+        {
+            options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder("Test")
+                                        .RequireAuthenticatedUser()
+                                        .Build();
+        });
+
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents();
 

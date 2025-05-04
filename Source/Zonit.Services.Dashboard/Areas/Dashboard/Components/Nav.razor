@@ -8,24 +8,34 @@
 @inject ICultureProvider Culture
 @inject INavigationProvider Navigation
 
-@if(NavItems is not null)
+@if (NavItems is not null)
 {
     @foreach (var nav in NavItems)
     {
         <AuthorizeView Policy="@nav.Permission" Context="navContext">
             @if (nav.Children is null && nav.Link is not null)
             {
-                <MudNavLink Href="@nav.Link.Url" Match="NavLinkMatch.Prefix" Target="@nav.Link.Target" Icon="@nav.Icon">
-                    <div style="padding-left: 12px">@Culture.Translate(nav.Title)</div>
+                <MudNavLink Href="@nav.Link.Url"
+                            Match="NavLinkMatch.Prefix"
+                            Target="@nav.Link.Target"
+                            Icon="@nav.Icon">
+                    @Culture.Translate(nav.Title)
                 </MudNavLink>
             }
             else if (nav.Children is not null)
             {
-                <MudNavGroup Title="@Culture.Translate(nav.Title)" Icon="@nav.Icon" Expanded=@nav.Expanded>
+                <MudNavGroup Title="@Culture.Translate(nav.Title)"
+                                Icon="@nav.Icon"
+                                Expanded="@nav.Expanded">
                     @foreach (var link in nav.Children.OrderBy(x => x.Order).ToList())
                     {
                         <AuthorizeView Policy="@link.Permission" Context="linkContext">
-                            <MudNavLink Href="@link.Url" Match="@(link.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)" Target="@link.Target" Icon="@link.Icon">@Culture.Translate(link.Title)</MudNavLink>
+                            <MudNavLink Href="@link.Url"
+                                        Match="@(link.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)"
+                                        Target="@link.Target"
+                                        Icon="@link.Icon">
+                                @Culture.Translate(link.Title)
+                            </MudNavLink>
                         </AuthorizeView>
                     }
                 </MudNavGroup>
@@ -33,18 +43,21 @@
         </AuthorizeView>
     }
 
-    if(NavItems.Count > 0)
+    @if (NavItems.Count > 0)
     {
         <MudDivider Class="my-2" />
     }
 }
 
-@code{
+@code {
     [Parameter, EditorRequired]
     public AreaType AreaType { get; set; }
 
     [Parameter]
     public string? Position { get; set; }
+
+    [Parameter]
+    public Color Color { get; set; } = Color.Inherit;
 
     public IReadOnlyCollection<NavGroupModel>? NavItems { get; set; }
 

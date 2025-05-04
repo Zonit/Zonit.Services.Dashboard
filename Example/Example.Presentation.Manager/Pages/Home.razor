@@ -59,8 +59,32 @@
         <MudButton>Click me</MudButton>
     </MudCardActions>
 </MudCard>
-
 </div>
+
+    <MudPaper Width="250px" Elevation="0" Class="py-3 mb-4">
+        <MudNavMenu Color="Color.Info" Rounded="true" Margin="Margin.Normal" Class="pa-2" Bordered="false">
+            <MudNavLink Href="/" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+            <MudNavLink Href="/__Main" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Storage">Servers</MudNavLink>
+            <MudNavLink Href="/billing" Disabled="true">Billing</MudNavLink>
+            <MudNavGroup Title="Settings" Expanded="true">
+                <MudNavLink Href="/users">Users</MudNavLink>
+                <MudNavLink Href="/security">Security</MudNavLink>
+            </MudNavGroup>
+            <MudNavLink Href="/about">About</MudNavLink>
+        </MudNavMenu>
+    </MudPaper>
+    <MudPaper Width="250px" Elevation="0" Class="py-3">
+        <MudNavMenu Color="Color.Success" Bordered="true">
+            <MudNavLink Href="/" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+            <MudNavLink Href="/__Main" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Storage">Servers</MudNavLink>
+            <MudNavLink Href="/billing" Disabled="true">Billing</MudNavLink>
+            <MudNavGroup Title="Settings" Expanded="true">
+                <MudNavLink Href="/users">Users</MudNavLink>
+                <MudNavLink Href="/security">Security</MudNavLink>
+            </MudNavGroup>
+            <MudNavLink Href="/about">About</MudNavLink>
+        </MudNavMenu>
+    </MudPaper>
 
 @code {
     private int currentCount = 0;
