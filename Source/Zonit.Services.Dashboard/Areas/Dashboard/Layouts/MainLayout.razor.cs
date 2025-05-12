@@ -2,10 +2,12 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using MudBlazor.Services;
+using Zonit.Extensions.Organizations;
 using Zonit.Extensions.Website;
 using Zonit.Extensions.Website.Abstractions.Navigations.Types;
 using Zonit.Services.Dashboard.Repositories;
 using Zonit.Services.Dashboard.Services;
+using Zonit.Services.EventMessage;
 
 namespace Zonit.Services.Dashboard.Areas.Dashboard.Layouts;
 
@@ -24,11 +26,20 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
     [Inject]
     IBreadcrumbsProvider BreadcrumbsProvider { get; set; } = default!;
 
+    [Inject]
+    ITaskManager TaskManager { get; set; } = default!;
+
+    [Inject]
+    IWorkspaceProvider WorkspaceProvider { get; set; } = default;
+
     AreaType AreaType { get; set; }
 
     Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
 
     List<BreadcrumbItem>? _breadcrumbItems = null;
+
+    public bool ProgressTask = false;
+    IReadOnlyCollection<TaskEventModel> _activeTasks = new List<TaskEventModel>();
 
     ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
     {
@@ -75,6 +86,19 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
             }
             StateHasChanged();
         };
+
+        var activeTasks = TaskManager.GetActiveTasks(WorkspaceProvider.Organization?.Id);
+        ProgressTask = activeTasks.Count > 0;
+
+        TaskManager.EventOnChange(async task => {
+            if (task.ExtensionId != WorkspaceProvider.Organization?.Id && task.ExtensionId != null)
+                return; // Ignoruj taski z innych organizacji
+
+            // Pobierz aktualny stan aktywnych tasków po każdej zmianie
+            var activeTasks = TaskManager.GetActiveTasks(WorkspaceProvider.Organization?.Id);
+            ProgressTask = activeTasks.Count > 0;
+            await InvokeAsync(StateHasChanged);
+        });
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

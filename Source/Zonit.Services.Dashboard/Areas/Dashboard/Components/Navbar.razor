@@ -5,6 +5,8 @@
 @using Zonit.Extensions.Projects
 @using Zonit.Extensions.Organizations
 
+@using Zonit.Services.Dashboard.Areas.Dashboard.Components
+
 @implements IDisposable
 
 @inject ICultureProvider Culture
@@ -42,10 +44,16 @@
     </MudBreadcrumbs>
 
     <MudSpacer />
+
+
+    <ExtensionView Name="@Extensions.Task">
+        <TaskButton />
+    </ExtensionView>
+
     <MudTooltip Text=@Culture.Translate(_darkModeTooltip) Placement="Placement.Bottom">
-        <MudIconButton Icon=@_darkModeIcon Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DarkTheme())" />
+        <MudIconButton Icon=@_darkModeIcon Color="Color.Inherit" Class="mx-1" Edge="Edge.Start" OnClick="@((e) => DarkTheme())" />
     </MudTooltip>
-    <MudIconButton Icon="@IconData.User" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerRightToggle())" />
+    <MudIconButton Icon="@IconData.User" Color="Color.Inherit" Class="mx-1" Edge="Edge.Start" OnClick="@((e) => DrawerRightToggle())" />
 </MudAppBar>
 
 

@@ -1,0 +1,212 @@
+﻿@using Zonit.Extensions.Cultures
+@using Zonit.Extensions.Organizations
+@using Zonit.Services.EventMessage
+
+@using Zonit.Services.Dashboard.Data
+@using System.Timers
+
+@namespace Zonit.Services.Dashboard.Areas.Dashboard.Components
+
+@inject ICultureProvider Culture
+@inject IWorkspaceProvider Workspace
+@inject IExtensionManager ExtensionManager
+@inject ITaskManager TaskManager
+
+<MudDrawer   
+    Open="@ExtensionManager.Drawer(Extensions.Task).IsOpen"
+    OpenChanged="@(value => ExtensionManager.Drawer(Extensions.Task).Set(value))" 
+    Width="400px" Height="100%" Anchor="Anchor.End" Elevation="3" Variant="@DrawerVariant.Temporary">
+
+    <MudDrawerHeader>
+        <div class="d-flex align-center justify-space-between flex-grow-1">
+            <MudText Typo="Typo.h6">@Culture.Translate("Active tasks")</MudText>
+            <MudIconButton OnClick="@(() => ExtensionManager.Drawer(Extensions.Task).Close())"
+                       Icon=@Icons.Material.Filled.Close
+                       aria-label="@Culture.Translate("Close")" />
+        </div>
+    </MudDrawerHeader>
+
+    <MudContainer Class="pa-2">
+        @if (!ActiveTasks.Any())
+        {
+            <MudText Typo="Typo.body1" Class="d-flex justify-center mt-4">
+                @Culture.Translate("No active tasks")
+            </MudText>
+        }
+        else
+        {
+            <MudList T="string" Dense="true" Gutters="true" Class="pa-0">
+                @foreach (var task in ActiveTasks)
+                {
+                    <MudPaper Elevation="0" Class="mb-2 pa-2" Style="border-radius: 4px; background-color: var(--mud-palette-background-grey)">
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body1" Style="font-weight: 500">
+                                @GetTaskTitle(task)
+                            </MudText>
+                            <MudChip Size="Size.Small" 
+                                    Color="@GetTaskStatusColor(task.Status)" 
+                                    Variant="Variant.Filled">
+                                @GetTaskStatusText(task.Status)
+                            </MudChip>
+                        </div>
+
+                        <div class="d-flex align-center mt-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="mr-1" />
+                            <MudText Typo="Typo.caption">
+                                @if (task.Status == TaskEventStatus.Processing)
+                                {
+                                    @GetTaskDuration(task)
+                                }
+                                else if (task.CompletedAt.HasValue)
+                                {
+                                    <span>@Culture.Translate("Completed in"): @GetElapsedTime(task.ProcessedAt, task.CompletedAt)</span>
+                                }
+                                else
+                                {
+                                    <span>@Culture.Translate("Created"): @task.CreatedAt.ToLocalTime().ToString("g")</span>
+                                }
+                            </MudText>
+                        </div>
+
+                        @if (task.Progress.HasValue)
+                        {
+                            <div class="mt-2">
+                                <MudProgressLinear Color="Color.Primary" 
+                                                Value="@task.Progress.Value" 
+                                                Striped="true"
+                                                Rounded="true" />
+                                <MudText Typo="Typo.caption" Class="d-flex justify-end">
+                                    @task.Progress.Value.ToString("0")%
+                                </MudText>
+                            </div>
+                        }
+                    </MudPaper>
+                }
+            </MudList>
+        }
+    </MudContainer>
+</MudDrawer>
+
+@code{
+    private IEnumerable<TaskEventModel> ActiveTasks { get; set; } = Enumerable.Empty<TaskEventModel>();
+    private Timer _timer;
+    private DateTime _currentTime = DateTime.UtcNow;
+
+    protected override void OnInitialized()
+    {
+        Culture.OnChange += StateHasChanged;
+        Workspace.OnChange += StateHasChanged;
+        ExtensionManager.Drawer(Extensions.Task)
+            .OnChange += StateHasChanged;
+
+        // Initialize timer for updating durations
+        _timer = new Timer(1000);
+        _timer.Elapsed += async (sender, e) =>
+        {
+            _currentTime = DateTime.UtcNow;
+            await InvokeAsync(StateHasChanged);
+        };
+        _timer.AutoReset = true;
+        _timer.Start();
+
+        ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization?.Id);
+        TaskManager.EventOnChange(async task =>
+        {
+            if (task.ExtensionId != Workspace.Organization?.Id && task.ExtensionId != null)
+                return; // Ignore tasks from other organizations
+
+            ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization?.Id);
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private string GetTaskTitle(TaskEventModel task)
+    {
+        // Try to determine a user-friendly name from payload data
+        var payloadData = task.Payload?.Data;
+        
+        if (payloadData != null)
+        {
+            // Try to get a name or title property using reflection
+            var type = payloadData.GetType();
+            var nameProperty = type.GetProperty("Name") ?? 
+                               type.GetProperty("Title") ?? 
+                               type.GetProperty("Description");
+            
+            if (nameProperty != null)
+            {
+                var nameValue = nameProperty.GetValue(payloadData)?.ToString();
+                if (!string.IsNullOrEmpty(nameValue))
+                {
+                    return nameValue;
+                }
+            }
+            
+            // Just show the task name/id for simplicity
+            return $"Task {task.Id.ToString().Substring(0, 8)}";
+        }
+        
+        return $"Task {task.Id.ToString().Substring(0, 8)}";
+    }
+
+    private Color GetTaskStatusColor(TaskEventStatus status)
+    {
+        return status switch
+        {
+            TaskEventStatus.Processing => Color.Info,
+            TaskEventStatus.Completed => Color.Success,
+            TaskEventStatus.Failed => Color.Error,
+            TaskEventStatus.Cancelled => Color.Warning,
+            _ => Color.Default,
+        };
+    }
+
+    private string GetTaskStatusText(TaskEventStatus status)
+    {
+        return status switch
+        {
+            TaskEventStatus.Pending => Culture.Translate("Pending"),
+            TaskEventStatus.Processing => Culture.Translate("Processing"),
+            TaskEventStatus.Completed => Culture.Translate("Completed"),
+            TaskEventStatus.Failed => Culture.Translate("Failed"),
+            TaskEventStatus.Cancelled => Culture.Translate("Canceled"),
+            _ => Culture.Translate("Unknown"),
+        };
+    }
+
+    private string GetTaskDuration(TaskEventModel task)
+    {
+        if (!task.ProcessedAt.HasValue)
+            return Culture.Translate("Waiting to start...");
+
+        return $"{Culture.Translate("Running for")}: {GetElapsedTime(task.ProcessedAt, _currentTime)}";
+    }
+
+    private string GetElapsedTime(DateTime? start, DateTime? end)
+    {
+        if (!start.HasValue || !end.HasValue)
+            return "-";
+            
+        var duration = end.Value - start.Value;
+        
+        if (duration.TotalDays >= 1)
+            return $"{Math.Floor(duration.TotalDays)}d {duration.Hours}h {duration.Minutes}m";
+        else if (duration.TotalHours >= 1)
+            return $"{duration.Hours}h {duration.Minutes}m {duration.Seconds}s";
+        else if (duration.TotalMinutes >= 1)
+            return $"{duration.Minutes}m {duration.Seconds}s";
+        else
+            return $"{duration.Seconds}s";
+    }
+
+    public void Dispose()
+    {
+        Culture.OnChange -= StateHasChanged;
+        Workspace.OnChange -= StateHasChanged;
+        ExtensionManager.Drawer(Extensions.Task)
+            .OnChange -= StateHasChanged;
+            
+        _timer?.Stop();
+        _timer?.Dispose();
+    }
+}

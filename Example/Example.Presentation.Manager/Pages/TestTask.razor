@@ -1,0 +1,20 @@
+@inherits Zonit.SDK.Website.PageBase
+@rendermode InteractiveAuto // InteractiveServer InteractiveWebAssembly
+
+<HeadContent>
+    <title>@Culture.Translate("TestTask")</title>
+</HeadContent>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudGrid Spacing="4">
+        <MudItem xs="12">
+            <MudText Typo="Typo.h1" GutterBottom="true">@Culture.Translate("TestTask")</MudText>
+            <MudCard>
+                <MudCardContent>
+                    <MudText>@Culture.Translate("Example text")</MudText>
+                    <button class="btn btn-primary" @onclick="PublishTask">Click me</button>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>

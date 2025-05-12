@@ -10,6 +10,7 @@
 		<PackageReference Include="Microsoft.JSInterop" />
 		<PackageReference Include="MudBlazor" />
 		<PackageReference Include="Zonit.SDK.Website" />
+		<PackageReference Include="Zonit.Services.EventMessage.Abstractions" />
 	</ItemGroup>
 
 </Project>

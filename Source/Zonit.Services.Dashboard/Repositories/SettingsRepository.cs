@@ -1,34 +1,38 @@
-﻿namespace Zonit.Services.Dashboard.Repositories;
-
-public interface ISettingsManager
+﻿namespace Zonit.Services.Dashboard 
 {
-    public DashboardOptions Settings { get; }
-    public void SetSettings(DashboardOptions settings);
+    public interface ISettingsManager
+    {
+        public DashboardOptions Settings { get; }
+        public void SetSettings(DashboardOptions settings);
 
-    public Type Area { get; }
-    public void SetArea(Type area);
+        public Type Area { get; }
+        public void SetArea(Type area);
+    }
 }
 
-public class SettingsRepository : ISettingsManager
+namespace Zonit.Services.Dashboard.Repositories
 {
-    DashboardOptions _settings = null!;
-    public DashboardOptions Settings => _settings;
-
-    public void SetSettings(DashboardOptions settings)
+    public class SettingsRepository : ISettingsManager
     {
-        _settings = settings;
-    }
+        DashboardOptions _settings = null!;
+        public DashboardOptions Settings => _settings;
 
-    private Type _area = null!;
-    public Type Area => _area;
+        public void SetSettings(DashboardOptions settings)
+        {
+            _settings = settings;
+        }
 
-    public void SetArea(Type areaType)
-    {
-        ArgumentNullException.ThrowIfNull(areaType);
+        private Type _area = null!;
+        public Type Area => _area;
 
-        if (!areaType.IsInterface)
-            throw new ArgumentException("Type must be an interface.", nameof(areaType));
+        public void SetArea(Type areaType)
+        {
+            ArgumentNullException.ThrowIfNull(areaType);
 
-        _area = areaType;
+            if (!areaType.IsInterface)
+                throw new ArgumentException("Type must be an interface.", nameof(areaType));
+
+            _area = areaType;
+        }
     }
 }

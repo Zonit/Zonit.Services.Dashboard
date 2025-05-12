@@ -18,6 +18,10 @@
 <MudRTLProvider RightToLeft="RightToLeft">
     <MudLayout>
 
+        @if(ProgressTask == true)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true"  Style="z-index: 2;" Size="Size.Small" />
+        }
         <Navbar MudThemeProvider=@_mudThemeProvider Breadcrumbs=@_breadcrumbItems @bind-DrawerOpen=@_drawerOpen @bind-DrawerRightOpen=@_drawerRightOpen @bind-DarkMode=@_isDarkMode Width="@_width" Hegith="@_height" />
 
         <MudSwipeArea OnSwipeEnd="@OnSwipe" Style="width: 100%; touch-action: pan-y" PreventDefault="false">
@@ -92,6 +96,16 @@
             </MudMainContent>
 
         </MudSwipeArea>
+
+
+        
+        @*  LOADING DRAWER  *@
+
+        <ExtensionView Name="@Extensions.Task">
+            <TaskDrawer />
+        </ExtensionView>
+
+
 
     </MudLayout>
 </MudRTLProvider>

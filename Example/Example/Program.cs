@@ -43,6 +43,9 @@ public class Program
         builder.Services.AddTransient<ISessionProvider, SessionService>();
         builder.Services.AddTransient<IOrganizationProjectManager, ProjectService>();
 
+        // EVENT MESSAGE
+        builder.Services.AddEventMessageService();
+
         builder.Services.AddExampleManager();
         builder.Services.AddExampleManagement();
 
@@ -82,7 +85,7 @@ public class Program
         {
             Directory = "Manager",
             Title = "Manager",
-            Extensions = [ Extensions.Identity, Extensions.Cultures, Extensions.Projects, Extensions.Organizations, Extensions.Wallets, Extensions.SocialMedia ],
+            Extensions = [ Extensions.Identity, Extensions.Cultures, Extensions.Projects, Extensions.Organizations, Extensions.Wallets, Extensions.SocialMedia, Extensions.Task ],
         });
         app.UseDashboardServices<IAreaManagement>(new DashboardOptions
         {

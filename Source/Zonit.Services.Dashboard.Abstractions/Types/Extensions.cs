@@ -8,4 +8,5 @@ public static class Extensions
     public const string Projects = "projects";
     public const string Wallets = "wallets";
     public const string SocialMedia = "socialmedia";
+    public const string Task = "task";
 }

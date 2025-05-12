@@ -15,6 +15,8 @@ public static class ServiceCollectionExtensions
     {
         services.AddHttpContextAccessor();
 
+        //services.AddEventMessageService();
+
         services.AddCulturesExtension();
         services.AddIdentityExtension();
         services.AddCookiesExtension();

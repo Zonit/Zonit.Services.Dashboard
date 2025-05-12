@@ -13,10 +13,14 @@
 		<PackageReference Include="Zonit.Extensions.Organizations" />
 		<PackageReference Include="Zonit.Extensions.Projects" />
 		<PackageReference Include="Zonit.Extensions.Website" />
+		<PackageReference Include="Zonit.Services.EventMessage" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Middlewares\" />
+		<Folder Include="Areas\Dashboard\Components\CultureManager\" />
+		<Folder Include="Areas\Dashboard\Components\ProjectManager\" />
+		<Folder Include="Areas\Dashboard\Components\OrganizationManager\" />
+		<Folder Include="Middlewares\" />
 	</ItemGroup>
 
 	<ItemGroup>

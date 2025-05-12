@@ -1,0 +1,104 @@
+﻿@using Zonit.Extensions.Cultures
+@using Zonit.Extensions.Organizations
+@using Zonit.Services.EventMessage
+
+@using Zonit.Services.Dashboard.Data
+
+@namespace Zonit.Services.Dashboard.Areas.Dashboard.Components
+
+@inject ICultureProvider Culture
+@inject IWorkspaceProvider Workspace
+@inject IExtensionManager ExtensionManager
+@inject ITaskManager TaskManager
+@implements IDisposable
+
+<MudChip T="string"
+         Label="true"
+         Icon="@IconData.TaskIcon"
+         Color="@(HasProcessingTasks ? Color.Warning : Color.Default)"
+         OnClick="@(() => ExtensionManager.Drawer(ExtensionName).Toggle())"
+         Size="Size.Medium"
+         Variant="Variant.Outlined"
+         Class="@(HasProcessingTasks ? "mud-pulse mx-1 my-1" : "mx-1 my-1")">
+
+    <div class="d-flex align-center" style="gap: 6px;">
+        @ActiveTasks.Count
+    </div>
+</MudChip>
+
+
+@code {
+    static readonly string ExtensionName = Extensions.Task;
+    private Timer? _refreshTimer;
+
+    private IReadOnlyCollection<TaskEventModel> ActiveTasks { get; set; } = [];
+    private bool HasProcessingTasks => ActiveTasks.Any(t => t.Status == TaskEventStatus.Processing);
+    private bool HasFailedTasks => ActiveTasks.Any(t => t.Status == TaskEventStatus.Failed);
+
+    protected override void OnInitialized()
+    {
+        Culture.OnChange += StateHasChanged;
+        Workspace.OnChange += StateHasChanged;
+        ExtensionManager.Drawer(ExtensionName)
+            .OnChange += StateHasChanged;
+
+        // Timer dla animacji pulsowania
+        _refreshTimer = new Timer(_ => InvokeAsync(StateHasChanged), null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+
+        ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization?.Id);
+        TaskManager.EventOnChange(async task =>
+        {
+            if (task.ExtensionId != Workspace.Organization?.Id && task.ExtensionId != null)
+                return; // Ignoruj taski z innych organizacji
+
+            ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization?.Id);
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private Color GetBadgeColor()
+    {
+        if (HasFailedTasks) return Color.Error;
+        if (HasProcessingTasks) return Color.Warning;
+        if (ActiveTasks.Any()) return Color.Default;
+        return Color.Default;
+    }
+
+    private Color GetButtonColor()
+    {
+        if (HasFailedTasks) return Color.Error;
+        if (HasProcessingTasks) return Color.Warning;
+        if (ActiveTasks.Any()) return Color.Default;
+        return Color.Default;
+    }
+
+    public void Dispose()
+    {
+        Culture.OnChange -= StateHasChanged;
+        Workspace.OnChange -= StateHasChanged;
+        ExtensionManager.Drawer(ExtensionName)
+            .OnChange -= StateHasChanged;
+        _refreshTimer?.Dispose();
+    }
+}
+
+<style>
+    .mud-pulse {
+        animation: pulse 1.5s infinite;
+    }
+
+    @@keyframes pulse {
+        0% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.8;
+            transform: scale(1.1);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+</style>
