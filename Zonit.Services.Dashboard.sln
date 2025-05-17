@@ -27,8 +27,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{02EA
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{FFF66721-3989-4969-951B-95B86607EC0E}"
 	ProjectSection(SolutionItems) = preProject
-		.github\workflows\bump-version.yml = .github\workflows\bump-version.yml
-		.github\workflows\publish.yml = .github\workflows\publish.yml
+		.github\workflows\CheckNugetAndPublish.yml = .github\workflows\CheckNugetAndPublish.yml
+		.github\workflows\PublishNuGet.yml = .github\workflows\PublishNuGet.yml
 		.github\workflows\update-packages.yml = .github\workflows\update-packages.yml
 	EndProjectSection
 EndProject
