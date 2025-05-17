@@ -73,55 +73,59 @@ jobs:
           
           Write-Host "Wykryto wersje .NET: $($usedNetVersions -join ', ')"
           
-          function Compare-NuGetVersions {
-            param (
+          function IsPreviewVersion {
+            param([string]$version)
+            return $version -match "-preview"
+          }
+          
+          function GetVersionParts {
+            param([string]$version)
+            
+            $result = @{
+              IsPreview = IsPreviewVersion $version
+              Major = 0
+              Minor = 0
+              Build = 0
+              PreviewMajor = 0
+              PreviewMinor = 0
+            }
+            
+            if ($version -match "^(\d+)\.(\d+)\.(\d+)(?:-preview\.(\d+)(?:\.(\d+))?)?$") {
+              $result.Major = [int]$Matches[1]
+              $result.Minor = [int]$Matches[2]
+              $result.Build = [int]$Matches[3]
+              
+              if ($Matches[4]) {
+                $result.PreviewMajor = [int]$Matches[4]
+                if ($Matches[5]) {
+                  $result.PreviewMinor = [int]$Matches[5]
+                }
+              }
+              
+              return $result
+            }
+            
+            try {
+              $v = [version]$version
+              $result.Major = $v.Major
+              $result.Minor = $v.Minor
+              $result.Build = $v.Build
+              return $result
+            }
+            catch {
+              Write-Host "Nieobsługiwany format wersji: $version"
+              return $result
+            }
+          }
+          
+          function CompareVersions {
+            param(
               [string]$version1,
               [string]$version2
             )
             
-            # Funkcja do porównywania wersji z obsługą preview
-            function Parse-Version {
-              param([string]$version)
-              
-              if ($version -match "^(\d+\.\d+\.\d+)(?:-preview\.(\d+)(?:\.(\d+))?)?$") {
-                $mainVer = [version]$Matches[1]
-                $previewNum1 = if ($Matches[2]) { [int]$Matches[2] } else { 0 }
-                $previewNum2 = if ($Matches[3]) { [int]$Matches[3] } else { 0 }
-                
-                return @{
-                  IsPreview = $version -match "-preview"
-                  Major = $mainVer.Major
-                  Minor = $mainVer.Minor
-                  Build = $mainVer.Build
-                  PreviewMajor = $previewNum1
-                  PreviewMinor = $previewNum2
-                }
-              }
-              else {
-                try {
-                  $v = [version]$version
-                  return @{
-                    IsPreview = $false
-                    Major = $v.Major
-                    Minor = $v.Minor
-                    Build = $v.Build
-                    PreviewMajor = 0
-                    PreviewMinor = 0
-                  }
-                }
-                catch {
-                  Write-Host "Nieobsługiwany format wersji: $version"
-                  return $null
-                }
-              }
-            }
-            
-            $v1 = Parse-Version $version1
-            $v2 = Parse-Version $version2
-            
-            if ($null -eq $v1 -or $null -eq $v2) {
-              return 0  # Nie można porównać
-            }
+            $v1 = GetVersionParts $version1
+            $v2 = GetVersionParts $version2
             
             # Najpierw porównaj główne wersje
             if ($v1.Major -ne $v2.Major) { return $v1.Major.CompareTo($v2.Major) }
@@ -148,13 +152,13 @@ jobs:
             try {
               $resp = Invoke-RestMethod -Uri $url -UseBasicParsing
               
-              $isCurrentPreview = $currentVersion -match "-preview"
+              $isCurrentPreview = IsPreviewVersion $currentVersion
               $mainVersionPrefix = "$major\."
 
-              # Ograniczamy wersje do tego samego major release
+              # Filtrujemy wersje dla tego samego major
               $versions = $resp.versions | Where-Object { $_ -match "^$mainVersionPrefix" }
               
-              if (!$versions) {
+              if (!$versions -or $versions.Count -eq 0) {
                 Write-Host "Brak wersji dla pakietu $packageId zaczynających się od $major."
                 return $currentVersion
               }
@@ -162,12 +166,12 @@ jobs:
               $availableVersions = @()
               if ($isCurrentPreview) {
                 # Dla preview, znajdź tylko nowsze wersje preview z tego samego major
-                $previewVersions = $versions | Where-Object { $_ -match "-preview" }
+                $previewVersions = $versions | Where-Object { IsPreviewVersion $_ }
                 $availableVersions = $previewVersions
                 Write-Host "Obecna wersja $packageId to preview: $currentVersion. Znaleziono $(($previewVersions | Measure-Object).Count) wersji preview."
               } else {
-                # Dla stabilnych, znajdź tylko nowsze stabilne wersje z tego samego major
-                $stableVersions = $versions | Where-Object { $_ -notmatch "-preview" }
+                # Dla stabilnych wersji, znajdź tylko wersje stabilne
+                $stableVersions = $versions | Where-Object { -not (IsPreviewVersion $_) }
                 $availableVersions = $stableVersions
                 Write-Host "Obecna wersja $packageId to stabilna: $currentVersion. Znaleziono $(($stableVersions | Measure-Object).Count) wersji stabilnych."
               }
@@ -177,17 +181,20 @@ jobs:
                 return $currentVersion
               }
               
-              # Sortowanie z użyciem naszej własnej funkcji porównującej wersje
-              $sortedVersions = $availableVersions | Sort-Object -Property { $_ } -Descending {
-                param($a, $b)
-                return Compare-NuGetVersions $a $b
+              # Sortuj wersje używając własnej funkcji porównującej
+              $latestVersion = $null
+              $highestCompare = -1
+              
+              foreach ($ver in $availableVersions) {
+                $compareResult = CompareVersions $ver $currentVersion
+                if ($compareResult -gt $highestCompare) {
+                  $highestCompare = $compareResult
+                  $latestVersion = $ver
+                }
               }
               
-              $latestVersion = $sortedVersions[0]
-              
-              # Sprawdź czy znaleziona wersja jest nowsza
-              if ((Compare-NuGetVersions $latestVersion $currentVersion) -gt 0) {
-                Write-Host "Znaleziono nowszą wersję dla $packageId: $latestVersion (obecna: $currentVersion)"
+              if ($highestCompare -gt 0 -and $latestVersion) {
+                Write-Host "Znaleziono nowszą wersję dla $packageId - $latestVersion (obecna: $currentVersion)"
                 return $latestVersion
               } else {
                 Write-Host "Nie znaleziono nowszej wersji dla $packageId (obecna: $currentVersion)"
@@ -196,7 +203,7 @@ jobs:
             }
             catch {
               $errorMessage = $_.Exception.Message
-              Write-Host "Błąd podczas pobierania wersji dla $packageId: $errorMessage"
+              Write-Host "Błąd podczas pobierania wersji dla $packageId - $errorMessage"
               return $currentVersion
             }
           }
@@ -210,4 +217,109 @@ jobs:
                 $major = $Matches[1]
                 
                 if ($supportedMajors -contains [int]$major) {
-                  Write-Host "Przet
+                  Write-Host "Przetwarzanie pakietów dla .NET $major..."
+                  
+                  foreach ($pkg in $itemGroup.PackageVersion) {
+                    $id = $pkg.Include
+                    $current = $pkg.Version
+                    
+                    # Aktualizuj tylko do wersji zgodnych z tym samym frameworkiem
+                    $latest = Get-LatestNugetVersionForMajor -packageId $id -major $major -currentVersion $current
+                    
+                    if ($latest -and $current -ne $latest) {
+                      Write-Host "Aktualizuję $id (net$major.0): $current -> $latest"
+                      $pkg.Version = $latest
+                      $changes += "$id (net$major.0): $current -> $latest"
+                    }
+                  }
+                } else {
+                  Write-Host "Pominięto niewspieraną wersję .NET $major"
+                }
+              }
+            }
+          }
+          
+          if ($changes.Count -gt 0) {
+            $props.Save($propsPath)
+            Set-Content -Path conditional-updates.log -Value ($changes -join "`n")
+            Write-Host "Zaktualizowano warunkowe wersje pakietów."
+          } else {
+            Write-Host "Brak zmian w warunkowych wersjach pakietów."
+            Set-Content -Path conditional-updates.log -Value ""
+          }
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "No changes to commit"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Ensure "automated-task" label exists
+        if: steps.git-check.outputs.changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh_label_exists=$(gh api repos/${{ github.repository }}/labels/automated-task --silent 2>/dev/null || echo "404")
+          if [[ "$gh_label_exists" == "404" ]]; then
+            gh api repos/${{ github.repository }}/labels \
+              -X POST \
+              -F name='automated-task' \
+              -F color='ededed' \
+              -F description='PR generated by NuGet update workflow'
+          fi
+
+      - name: Prepare PR body with list of updated packages
+        id: pr-body
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          changes=$(grep -E ' -> ' outdated.log | grep -vE '^\s*$|^\[' | awk '{$1=$1};1' | sort | uniq)
+          cond_changes=$(cat conditional-updates.log)
+          BODY=""
+          
+          if [[ -n "$changes" ]]; then
+              BODY="### The following NuGet packages were updated:"
+              while IFS= read -r line; do
+                  name=$(echo "$line" | awk '{print $1}')
+                  from=$(echo "$line" | awk '{print $2}')
+                  to=$(echo "$line" | awk '{print $4}')
+                  BODY+="
+          - **$name**: \`$from\` ~~→~~ \`$to\`"
+              done <<< "$changes"
+          fi
+          
+          if [[ -n "$cond_changes" ]]; then
+              BODY+="
+          ### The following conditional NuGet package versions were updated:"
+              while IFS= read -r line; do
+                  name=$(echo "$line" | awk -F':' '{print $1}')
+                  fromto=$(echo "$line" | awk -F':' '{print $2}')
+                  BODY+="
+          - **$name**: $fromto"
+              done <<< "$cond_changes"
+          fi
+          
+          if [[ -z "$BODY" ]]; then
+              BODY="NuGet run did not output package updates, but there are file changes."
+          fi
+          
+          BODY="${BODY//'%'/'%25'}"
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        if: steps.git-check.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "[Task] Automated NuGet package update"
+          commit-message: "[Task] Automated NuGet package update"
+          branch: auto/update-nuget-packages
+          base: master
+          delete-branch: true
+          labels: automated-task
+          body: ${{ steps.pr-body.outputs.body }}
