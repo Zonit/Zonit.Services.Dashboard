@@ -73,21 +73,52 @@ jobs:
           
           Write-Host "Wykryto wersje .NET: $($usedNetVersions -join ', ')"
           
-          function Get-LatestNugetVersionForMajor ($packageId, $major) {
+          function Get-LatestNugetVersionForMajor ($packageId, $major, $currentVersion) {
             $url = "https://api.nuget.org/v3-flatcontainer/$packageId/index.json"
             try {
               $resp = Invoke-RestMethod -Uri $url -UseBasicParsing
+              
+              # Sprawdź, czy bieżąca wersja jest preview
+              $isPreview = $currentVersion -match "-preview"
+              
+              # Filtruj wersje dla danego major
               $versions = $resp.versions | Where-Object { $_ -match "^$major\." }
+              
               if ($versions) {
-                return $versions | Sort-Object {[version]$_} -Descending | Select-Object -First 1
+                # Jeśli bieżąca wersja jest preview, szukaj tylko wersji preview dla tego samego major
+                if ($isPreview) {
+                  $previewVersions = $versions | Where-Object { $_ -match "-preview" }
+                  if ($previewVersions) {
+                    # Sortuj wersje preview (specjalna logika dla formatu preview)
+                    return ($previewVersions | 
+                      Sort-Object -Descending {
+                        # Rozdziel na części numeryczne i preview
+                        if ($_ -match '^(\d+\.\d+\.\d+)(?:-preview\.(\d+)\.(\d+))?') {
+                          $mainVer = [version]$Matches[1]
+                          $previewNum1 = if ($Matches[2]) { [int]$Matches[2] } else { 0 }
+                          $previewNum2 = if ($Matches[3]) { [int]$Matches[3] } else { 0 }
+                          return "$($mainVer.Major).$($mainVer.Minor).$($mainVer.Build).$previewNum1.$previewNum2"
+                        }
+                        return $_
+                      } | Select-Object -First 1)
+                  } 
+                  return $currentVersion # Jeśli nie ma nowszych preview, zostaw obecną wersję
+                } else {
+                  # Dla stabilnych wersji, wybierz najnowszą stabilną wersję (bez preview)
+                  $stableVersions = $versions | Where-Object { $_ -notmatch "-preview" }
+                  if ($stableVersions) {
+                    return ($stableVersions | Sort-Object {[version]$_} -Descending | Select-Object -First 1)
+                  }
+                  return $currentVersion
+                }
               } else {
                 Write-Host ("Brak wersji dla {0} zaczynających się od {1}" -f $packageId, $major)
-                return $null
+                return $currentVersion
               }
             } catch {
               $errorMessage = $_.Exception.Message
               Write-Host ("Nie udało się pobrać wersji dla {0}: {1}" -f $packageId, $errorMessage)
-              return $null
+              return $currentVersion
             }
           }
           
@@ -105,7 +136,7 @@ jobs:
                   foreach ($pkg in $itemGroup.PackageVersion) {
                     $id = $pkg.Include
                     $current = $pkg.Version
-                    $latest = Get-LatestNugetVersionForMajor $id $major
+                    $latest = Get-LatestNugetVersionForMajor $id $major $current
                     
                     if ($latest -and $current -ne $latest) {
                       Write-Host ("Aktualizuję {0} (net{1}.0): {2} -> {3}" -f $id, $major, $current, $latest)
