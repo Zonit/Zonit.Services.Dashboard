@@ -25,12 +25,15 @@ jobs:
           ref: master
           fetch-depth: 0
 
-      - name: Setup .NET 8 and 9 SDKs
+      - name: Setup .NET SDKs
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
+            6.0.x
+            7.0.x
             8.0.x
             9.0.x
+            10.0.x
 
       - name: Install dotnet-outdated tool
         run: dotnet tool install --global dotnet-outdated-tool
@@ -45,9 +48,44 @@ jobs:
           fi
           echo "sln=$slnfile" >> $GITHUB_OUTPUT
 
-      - name: Update packages using dotnet-outdated
+      - name: Get target frameworks from projects
+        id: get-frameworks
         run: |
-          dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --no-restore | tee outdated.log
+          frameworks=$(find . -name "*.csproj" -o -name "Directory.Build.props" | xargs grep -l "<TargetFramework\|<TargetFrameworks" | xargs grep -h "<TargetFramework\|<TargetFrameworks" | sed -E 's/.*>(.*)<.*/\1/' | tr ';' '\n' | sort -u)
+          echo "Found frameworks: $frameworks"
+          echo "frameworks<<EOF" >> $GITHUB_OUTPUT
+          echo "$frameworks" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Update packages for each target framework
+        run: |
+          mkdir -p logs
+          frameworks_array=()
+          while IFS= read -r framework; do
+            if [[ -n "$framework" ]]; then
+              # Check if SDK exists for this framework version
+              framework_version=$(echo "$framework" | sed -E 's/^net([0-9]+)\.?([0-9]*).*/\1.\2/')
+              framework_version=${framework_version%.}  # Remove trailing dot if any
+              
+              # For netX format, convert to X.0
+              if [[ "$framework_version" =~ ^[0-9]+$ ]]; then
+                framework_version="$framework_version.0"
+              fi
+              
+              echo "Checking for .NET SDK $framework_version"
+              if dotnet --list-sdks | grep -q "$framework_version"; then
+                echo "Updating packages for $framework"
+                frameworks_array+=("$framework")
+                # Update packages for specific framework
+                dotnet outdated "${{ steps.find-sln.outputs.sln }}" --upgrade --target-framework "$framework" --no-restore | tee "logs/outdated-$framework.log"
+              else
+                echo "No SDK found for $framework, skipping"
+              fi
+            fi
+          done <<< "${{ steps.get-frameworks.outputs.frameworks }}"
+          
+          # Combine all logs
+          cat logs/outdated-*.log > outdated.log
 
       - name: Check for changes
         id: git-check
@@ -80,25 +118,38 @@ jobs:
         run: |
             changes=$(grep -E ' -> ' outdated.log | grep -vE '^\s*$|^\[' | awk '{$1=$1};1' | sort | uniq)
             if [[ -n "$changes" ]]; then
-                BODY="### The following NuGet packages were updated:"
-                while IFS= read -r line; do
-                    name=$(echo "$line" | awk '{print $1}')
-                    from=$(echo "$line" | awk '{print $2}')
-                    to=$(echo "$line" | awk '{print $4}')
+                BODY="### The following NuGet packages were updated by target framework:"
+                
+                # Group by framework
+                while IFS= read -r log_file; do
+                  framework=$(basename "$log_file" | sed 's/outdated-\(.*\)\.log/\1/')
+                  framework_changes=$(grep -E ' -> ' "$log_file" | grep -vE '^\s*$|^\[' | awk '{$1=$1};1' | sort | uniq)
+                  
+                  if [[ -n "$framework_changes" ]]; then
                     BODY+="
+            
+            #### $framework"
+                    while IFS= read -r line; do
+                      name=$(echo "$line" | awk '{print $1}')
+                      from=$(echo "$line" | awk '{print $2}')
+                      to=$(echo "$line" | awk '{print $4}')
+                      BODY+="
             - **$name**: \`$from\` ~~→~~ \`$to\`"
-                done <<< "$changes"
+                    done <<< "$framework_changes"
+                  fi
+                done < <(find logs -name "outdated-*.log" | sort)
             else
                 BODY="NuGet run did not output package updates, but there are file changes."
             fi
 
-            # Tylko escape dla % (to potrzebne w GitHub Actions)
+            # Escape for % (needed in GitHub Actions)
             BODY="${BODY//'%'/'%25'}"
+            BODY="${BODY//$'\n'/''}"
+            BODY="${BODY//$'\r'/''}"
 
             echo "body<<EOF" >> $GITHUB_OUTPUT
             echo "$BODY" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
-
 
       - name: Create Pull Request
         if: steps.git-check.outputs.changed == 'true'
