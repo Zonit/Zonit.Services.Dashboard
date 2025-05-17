@@ -153,33 +153,44 @@ jobs:
   
               Write-Host "Checking package $packageId for .NET $netMajor (current version: $currentVersion)"
               
-              $url = "https://api.nuget.org/v3-flatcontainer/$packageId/index.json"
+              # Poprawny adres API NuGet - używa api.nuget.org/v3
+              $url = "https://api.nuget.org/v3/registration5-semver1/$($packageId.ToLowerInvariant())/index.json"
               try {
                 $resp = Invoke-RestMethod -Uri $url -UseBasicParsing
                 
                 $isCurrentPreview = IsPreviewVersion $currentVersion
                 $currentVersionParts = GetVersionParts $currentVersion
                 
-                Write-Host "  Found $(($resp.versions).Length) available versions for $packageId"
+                # Pobierz wszystkie dostępne wersje
+                $allVersions = @()
+                foreach ($item in $resp.items) {
+                  foreach ($entry in $item.items) {
+                    if ($entry.catalogEntry.version) {
+                      $allVersions += $entry.catalogEntry.version
+                    }
+                  }
+                }
                 
-                # Only consider versions compatible with the target .NET version
+                Write-Host "  Found $($allVersions.Count) available versions for $packageId"
+                
+                # Wybierz tylko kompatybilne wersje
                 $compatibleVersions = @()
-                foreach ($version in $resp.versions) {
+                foreach ($version in $allVersions) {
                   $versionParts = GetVersionParts $version
                   
-                  # Zweryfikuj zgodność głównej wersji numerycznej pakietów Microsoft
+                  # Dla pakietów Microsoft .NET Core, wersja główna musi odpowiadać wersji .NET
                   if ($packageId -like "Microsoft.AspNetCore.*" -or 
                       $packageId -like "Microsoft.Extensions.*" -or 
                       $packageId -like "Microsoft.JSInterop*") {
                     
-                    # Ścisła weryfikacja - major version MUSI odpowiadać wersji .NET
+                    # Major version musi odpowiadać wersji .NET
                     if ($versionParts.Major -ne $netMajor) {
-                      Write-Host "  Skipping $version - major version doesn't match .NET $netMajor"
+                      Write-Host "  Skipping $version - major version $($versionParts.Major) doesn't match .NET $netMajor"
                       continue
                     }
                   }
                   
-                  # Zawsze weryfikuj zgodność stabilności (preview vs stable)
+                  # Zgodność stabilności (preview vs stable)
                   if ($isCurrentPreview -ne (IsPreviewVersion $version)) {
                     Write-Host "  Skipping $version - preview status doesn't match current version"
                     continue
@@ -194,7 +205,7 @@ jobs:
                   return $currentVersion
                 }
                 
-                # Sort versions using our custom comparison function
+                # Wybierz najnowszą wersję
                 $latestVersion = $null
                 $highestCompare = -1
                 
@@ -217,6 +228,73 @@ jobs:
               catch {
                 $errorMessage = $_.Exception.Message
                 Write-Host "  Error retrieving versions for $packageId - $errorMessage"
+                
+                # Alternatywne podejście - użyj API search
+                try {
+                  Write-Host "  Trying alternative approach with search API..."
+                  $searchUrl = "https://azuresearch-usnc.nuget.org/query?q=packageid:$packageId&prerelease=$($isCurrentPreview.ToString().ToLower())"
+                  $searchResp = Invoke-RestMethod -Uri $searchUrl -UseBasicParsing
+                  
+                  $matchingVersions = @()
+                  foreach ($data in $searchResp.data) {
+                    if ($data.id -eq $packageId) {
+                      foreach ($version in $data.versions) {
+                        $versionParts = GetVersionParts $version.version
+                        
+                        # Dla pakietów Microsoft, sprawdź zgodność głównej wersji
+                        if ($packageId -like "Microsoft.AspNetCore.*" -or 
+                            $packageId -like "Microsoft.Extensions.*" -or 
+                            $packageId -like "Microsoft.JSInterop*") {
+                          if ($versionParts.Major -eq $netMajor) {
+                            $matchingVersions += $version.version
+                          }
+                        }
+                        else {
+                          $matchingVersions += $version.version
+                        }
+                      }
+                    }
+                  }
+                  
+                  if ($matchingVersions.Count -gt 0) {
+                    Write-Host "  Found $($matchingVersions.Count) versions via search API"
+                    
+                    $latestVersion = $null
+                    $highestCompare = -1
+                    
+                    foreach ($ver in $matchingVersions) {
+                      $compareResult = CompareVersions $ver $currentVersion
+                      if ($compareResult -gt $highestCompare) {
+                        $highestCompare = $compareResult
+                        $latestVersion = $ver
+                      }
+                    }
+                    
+                    if ($highestCompare -gt 0 -and $latestVersion) {
+                      Write-Host "  Found newer version for $packageId - $latestVersion (current: $currentVersion)"
+                      return $latestVersion
+                    }
+                  }
+                }
+                catch {
+                  $errorMessage2 = $_.Exception.Message
+                  Write-Host "  Alternative approach also failed: $errorMessage2"
+                }
+                
+                # Jeśli brak wersji i major jest nieprawidłowy, przyjmij wartość domyślną
+                $currentMajor = (GetVersionParts $currentVersion).Major
+                if ($currentMajor -ne $netMajor -and 
+                    ($packageId -like "Microsoft.AspNetCore.*" -or 
+                     $packageId -like "Microsoft.Extensions.*" -or 
+                     $packageId -like "Microsoft.JSInterop*")) {
+                  # Dla .NET 10 przyjmij wersję preview dla ostatnich wersji
+                  if ($netMajor -eq 10) {
+                    return "10.0.0-preview.1.24158.1"
+                  }
+                  # Dla pozostałych przyjmij stabilną wersję
+                  return "$netMajor.0.0"
+                }
+                
                 return $currentVersion
               }
             }
