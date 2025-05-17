@@ -58,11 +58,17 @@ jobs:
           }
           [xml]$props = Get-Content $propsPath
 
-          function Get-LatestNugetVersion($packageId) {
+          function Get-LatestNugetVersionForMajor ($packageId, $major) {
             $url = "https://api.nuget.org/v3-flatcontainer/$packageId/index.json"
             try {
               $resp = Invoke-RestMethod -Uri $url -UseBasicParsing
-              return $resp.versions | Sort-Object -Descending | Select-Object -First 1
+              $versions = $resp.versions | Where-Object { $_ -match "^$major\." }
+              if ($versions) {
+                return $versions | Sort-Object {[version]$_} -Descending | Select-Object -First 1
+              } else {
+                # Jeśli nie ma wersji z tym prefixem, zwróć najnowszą
+                return $resp.versions | Sort-Object {[version]$_} -Descending | Select-Object -First 1
+              }
             } catch {
               Write-Host "Nie udało się pobrać wersji dla $packageId"
               return $null
@@ -72,15 +78,17 @@ jobs:
           $changes = @()
           foreach ($itemGroup in $props.Project.ItemGroup) {
             if ($itemGroup.Condition) {
-              $tfm = $itemGroup.Condition -replace "'.*' == '(.+)'", '$1'
-              foreach ($pkg in $itemGroup.PackageVersion) {
-                $id = $pkg.Include
-                $current = $pkg.Version
-                $latest = Get-LatestNugetVersion $id
-                if ($latest -and $current -ne $latest) {
-                  Write-Host "Aktualizuję $id ($tfm): $current -> $latest"
-                  $pkg.Version = $latest
-                  $changes += "$id ($tfm): $current -> $latest"
+              if ($itemGroup.Condition -match "'\$\((?:TargetFramework|TargetFrameworkIdentifier)\)' *== *'net(\d+)\.0'") {
+                $major = $Matches[1]
+                foreach ($pkg in $itemGroup.PackageVersion) {
+                  $id = $pkg.Include
+                  $current = $pkg.Version
+                  $latest = Get-LatestNugetVersionForMajor $id $major
+                  if ($latest -and $current -ne $latest) {
+                    Write-Host "Aktualizuję $id (net$major.0): $current -> $latest"
+                    $pkg.Version = $latest
+                    $changes += "$id (net$major.0): $current -> $latest"
+                  }
                 }
               }
             }
@@ -93,7 +101,6 @@ jobs:
           } else {
             Write-Host "Brak zmian w warunkowych wersjach pakietów."
             Set-Content -Path conditional-updates.log -Value ""
-          }
 
       - name: Check for changes
         id: git-check

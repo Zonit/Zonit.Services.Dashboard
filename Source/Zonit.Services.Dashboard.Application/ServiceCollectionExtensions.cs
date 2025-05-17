@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Zonit.Services.Dashboard;
 using Zonit.Services.Dashboard.Application.Services;
 
-namespace Zonit.Services.Dashboard;
+namespace Zonit.Services;
 
 public static class ServiceCollectionExtensions
 {

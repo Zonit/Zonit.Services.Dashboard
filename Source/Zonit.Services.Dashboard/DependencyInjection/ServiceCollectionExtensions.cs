@@ -3,11 +3,12 @@ using MudBlazor;
 using MudBlazor.Services;
 using MudBlazor.Translations;
 using Zonit.Extensions;
+using Zonit.Services.Dashboard;
 using Zonit.Services.Dashboard.Data;
 using Zonit.Services.Dashboard.Repositories;
 using Zonit.Services.Dashboard.Services;
 
-namespace Zonit.Services.Dashboard.DependencyInjection;
+namespace Zonit.Services;
 
 public static class ServiceCollectionExtensions
 {
