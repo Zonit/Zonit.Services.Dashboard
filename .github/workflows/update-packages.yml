@@ -163,9 +163,12 @@ jobs:
                 foreach ($version in $resp.versions) {
                   $versionParts = GetVersionParts $version
       
-                  # For Microsoft packages, ensure we're using the right major version for the .NET version
-                  if ($packageId -like "Microsoft.*") {
-                    # For .NET packages, versions should match the .NET version
+                  # For Microsoft packages, major version should match the .NET target version
+                  # especially for core components like ASP.NET Core and Extensions
+                  if ($packageId -like "Microsoft.AspNetCore.*" -or 
+                      $packageId -like "Microsoft.Extensions.*" -or 
+                      $packageId -like "Microsoft.JSInterop") {
+                    # Major version should match the .NET version
                     if ($versionParts.Major -ne $netMajor) {
                       continue
                     }
