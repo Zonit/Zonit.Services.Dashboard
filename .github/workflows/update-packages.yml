@@ -151,46 +151,53 @@ jobs:
                 [string]$currentVersion
               )
   
+              Write-Host "Checking package $packageId for .NET $netMajor (current version: $currentVersion)"
+              
               $url = "https://api.nuget.org/v3-flatcontainer/$packageId/index.json"
               try {
                 $resp = Invoke-RestMethod -Uri $url -UseBasicParsing
-    
+                
                 $isCurrentPreview = IsPreviewVersion $currentVersion
                 $currentVersionParts = GetVersionParts $currentVersion
-    
+                
+                Write-Host "  Found $(($resp.versions).Length) available versions for $packageId"
+                
                 # Only consider versions compatible with the target .NET version
                 $compatibleVersions = @()
                 foreach ($version in $resp.versions) {
                   $versionParts = GetVersionParts $version
-      
-                  # For Microsoft packages, major version should match the .NET target version
-                  # especially for core components like ASP.NET Core and Extensions
+                  
+                  # Zweryfikuj zgodność głównej wersji numerycznej pakietów Microsoft
                   if ($packageId -like "Microsoft.AspNetCore.*" -or 
                       $packageId -like "Microsoft.Extensions.*" -or 
-                      $packageId -like "Microsoft.JSInterop") {
-                    # Major version should match the .NET version
+                      $packageId -like "Microsoft.JSInterop*") {
+                    
+                    # Ścisła weryfikacja - major version MUSI odpowiadać wersji .NET
                     if ($versionParts.Major -ne $netMajor) {
+                      Write-Host "  Skipping $version - major version doesn't match .NET $netMajor"
                       continue
                     }
                   }
-      
-                  # Must be same stability type (preview or stable)
+                  
+                  # Zawsze weryfikuj zgodność stabilności (preview vs stable)
                   if ($isCurrentPreview -ne (IsPreviewVersion $version)) {
+                    Write-Host "  Skipping $version - preview status doesn't match current version"
                     continue
                   }
-      
+                  
                   $compatibleVersions += $version
+                  Write-Host "  Added compatible version: $version"
                 }
-    
+                
                 if ($compatibleVersions.Count -eq 0) {
-                  Write-Host "No compatible versions found for $packageId. Keeping current version."
+                  Write-Host "  No compatible versions found for $packageId with .NET $netMajor. Keeping current version."
                   return $currentVersion
                 }
-    
+                
                 # Sort versions using our custom comparison function
                 $latestVersion = $null
                 $highestCompare = -1
-    
+                
                 foreach ($ver in $compatibleVersions) {
                   $compareResult = CompareVersions $ver $currentVersion
                   if ($compareResult -gt $highestCompare) {
@@ -198,18 +205,18 @@ jobs:
                     $latestVersion = $ver
                   }
                 }
-    
+                
                 if ($highestCompare -gt 0 -and $latestVersion) {
-                  Write-Host "Found newer version for $packageId - $latestVersion (current: $currentVersion)"
+                  Write-Host "  Found newer version for $packageId - $latestVersion (current: $currentVersion)"
                   return $latestVersion
                 } else {
-                  Write-Host "No newer version found for $packageId (current: $currentVersion)"
+                  Write-Host "  No newer version found for $packageId (current: $currentVersion)"
                   return $currentVersion
                 }
               }
               catch {
                 $errorMessage = $_.Exception.Message
-                Write-Host "Error retrieving versions for $packageId - $errorMessage"
+                Write-Host "  Error retrieving versions for $packageId - $errorMessage"
                 return $currentVersion
               }
             }
@@ -224,16 +231,40 @@ jobs:
       
                   if ($supportedMajors -contains $netMajor) {
                     Write-Host "Processing packages for .NET $netMajor..."
+                    Write-Host "Condition: $($itemGroup.Condition)"
         
                     foreach ($pkg in $itemGroup.PackageVersion) {
                       $id = $pkg.Include
                       $current = $pkg.Version
           
-                      # Update only to versions compatible with the same framework
+                      Write-Host "Checking package: $id ($current) for .NET $netMajor"
+          
+                      # Dodajmy specjalną obsługę dla pakietów Microsoft
+                      # Upewnijmy się, że pakiety Microsoft mają zawsze zgodną główną wersję
+                      if (($id -like "Microsoft.AspNetCore.*" -or 
+                           $id -like "Microsoft.Extensions.*" -or 
+                           $id -like "Microsoft.JSInterop*") -and 
+                           ([int](GetVersionParts $current).Major) -ne $netMajor) {
+                           
+                        # Wymuszamy prawidłową wersję dla krytycznych pakietów Microsoft
+                        Write-Host "  WARNING: Package $id has incorrect major version (current: $current, should be $netMajor.x)!"
+                        
+                        # Spróbuj znaleźć najnowszą poprawną wersję dla tego frameworka
+                        $latest = Get-LatestNugetVersionForMajor -packageId $id -netMajor $netMajor -currentVersion "$netMajor.0.0"
+                        
+                        if ($latest -ne "$netMajor.0.0") {
+                          Write-Host "  Forcing update of $id (net$netMajor.0): $current -> $latest (major version mismatch fix)"
+                          $pkg.Version = $latest
+                          $changes += "$id (net$netMajor.0): $current -> $latest (fixed major version)"
+                          continue
+                        }
+                      }
+          
+                      # Standardowa aktualizacja do najnowszej wersji
                       $latest = Get-LatestNugetVersionForMajor -packageId $id -netMajor $netMajor -currentVersion $current
           
                       if ($latest -and $current -ne $latest) {
-                        Write-Host "Updating $id (net$netMajor.0): $current -> $latest"
+                        Write-Host "  Updating $id (net$netMajor.0): $current -> $latest"
                         $pkg.Version = $latest
                         $changes += "$id (net$netMajor.0): $current -> $latest"
                       }
@@ -243,6 +274,49 @@ jobs:
                   }
                 }
               }
+            }
+
+            # Dodaj tę sekcję przed zapisem zmian
+            Write-Host "Performing final validation of package versions..."
+            $validationIssues = @()
+
+            foreach ($itemGroup in $props.Project.ItemGroup) {
+              if ($itemGroup.Condition -match "'\$\((?:TargetFramework|TargetFrameworkIdentifier)\)' *== *'net(\d+)\.0'") {
+                $netMajor = [int]$Matches[1]
+                
+                foreach ($pkg in $itemGroup.PackageVersion) {
+                  $id = $pkg.Include
+                  $version = $pkg.Version
+                  $versionParts = GetVersionParts $version
+                  
+                  # Sprawdź, czy krytyczne pakiety Microsoft mają zgodne wersje
+                  if (($id -like "Microsoft.AspNetCore.*" -or 
+                       $id -like "Microsoft.Extensions.*" -or 
+                       $id -like "Microsoft.JSInterop*") -and 
+                       $versionParts.Major -ne $netMajor) {
+                    
+                    $validationIssues += "ERROR: $id for .NET $netMajor has incorrect version $version"
+                    
+                    # Napraw wersję, jeśli to możliwe
+                    $correctVersion = Get-LatestNugetVersionForMajor -packageId $id -netMajor $netMajor -currentVersion "$netMajor.0.0"
+                    if ($correctVersion -ne "$netMajor.0.0") {
+                      Write-Host "  FIXING: Update $id to $correctVersion (from $version)"
+                      $pkg.Version = $correctVersion
+                      $changes += "$id (net$netMajor.0): $version -> $correctVersion (validation fix)"
+                    } else {
+                      Write-Host "  UNABLE TO FIX: No valid version found for $id (.NET $netMajor)"
+                    }
+                  }
+                }
+              }
+            }
+
+            if ($validationIssues.Count -gt 0) {
+              Write-Host "Validation issues found:"
+              foreach ($issue in $validationIssues) {
+                Write-Host "  $issue"
+              }
+              Write-Host "Attempted to fix issues automatically."
             }
 
             if ($changes.Count -gt 0) {
