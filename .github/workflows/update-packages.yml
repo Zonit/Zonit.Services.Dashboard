@@ -81,7 +81,7 @@ jobs:
 
                 Write-Host "`nChecking $FilePath" -ForegroundColor Cyan
                 try {
-                    [xml]$xml = Get-Content $FilePath
+                    [xml]$xml = [xml](Get-Content $FilePath -Raw)
                 } catch {
                     Write-Warning "$FilePath is not a valid XML file, skipping."
                     return
@@ -90,6 +90,7 @@ jobs:
                 $modified = $false
                 $chg = @()
 
+                # Jeśli Directory.Packages.props
                 if ($FilePath -like "*Directory.Packages.props") {
                     foreach ($itemGroup in $xml.Project.ItemGroup) {
                         foreach ($pkg in $itemGroup.PackageVersion) {
@@ -146,7 +147,11 @@ jobs:
                 }
 
                 if ($modified) {
-                    $xml.Save($FilePath)
+                    # POPRAWIONE: zapis w sposób działający cross-platform
+                    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+                    $stream = [System.IO.StreamWriter]::new($FilePath, $false, $utf8NoBom)
+                    $xml.Save($stream)
+                    $stream.Close()
                     Write-Host "  Saved $FilePath" -ForegroundColor Green
                     return ,$chg
                 } else {
@@ -155,8 +160,13 @@ jobs:
                 }
             }
 
-            # Użyj bieżącego katalogu jako root
+            # Szukamy plików .props oraz .csproj (zawsze z root)
             $files = Get-ChildItem -Path "." -Recurse -Include "Directory.Packages.props","*.csproj" -File
+
+            if ($files.Count -eq 0) {
+                Write-Host "No files found for update."
+            }
+
             $allChg = @()
             foreach ($file in $files) {
                 $result = Update-Packages-InFile -FilePath $file.FullName
