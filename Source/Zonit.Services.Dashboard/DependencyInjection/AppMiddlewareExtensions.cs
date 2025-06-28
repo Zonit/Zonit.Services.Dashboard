@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using Zonit.Extensions;
+using Zonit.Extensions.Reflection;
 using Zonit.Extensions.Website;
 using Zonit.Services.Dashboard.Areas.Dashboard;
 using Zonit.Services.Dashboard.Repositories;
@@ -63,23 +64,13 @@ public static class AppMiddlewareExtensions
 
             app.UseEndpoints(endpoints =>
             {
-                Type interfaceType = typeof(T);
-
-                // Tworzenie instancji Routes<T> dynamicznie
-                var routeInstance = Activator.CreateInstance(typeof(AssemblyScannerService<>).MakeGenericType(interfaceType));
-
-                // Pobranie metod i wywołanie "Types()"
-                var typesMethod = routeInstance?.GetType().GetMethod("Types");
-                var assemblies = (typesMethod?.Invoke(routeInstance, null) as IEnumerable<Assembly>)?.ToArray() ?? [];
-
                 var razor = endpoints.MapRazorComponents<App>()
                     .AddInteractiveServerRenderMode()
-                    .AddAdditionalAssemblies(assemblies);
+                    .AddAdditionalAssemblies(AssemblyProvider.GetAssemblies<T>().ToArray());
 
                 // Dodanie wymaganej autoryzacji
                 if (options.Permission is not null)
                     razor.RequireAuthorization(options.Permission);
-
             });
         });
 
