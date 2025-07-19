@@ -1,0 +1,55 @@
+﻿@using System.Globalization
+@using Zonit.Extensions.Cultures
+
+@namespace Zonit.Services.Dashboard.Components
+
+@inject ICultureProvider Culture
+@inject IExtensionManager ExtensionManager
+@inject ICultureManager CultureManager
+@inject ILanguageProvider Language
+@implements IDisposable
+
+@if(CultureManager.SupportedCultures is not null)
+{
+    <MudTooltip Text="@Culture.Translate("Change languages")" Arrow="true" Placement="Placement.Top" RootStyle="width: 100%;">
+        <MudButton Variant="Variant.Text" FullWidth="true" OnClick="@(() => ExtensionManager.Drawer(ExtensionName).Toggle())" Class="d-flex justify-center">
+            <MudGrid Justify="Justify.Center" AlignItems="Center">
+                <MudItem xs="2" Class="d-flex align-center">
+                    <MudIcon Color="Color.Dark" Icon="@currentLanguage.IconFlag" Size="Size.Small" />
+                </MudItem>
+                <MudItem xs="6" Class="d-flex flex-column align-center">
+                    <MudText Style="font-size: 10px; font-family: 'Roboto', sans-serif; font-weight: 400; letter-spacing: 0.5px; text-transform: uppercase; color: gray;">
+                        @Culture.Translate("Language")
+                    </MudText>
+                    <MudText Style="font-size: 14px; font-family: 'Roboto', sans-serif; font-weight: 500; letter-spacing: 0.4px; text-transform: capitalize;">
+                        @Culture.Translate(currentLanguage.EnglishName).ToUpper()
+                    </MudText>
+                </MudItem>
+            </MudGrid>
+        </MudButton>
+    </MudTooltip>
+
+    <MudDivider Class="my-2" />
+}
+
+@code {
+    static readonly string ExtensionName = Extensions.Cultures;
+    
+    LanguageModel currentLanguage { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        Culture.OnChange += StateHasChanged;
+        ExtensionManager.Drawer(ExtensionName)
+            .OnChange += StateHasChanged;
+        
+        currentLanguage = Language.GetByCode(Culture.GetCulture);
+    }
+
+    public void Dispose()
+    {
+        Culture.OnChange -= StateHasChanged;
+        ExtensionManager.Drawer(ExtensionName)
+            .OnChange -= StateHasChanged;
+    }
+}

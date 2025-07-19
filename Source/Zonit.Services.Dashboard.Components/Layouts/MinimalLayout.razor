@@ -1,8 +1,13 @@
 ﻿@inherits LayoutComponentBase
 
 @using Zonit.Services.Dashboard.Abstractions
+@using Zonit.Extensions.Cultures
+@using Zonit.Services.Dashboard
 
 @inject ISettingsProvider settingsProvider
+@inject ICultureProvider Culture
+@inject IExtensionManager ExtensionManager
+@inject ILanguageProvider Language
 
 <MudThemeProvider Theme="@Theme.MainLayout" />
 <MudDialogProvider />
@@ -25,16 +30,30 @@
             @* Zawartość strony (error, login itp.) *@
             @Body
 
-            @* Opcjonalny link powrotu na dole *@
-            @* <div class="mt-16">
+            @* Stopka z nawigacją i zmianą języka *@
+            <div class="mt-4 d-flex align-center justify-center flex-wrap gap-4">
                 <MudButton Href="/" 
                           Variant="Variant.Text" 
                           StartIcon="@Icons.Material.Filled.ArrowBack" 
-                          Color="Color.Primary">
-                    Powrót do strony głównej
+                            Color="Color.Inherit" Style="font-size: 0.75rem;">
+                    @Culture.Translate("Back to homepage")
                 </MudButton>
-            </div> *@
+                
+                <MudDivider Vertical="true" FlexItem="true" Style="height: 24px;" />
+                
+                <MudTooltip Text="@Culture.Translate("Change language")" Placement="Placement.Top">
+                    <MudButton Variant="Variant.Text" 
+                               StartIcon="@IconData.Language" 
+                               Color="Color.Inherit" Style="font-size: 0.75rem;"
+                               OnClick="@(() => ExtensionManager.Drawer(Extensions.Cultures).Toggle())">
+                        @Culture.Translate("Language")
+                    </MudButton>
+                </MudTooltip>
+            </div>
 
         </MudContainer>
     </MudMainContent>
+    
+    <!-- Culture Drawer -->
+    <CultureDrawer />
 </MudLayout>

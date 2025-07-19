@@ -1,0 +1,77 @@
+﻿@using System.Globalization
+@using Zonit.Extensions.Cultures
+
+@namespace Zonit.Services.Dashboard.Components
+
+@inject ICultureProvider Culture
+@inject IExtensionManager ExtensionManager
+@inject ICultureManager CultureManager
+@inject ILanguageProvider Language
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+@if(CultureManager.SupportedCultures is not null)
+{
+    <MudDrawer Open="@ExtensionManager.Drawer(Extensions.Cultures).IsOpen"
+               OpenChanged="@(value => ExtensionManager.Drawer(Extensions.Cultures).Set(value))"
+               Width="300px" Height="100%" Anchor="Anchor.End" Elevation="3" Variant="@DrawerVariant.Temporary">
+        <MudDrawerHeader>
+            <div class="d-flex align-center justify-space-between flex-grow-1 py-2">
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@IconData.Language" Class="mr-3" Size="Size.Medium" Color="Color.Inherit" />
+                    <MudText Typo="Typo.h5" Style="font-weight: 600;">@Culture.Translate("Select language")</MudText>
+                </div>
+                <MudIconButton OnClick="@(() => ExtensionManager.Drawer(Extensions.Cultures).Close())"
+                               Icon=@Icons.Material.Filled.Close
+                               Size="Size.Small"
+                               Color="Color.Default"
+                               aria-label="@Culture.Translate("Close")" />
+            </div>
+        </MudDrawerHeader>
+        
+        <MudNavMenu>
+            <MudPaper Elevation="0" Class="px-6 py-2">
+                <MudList T=string SelectedValueChanged="(async (e) => await SwitchAsync(e))" SelectedValue="@Culture.GetCulture">
+                    @foreach(var culture in CultureManager.SupportedCultures)
+                    {
+                        <MudListItem Icon="@culture.IconFlag" Value="@culture.Code">@Culture.Translate(culture.EnglishName)</MudListItem>
+                    }
+                </MudList>
+            </MudPaper>
+        </MudNavMenu>
+    </MudDrawer>
+}
+
+@code {
+    LanguageModel currentLanguage { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        Culture.OnChange += StateHasChanged;
+        ExtensionManager.Drawer(Extensions.Cultures)
+            .OnChange += StateHasChanged;
+        
+        currentLanguage = Language.GetByCode(Culture.GetCulture);
+    }
+
+    public void Dispose()
+    {
+        Culture.OnChange -= StateHasChanged;
+        ExtensionManager.Drawer(Extensions.Cultures)
+            .OnChange -= StateHasChanged;
+    }
+
+    public async Task SwitchAsync(string culture)
+    {
+        // TODO: Pomyśl nad dodatkowym interfejsem, który zmieni kulturę i wywoła poniższy kod
+        await JSRuntime.InvokeVoidAsync("blazorCulture.set", culture);
+        await JSRuntime.InvokeVoidAsync("eval", $"document.cookie = 'Culture={culture}; expires={DateTime.UtcNow.AddDays(365):R}; path=/;'");
+        CultureManager.SetCulture(culture);
+
+        currentLanguage = Language.GetByCode(culture);
+
+        ExtensionManager.Drawer(Extensions.Cultures).Close();
+
+        await Task.CompletedTask;
+    }
+}

@@ -2,9 +2,12 @@
 
 @using Zonit.Extensions.Cultures
 @using Zonit.Services.Dashboard.Abstractions
+@using Zonit.Services.Dashboard
 
 @inject ISettingsProvider settingsProvider
 @inject ICultureProvider Culture
+@inject IExtensionManager ExtensionManager
+@inject ILanguageProvider Language
 
 <MudThemeProvider Theme="@Theme.MainLayout" />
 <MudDialogProvider />
@@ -20,10 +23,17 @@
                 </MudText>
             </MudLink>
             <MudSpacer />
-            <MudStack Direction="Direction.Row" AlignItems="AlignItems.Center" Spacing="2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudButton Href="/" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Home" Color="Color.Inherit">
                     @Culture.Translate("Home page")
                 </MudButton>
+                
+                <MudTooltip Text="@Culture.Translate("Change language")" Placement="Placement.Bottom">
+                    <MudIconButton Icon="@IconData.Language"
+                                   Color="Color.Inherit" 
+                                   Class="mx-1" 
+                                   OnClick="@(() => ExtensionManager.Drawer(Extensions.Cultures).Toggle())" />
+                </MudTooltip>
             </MudStack>
         </MudContainer>
     </MudAppBar>
@@ -31,4 +41,7 @@
     <MudMainContent Class="mt-5">
         @Body
     </MudMainContent>
+    
+    <!-- Culture Drawer -->
+    <CultureDrawer />
 </MudLayout>

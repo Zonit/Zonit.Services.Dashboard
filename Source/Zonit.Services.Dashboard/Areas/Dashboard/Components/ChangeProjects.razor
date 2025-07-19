@@ -62,13 +62,31 @@
                 <MudDivider Class="my-4" />
                 @if (CatalogManager.Projects is not null)
                 {
-                    <MudText Typo="Typo.body1">@Culture.Translate("Your projects")</MudText>
+                    <MudText Typo="Typo.body1" Class="mb-3">@Culture.Translate("Your projects")</MudText>
+                    
+                    <MudTextField @bind-Value="searchText" 
+                                  Placeholder="@Culture.Translate("Search projects...")"
+                                  Variant="Variant.Outlined" 
+                                  Adornment="Adornment.Start" 
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Margin="Margin.Dense"
+                                  Class="mb-3"
+                                  Clearable="true"
+                                  Immediate="true" />
+                    
                     <MudList T=Guid @bind-SelectedValue=selectedProject>
-                        @foreach (var organization in CatalogManager.Projects)
+                        @foreach (var organization in FilteredProjects)
                         {
                             <MudListItem Value="@organization.Id" Text="@organization.Name" OnClick="(async () => await SwitchAsync(organization.Id))" />
                         }
                     </MudList>
+                    
+                    @if (!FilteredProjects.Any() && !string.IsNullOrWhiteSpace(searchText))
+                    {
+                        <MudText Typo="Typo.body2" Class="text-center pa-4" Style="color: gray;">
+                            @Culture.Translate("No projects found")
+                        </MudText>
+                    }
                 }
                 <MudDivider Class="my-4" />
                 <MudButton FullWidth="true" OnClick="@(() => GoToManage("projects"))">@Culture.Translate("Manage projects")</MudButton>
@@ -79,6 +97,13 @@
 
 @code {
     Guid selectedProject;
+    string searchText = string.Empty;
+
+    private IEnumerable<dynamic> FilteredProjects => 
+        string.IsNullOrWhiteSpace(searchText) 
+            ? CatalogManager.Projects ?? Enumerable.Empty<dynamic>()
+            : (CatalogManager.Projects ?? Enumerable.Empty<dynamic>())
+                .Where(p => p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase));
 
     protected override void OnInitialized()
     {
