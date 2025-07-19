@@ -30,6 +30,15 @@ internal class NavData(INavigationProvider _navigation) : IHostedService
 
         _navigation.Add(new()
         {
+            Title = "Test task",
+            Area = AreaType.Manager,
+            Order = 21,
+            Icon = Icons.Material.Filled.ExposurePlus1,
+            Link = new("TestTask", TestTask.Route),
+        });
+
+        _navigation.Add(new()
+        {
             Title = "Komponenty MudBlazor",
             Area = AreaType.Manager,
             Order = 30,

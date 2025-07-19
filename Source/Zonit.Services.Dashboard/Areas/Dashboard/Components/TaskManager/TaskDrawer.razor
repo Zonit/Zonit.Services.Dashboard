@@ -15,81 +15,119 @@
 <MudDrawer   
     Open="@ExtensionManager.Drawer(Extensions.Task).IsOpen"
     OpenChanged="@(value => ExtensionManager.Drawer(Extensions.Task).Set(value))" 
-    Width="400px" Height="100%" Anchor="Anchor.End" Elevation="3" Variant="@DrawerVariant.Temporary">
+    Width="420px" Height="100%" Anchor="Anchor.End" Elevation="1" Variant="@DrawerVariant.Temporary">
 
     <MudDrawerHeader>
-        <div class="d-flex align-center justify-space-between flex-grow-1">
-            <MudText Typo="Typo.h6">@Culture.Translate("Active tasks")</MudText>
+        <div class="d-flex align-center justify-space-between flex-grow-1 py-2">
+            <div class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.Task" Class="mr-3" Size="Size.Medium" Color="Color.Primary" />
+                <MudText Typo="Typo.h5" Style="font-weight: 600;">@Culture.Translate("Task Manager")</MudText>
+            </div>
             <MudIconButton OnClick="@(() => ExtensionManager.Drawer(Extensions.Task).Close())"
                        Icon=@Icons.Material.Filled.Close
-                       aria-label="@Culture.Translate("Close")" />
+                       Size="Size.Small"
+                       Color="Color.Default"
+                       aria-label="@Culture.Translate("Close panel")" />
         </div>
     </MudDrawerHeader>
 
-    <MudContainer Class="pa-2">
+    <hr class="mud-divider my-0" />
+
+
+    <div Class="d-flex flex-column" style="height: calc(100vh - 140px); overflow-y: auto;">
         @if (!ActiveTasks.Any())
         {
-            <MudText Typo="Typo.body1" Class="d-flex justify-center mt-4">
-                @Culture.Translate("No active tasks")
-            </MudText>
+            <div class="d-flex flex-column align-center justify-center" style="min-height: 200px;">
+                <MudIcon Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Large" Color="Color.Tertiary" Class="mb-3" />
+                <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">
+                    @Culture.Translate("All Tasks Completed")
+                </MudText>
+                <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">
+                    @Culture.Translate("No active tasks are currently running")
+                </MudText>
+            </div>
         }
         else
         {
-            <MudList T="string" Dense="true" Gutters="true" Class="pa-0">
-                @foreach (var task in ActiveTasks)
-                {
-                    <MudPaper Elevation="0" Class="mb-2 pa-2" Style="border-radius: 4px; background-color: var(--mud-palette-background-grey)">
-                        <div class="d-flex justify-space-between align-center">
-                            <MudText Typo="Typo.body1" Style="font-weight: 500">
-                                @GetTaskTitle(task)
-                            </MudText>
-                            <MudChip Size="Size.Small" 
-                                    Color="@GetTaskStatusColor(task.Status)" 
-                                    Variant="Variant.Filled">
-                                @GetTaskStatusText(task.Status)
-                            </MudChip>
-                        </div>
+            <div class="pa-4">
+                <div class="mb-3">
+                    <MudText Typo="Typo.overline" Style="font-weight: 600; letter-spacing: 0.5px;">
+                        @Culture.Translate("Active Tasks") (@ActiveTasks.Count())
+                    </MudText>
+                </div>
 
-                        <div class="d-flex align-center mt-1">
-                            <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="mr-1" />
-                            <MudText Typo="Typo.caption">
-                                @if (task.Status == TaskEventStatus.Processing)
-                                {
-                                    @GetTaskDuration(task)
-                                }
-                                else if (task.CompletedAt.HasValue)
-                                {
-                                    <span>@Culture.Translate("Completed in"): @GetElapsedTime(task.ProcessedAt, task.CompletedAt)</span>
-                                }
-                                else
-                                {
-                                    <span>@Culture.Translate("Created"): @task.CreatedAt.ToLocalTime().ToString("g")</span>
-                                }
-                            </MudText>
-                        </div>
+                <MudStack Spacing="3">
+                    @foreach (var task in ActiveTasks.OrderBy(t => t.CreatedAt))
+                    {
+                        <MudCard Elevation="2" Style="border-radius: 8px;">
+                            <MudCardContent Class="pa-4">
+                                <!-- Task Header -->
+                                <div class="d-flex justify-space-between align-start mb-3">
+                                    <div class="flex-grow-1 mr-3">
+                                        <MudText Typo="Typo.subtitle1" Style="font-weight: 600; line-height: 1.3;">
+                                            @GetTaskTitle(task)
+                                        </MudText>
+                                        @* <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                            @Culture.Translate("Task ID"): @task.Id.ToString().Substring(0, 8)
+                                        </MudText> *@
+                                    </div>
+                                    <MudChip T="string" Size="Size.Small" 
+                                            Color="@GetTaskStatusColor(task.Status)" 
+                                            Variant="Variant.Filled"
+                                            Style="font-weight: 500;">
+                                        @GetTaskStatusText(task.Status)
+                                    </MudChip>
+                                </div>
 
-                        @if (task.Progress.HasValue)
-                        {
-                            <div class="mt-2">
-                                <MudProgressLinear Color="Color.Primary" 
-                                                Value="@task.Progress.Value" 
-                                                Striped="true"
-                                                Rounded="true" />
-                                <MudText Typo="Typo.caption" Class="d-flex justify-end">
-                                    @task.Progress.Value.ToString("0")%
-                                </MudText>
-                            </div>
-                        }
-                    </MudPaper>
-                }
-            </MudList>
+                                <!-- Progress Section -->
+                                @if (task.Progress.HasValue)
+                                {
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-space-between align-center mb-1">
+                                            <MudText Typo="Typo.caption" Style="font-weight: 500;">
+                                                @Culture.Translate("Progress")
+                                            </MudText>
+                                            <MudText Typo="Typo.caption" Style="font-weight: 600;" Color="Color.Primary">
+                                                @task.Progress.Value.ToString("0")%
+                                            </MudText>
+                                        </div>
+                                        <MudProgressLinear Color="Color.Primary" 
+                                                        Value="@task.Progress.Value" 
+                                                        Size="Size.Small"
+                                                        Rounded="true" />
+                                    </div>
+                                }
+
+                                <!-- Timing Information -->
+                                <div class="d-flex align-center">
+                                    <MudIcon Icon="@GetTaskTimeIcon(task.Status)" Size="Size.Small" Class="mr-2" Color="Color.Secondary" />
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        @if (task.Status == TaskEventStatus.Processing)
+                                        {
+                                            @GetTaskDuration(task)
+                                        }
+                                        else if (task.CompletedAt.HasValue)
+                                        {
+                                            <span>@Culture.Translate("Completed in") @GetElapsedTime(task.ProcessedAt, task.CompletedAt)</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@Culture.Translate("Created at") @task.CreatedAt.ToLocalTime().ToString("g")</span>
+                                        }
+                                    </MudText>
+                                </div>
+                            </MudCardContent>
+                        </MudCard>
+                    }
+                </MudStack>
+            </div>
         }
-    </MudContainer>
+    </div>
 </MudDrawer>
 
 @code{
     private IEnumerable<TaskEventModel> ActiveTasks { get; set; } = Enumerable.Empty<TaskEventModel>();
-    private Timer _timer;
+    private Timer? _timer;
     private DateTime _currentTime = DateTime.UtcNow;
 
     protected override void OnInitialized()
@@ -141,12 +179,10 @@
                     return nameValue;
                 }
             }
-            
-            // Just show the task name/id for simplicity
-            return $"Task {task.Id.ToString().Substring(0, 8)}";
         }
         
-        return $"Task {task.Id.ToString().Substring(0, 8)}";
+        // Fallback to a more descriptive name
+        return Culture.Translate("Background Task");
     }
 
     private Color GetTaskStatusColor(TaskEventStatus status)
@@ -166,20 +202,33 @@
         return status switch
         {
             TaskEventStatus.Pending => Culture.Translate("Pending"),
-            TaskEventStatus.Processing => Culture.Translate("Processing"),
+            TaskEventStatus.Processing => Culture.Translate("In Progress"),
             TaskEventStatus.Completed => Culture.Translate("Completed"),
             TaskEventStatus.Failed => Culture.Translate("Failed"),
-            TaskEventStatus.Cancelled => Culture.Translate("Canceled"),
-            _ => Culture.Translate("Unknown"),
+            TaskEventStatus.Cancelled => Culture.Translate("Cancelled"),
+            _ => Culture.Translate("Unknown Status"),
+        };
+    }
+
+    private string GetTaskTimeIcon(TaskEventStatus status)
+    {
+        return status switch
+        {
+            TaskEventStatus.Processing => Icons.Material.Filled.PlayArrow,
+            TaskEventStatus.Completed => Icons.Material.Filled.CheckCircle,
+            TaskEventStatus.Failed => Icons.Material.Filled.Error,
+            TaskEventStatus.Cancelled => Icons.Material.Filled.Cancel,
+            _ => Icons.Material.Filled.Schedule,
         };
     }
 
     private string GetTaskDuration(TaskEventModel task)
     {
         if (!task.ProcessedAt.HasValue)
-            return Culture.Translate("Waiting to start...");
+            return Culture.Translate("Waiting to start");
 
-        return $"{Culture.Translate("Running for")}: {GetElapsedTime(task.ProcessedAt, _currentTime)}";
+        var duration = GetElapsedTime(task.ProcessedAt, _currentTime);
+        return $"{Culture.Translate("Running for")} {duration}";
     }
 
     private string GetElapsedTime(DateTime? start, DateTime? end)
