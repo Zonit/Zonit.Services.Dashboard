@@ -1,0 +1,34 @@
+﻿@inherits LayoutComponentBase
+
+@using Zonit.Extensions.Cultures
+@using Zonit.Services.Dashboard.Abstractions
+
+@inject ISettingsProvider settingsProvider
+@inject ICultureProvider Culture
+
+<MudThemeProvider Theme="@Theme.MainLayout" />
+<MudDialogProvider />
+<MudPopoverProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Class="px-4">
+        <MudContainer MaxWidth="MaxWidth.Large" Class="d-flex align-center">
+            <MudLink Href="/" Color="Color.Inherit" Underline="Underline.None">
+                <MudText Typo="Typo.h5" Class="fw-bold">
+                    @settingsProvider.Settings.Title
+                </MudText>
+            </MudLink>
+            <MudSpacer />
+            <MudStack Direction="Direction.Row" AlignItems="AlignItems.Center" Spacing="2">
+                <MudButton Href="/" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Home" Color="Color.Inherit">
+                    @Culture.Translate("Home page")
+                </MudButton>
+            </MudStack>
+        </MudContainer>
+    </MudAppBar>
+
+    <MudMainContent Class="mt-5">
+        @Body
+    </MudMainContent>
+</MudLayout>

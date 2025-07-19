@@ -1,5 +1,5 @@
 ﻿@page "/errors/403"
-@layout ErrorLayout
+@layout MinimalLayout
 @inject ICultureProvider Culture
 
 @attribute [AllowAnonymous]
@@ -8,12 +8,12 @@
     <title>@Culture.Translate("Forbidden")</title>
 </HeadContent>
 
-<MudCard>
-    <MudCardHeader>
-        <MudText Typo="Typo.h6">@Culture.Translate("Forbidden")</MudText>
-    </MudCardHeader>
-    <MudCardContent>
-        <MudText Class="mb-2">@Culture.Translate("Access to this resource is forbidden.")</MudText>
-        <MudLink Href="javascript:history.back()">@Culture.Translate("Back to previous page")</MudLink>
-    </MudCardContent>
-</MudCard>
+<MudContainer MaxWidth="MaxWidth.Small">
+    <MudPaper Class="pa-6">
+        <MudText Align="Align.Center" Typo="Typo.h1" Class="mb-3">@Culture.Translate("Forbidden")</MudText>
+        <MudText Align="Align.Center" Class="mb-3">@Culture.Translate("Access to this resource is forbidden.")</MudText>
+        <MudText Align="Align.Center">
+            <MudLink Href="javascript:history.back()">@Culture.Translate("Back to previous page")</MudLink>
+        </MudText>
+    </MudPaper>
+</MudContainer>

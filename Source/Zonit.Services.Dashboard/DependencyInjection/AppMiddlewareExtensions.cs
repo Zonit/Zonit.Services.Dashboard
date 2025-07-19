@@ -40,16 +40,16 @@ public static class AppMiddlewareExtensions
                 switch (response.StatusCode)
                 {
                     case 401:
-                        response.Redirect($"{pathBase}/Errors/401");
+                        response.Redirect($"{pathBase}/errors/401");
                         break;
                     case 403:
-                        response.Redirect($"{pathBase}/Errors/403");
+                        response.Redirect($"{pathBase}/errors/403");
                         break;
                     case 404:
-                        response.Redirect($"{pathBase}/Errors/404");
+                        response.Redirect($"{pathBase}/errors/404");
                         break;
                     case 500:
-                        response.Redirect($"{pathBase}/Errors/500");
+                        response.Redirect($"{pathBase}/errors/500");
                         break;
                 }
 

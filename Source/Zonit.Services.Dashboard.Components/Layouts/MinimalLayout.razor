@@ -1,0 +1,40 @@
+﻿@inherits LayoutComponentBase
+
+@using Zonit.Services.Dashboard.Abstractions
+
+@inject ISettingsProvider settingsProvider
+
+<MudThemeProvider Theme="@Theme.MainLayout" />
+<MudDialogProvider />
+<MudPopoverProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.False" Class="d-flex flex-column align-center justify-center" Style="min-height: 25vh;">
+            
+            @* Logo/Nazwa serwisu na górze *@
+            <div class="mb-12">
+                <MudLink Href="/" Color="Color.Primary" Underline="Underline.None">
+                    <MudText Typo="Typo.h2" Class="fw-bold text-center" Style="font-size: 3rem;">
+                        @settingsProvider.Settings.Title
+                    </MudText>
+                </MudLink>
+            </div>
+
+            @* Zawartość strony (error, login itp.) *@
+            @Body
+
+            @* Opcjonalny link powrotu na dole *@
+            @* <div class="mt-16">
+                <MudButton Href="/" 
+                          Variant="Variant.Text" 
+                          StartIcon="@Icons.Material.Filled.ArrowBack" 
+                          Color="Color.Primary">
+                    Powrót do strony głównej
+                </MudButton>
+            </div> *@
+
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>

@@ -5,8 +5,7 @@ using MudBlazor.Services;
 using Zonit.Extensions.Organizations;
 using Zonit.Extensions.Website;
 using Zonit.Extensions.Website.Abstractions.Navigations.Types;
-using Zonit.Services.Dashboard.Repositories;
-using Zonit.Services.Dashboard.Services;
+using Zonit.Services.Dashboard.Abstractions;
 using Zonit.Services.EventMessage;
 
 namespace Zonit.Services.Dashboard.Areas.Dashboard.Layouts;

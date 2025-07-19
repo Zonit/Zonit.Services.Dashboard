@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using System.Reflection;
-using Zonit.Services.Dashboard.Repositories;
+using Zonit.Services.Dashboard.Abstractions;
 using Zonit.Services.Dashboard.Services;
 
 namespace Zonit.Services.Dashboard.Areas.Dashboard;

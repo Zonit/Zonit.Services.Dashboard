@@ -31,6 +31,7 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\Zonit.Services.Dashboard.Abstractions\Zonit.Services.Dashboard.Abstractions.csproj" />
 	  <ProjectReference Include="..\Zonit.Services.Dashboard.Application\Zonit.Services.Dashboard.Application.csproj" />
+	  <ProjectReference Include="..\Zonit.Services.Dashboard.Components\Zonit.Services.Dashboard.Components.csproj" />
 	</ItemGroup>
 
 </Project>
