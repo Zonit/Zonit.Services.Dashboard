@@ -1,9 +1,8 @@
 ﻿@page "/errors/401"
 @layout MinimalLayout
-@inject ICultureProvider Culture
+@inherits PageBase
 
 @attribute [AllowAnonymous]
-
 
 <HeadContent>
     <title>@Culture.Translate("Unauthorized")</title>

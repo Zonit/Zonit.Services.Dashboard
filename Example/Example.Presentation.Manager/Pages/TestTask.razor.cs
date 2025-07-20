@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Zonit.Extensions.Website;
-using Zonit.SDK.Website;
 using Zonit.Services.EventMessage;
 
 namespace Example.Presentation.Manager.Pages

@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Zonit.Extensions.Website;
 using Microsoft.AspNetCore.Authorization;
-using Zonit.SDK.Website;
 
 namespace Example.Presentation.Manager.Pages;
 

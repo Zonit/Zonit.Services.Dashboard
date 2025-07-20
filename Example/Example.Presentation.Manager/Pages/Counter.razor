@@ -1,4 +1,4 @@
-@inherits Zonit.SDK.Website.PageBase
+@inherits Zonit.Extensions.Website.PageBase
 @rendermode InteractiveServer
 <HeadContent>
     <title>@Culture.Translate("Counter")</title>
@@ -25,5 +25,7 @@
     private void IncrementCount()
     {
         currentCount++;
+
+        Toast.AddInfo($"Count {currentCount}");
     }
 }

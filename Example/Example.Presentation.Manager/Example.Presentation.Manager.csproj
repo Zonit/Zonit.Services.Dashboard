@@ -9,7 +9,7 @@
 		<PackageReference Include="Microsoft.AspNetCore.Components.Web" />
 		<PackageReference Include="Microsoft.JSInterop" />
 		<PackageReference Include="MudBlazor" />
-		<PackageReference Include="Zonit.SDK.Website" />
+		<PackageReference Include="Zonit.Extensions.Website" />
 		<PackageReference Include="Zonit.Services.EventMessage.Abstractions" />
 	</ItemGroup>
 

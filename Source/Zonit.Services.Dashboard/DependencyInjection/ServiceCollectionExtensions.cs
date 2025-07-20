@@ -8,6 +8,7 @@ using Zonit.Services.Dashboard.Data;
 using Zonit.Services.Dashboard.Abstractions;
 using Zonit.Services.Dashboard.Services;
 using Zonit.Services.Dashboard.Repositories;
+using Zonit.Extensions.Website;
 
 namespace Zonit.Services;
 
@@ -25,6 +26,7 @@ public static class ServiceCollectionExtensions
         services.AddOrganizationsExtension();
         services.AddProjectsExtension();
         services.AddNavigationsExtension();
+        services.AddToastsExtension();
 
         services.AddBreadcrumbsExtension();
 
@@ -58,6 +60,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ISettingsManager, SettingsRepository>();
         services.AddScoped<ISettingsProvider, SettingsService>();
+        services.AddTransient<IToastProvider, ToastService>();
 
         services.AddHostedService<CultureData>();
 
