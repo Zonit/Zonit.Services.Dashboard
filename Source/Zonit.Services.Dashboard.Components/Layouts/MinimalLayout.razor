@@ -15,13 +15,13 @@
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudMainContent>
+    <MudMainContent Class="pt-4 pt-md-8">
         <MudContainer MaxWidth="MaxWidth.False" Class="d-flex flex-column align-center justify-center" Style="min-height: 25vh;">
             
             @* Logo/Nazwa serwisu na górze *@
-            <div class="mb-12">
+            <div class="mb-6 mb-md-12">
                 <MudLink Href="/" Color="Color.Primary" Underline="Underline.None">
-                    <MudText Typo="Typo.h2" Class="fw-bold text-center" Style="font-size: 3rem;">
+                    <MudText Typo="Typo.h2" Class="fw-bold text-center" Style="font-size: clamp(2rem, 5vw, 3rem);">
                         @settingsProvider.Settings.Title
                     </MudText>
                 </MudLink>
@@ -31,11 +31,11 @@
             @Body
 
             @* Stopka z nawigacją i zmianą języka *@
-            <div class="mt-4 d-flex align-center justify-center flex-wrap gap-4">
+            <div class="mt-6 mt-md-8 mb-8 mb-md-4 d-flex align-center justify-center flex-wrap gap-4">
                 <MudButton Href="/" 
                           Variant="Variant.Text" 
                           StartIcon="@Icons.Material.Filled.ArrowBack" 
-                            Color="Color.Inherit" Style="font-size: 0.75rem;">
+                            Color="Color.Inherit" Style="font-size: clamp(0.7rem, 2vw, 0.75rem);">
                     @Culture.Translate("Back to homepage")
                 </MudButton>
                 
@@ -44,7 +44,7 @@
                 <MudTooltip Text="@Culture.Translate("Change language")" Placement="Placement.Top">
                     <MudButton Variant="Variant.Text" 
                                StartIcon="@IconData.Language" 
-                               Color="Color.Inherit" Style="font-size: 0.75rem;"
+                               Color="Color.Inherit" Style="font-size: clamp(0.7rem, 2vw, 0.75rem);"
                                OnClick="@(() => ExtensionManager.Drawer(Extensions.Cultures).Toggle())">
                         @Culture.Translate("Language")
                     </MudButton>
