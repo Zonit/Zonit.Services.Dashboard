@@ -4,10 +4,10 @@
 <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="@Assemblies">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layouts.MainLayout)" >
-            <NotAuthorized>  
-                <MudContainer>
+            <NotAuthorized>
+                <LayoutView Layout="@typeof(MinimalLayout)">
                     <Zonit.Services.Dashboard.Areas.Dashboard.Pages.Errors._401 />
-                </MudContainer>
+                </LayoutView>
             </NotAuthorized>
         </AuthorizeRouteView>
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
