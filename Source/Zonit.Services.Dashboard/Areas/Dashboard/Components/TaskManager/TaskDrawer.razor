@@ -11,6 +11,7 @@
 @inject IWorkspaceProvider Workspace
 @inject IExtensionManager ExtensionManager
 @inject ITaskManager TaskManager
+@implements IAsyncDisposable
 
 <MudDrawer   
     Open="@ExtensionManager.Drawer(Extensions.Task).IsOpen"
@@ -129,6 +130,7 @@
     private IEnumerable<TaskEventModel> ActiveTasks { get; set; } = Enumerable.Empty<TaskEventModel>();
     private Timer? _timer;
     private DateTime _currentTime = DateTime.UtcNow;
+    private bool _disposed = false;
 
     protected override void OnInitialized()
     {
@@ -139,23 +141,59 @@
 
         // Initialize timer for updating durations
         _timer = new Timer(1000);
-        _timer.Elapsed += async (sender, e) =>
-        {
-            _currentTime = DateTime.UtcNow;
-            await InvokeAsync(StateHasChanged);
-        };
+        _timer.Elapsed += OnTimerElapsed;
         _timer.AutoReset = true;
         _timer.Start();
 
         ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization?.Id);
         TaskManager.EventOnChange(async task =>
         {
+            if (_disposed) return;
+            
             if (task.ExtensionId != Workspace.Organization?.Id && task.ExtensionId != null)
                 return; // Ignore tasks from other organizations
 
             ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization?.Id);
-            await InvokeAsync(StateHasChanged);
+            
+            try
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Component has been disposed, ignore
+            }
+            catch (InvalidOperationException)
+            {
+                // Component is no longer in the render tree, ignore
+            }
         });
+    }
+
+    private async void OnTimerElapsed(object? sender, ElapsedEventArgs e)
+    {
+        if (_disposed) return;
+        
+        try
+        {
+            _currentTime = DateTime.UtcNow;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Component has been disposed, stop the timer
+            _timer?.Stop();
+        }
+        catch (InvalidOperationException)
+        {
+            // Component is no longer in the render tree, stop the timer
+            _timer?.Stop();
+        }
+        catch (Exception)
+        {
+            // Any other exception during rendering, stop the timer to prevent crashes
+            _timer?.Stop();
+        }
     }
 
     private string GetTaskTitle(TaskEventModel task)
@@ -248,14 +286,23 @@
             return $"{duration.Seconds}s";
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
+        _disposed = true;
+        
         Culture.OnChange -= StateHasChanged;
         Workspace.OnChange -= StateHasChanged;
         ExtensionManager.Drawer(Extensions.Task)
             .OnChange -= StateHasChanged;
             
-        _timer?.Stop();
-        _timer?.Dispose();
+        if (_timer != null)
+        {
+            _timer.Stop();
+            _timer.Elapsed -= OnTimerElapsed;
+            _timer.Dispose();
+            _timer = null;
+        }
+
+        await Task.CompletedTask;
     }
 }

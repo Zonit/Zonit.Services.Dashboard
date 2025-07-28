@@ -10,7 +10,7 @@
 @inject IWorkspaceProvider Workspace
 @inject IExtensionManager ExtensionManager
 @inject ITaskManager TaskManager
-@implements IDisposable
+@implements IAsyncDisposable
 
 <MudChip T="string"
          Label="true"
@@ -30,6 +30,7 @@
 @code {
     static readonly string ExtensionName = Extensions.Task;
     private Timer? _refreshTimer;
+    private bool _disposed = false;
 
     private IReadOnlyCollection<TaskEventModel> ActiveTasks { get; set; } = [];
     private bool HasProcessingTasks => ActiveTasks.Any(t => t.Status == TaskEventStatus.Processing);
@@ -43,17 +44,56 @@
             .OnChange += StateHasChanged;
 
         // Timer dla animacji pulsowania
-        _refreshTimer = new Timer(_ => InvokeAsync(StateHasChanged), null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+        _refreshTimer = new Timer(OnTimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
 
         ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization?.Id);
         TaskManager.EventOnChange(async task =>
         {
+            if (_disposed) return;
+            
             if (task.ExtensionId != Workspace.Organization?.Id && task.ExtensionId != null)
                 return; // Ignoruj taski z innych organizacji
 
             ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization?.Id);
-            await InvokeAsync(StateHasChanged);
+            
+            try
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Component has been disposed, ignore
+            }
+            catch (InvalidOperationException)
+            {
+                // Component is no longer in the render tree, ignore
+            }
         });
+    }
+
+    private async void OnTimerCallback(object? state)
+    {
+        if (_disposed) return;
+        
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Component has been disposed, stop the timer
+            _refreshTimer?.Dispose();
+        }
+        catch (InvalidOperationException)
+        {
+            // Component is no longer in the render tree, stop the timer
+            _refreshTimer?.Dispose();
+        }
+        catch (Exception)
+        {
+            // Any other exception during rendering, stop the timer to prevent crashes
+            _refreshTimer?.Dispose();
+        }
     }
 
     private Color GetBadgeColor()
@@ -72,13 +112,20 @@
         return Color.Default;
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
+        _disposed = true;
+        
         Culture.OnChange -= StateHasChanged;
         Workspace.OnChange -= StateHasChanged;
         ExtensionManager.Drawer(ExtensionName)
             .OnChange -= StateHasChanged;
-        _refreshTimer?.Dispose();
+            
+        if (_refreshTimer != null)
+        {
+            await _refreshTimer.DisposeAsync();
+            _refreshTimer = null;
+        }
     }
 }
 
