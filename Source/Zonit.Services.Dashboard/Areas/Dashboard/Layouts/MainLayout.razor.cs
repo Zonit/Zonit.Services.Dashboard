@@ -40,6 +40,8 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
     public bool ProgressTask = false;
     IReadOnlyCollection<TaskEventModel> _activeTasks = new List<TaskEventModel>();
 
+    private bool _disposed = false;
+
     ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
     {
         ReportRate = 50,
@@ -53,12 +55,25 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
     {
         Culture.OnChange += () =>
         {
+            if (_disposed) return;
+            
             if (Culture.GetCulture == "ar-sa")
                 RightToLeft = true;
             else
                 RightToLeft = false;
 
-            StateHasChanged();
+            try
+            {
+                StateHasChanged();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Component has been disposed, ignore
+            }
+            catch (InvalidOperationException)
+            {
+                // Component is no longer in the render tree, ignore
+            }
         };
 
         if (Settings.Settings.Directory.ToLower() == "manager")
@@ -70,6 +85,8 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
 
         BreadcrumbsProvider.OnChange += () => 
         {
+            if (_disposed) return;
+            
             var g = BreadcrumbsProvider.Get();
             if (g is not null)
             {
@@ -83,20 +100,46 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
             {
                 _breadcrumbItems = null;
             }
-            StateHasChanged();
+            
+            try
+            {
+                StateHasChanged();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Component has been disposed, ignore
+            }
+            catch (InvalidOperationException)
+            {
+                // Component is no longer in the render tree, ignore
+            }
         };
 
         var activeTasks = TaskManager.GetActiveTasks(WorkspaceProvider.Organization?.Id);
         ProgressTask = activeTasks.Count > 0;
 
         TaskManager.EventOnChange(async task => {
+            if (_disposed) return;
+            
             if (task.ExtensionId != WorkspaceProvider.Organization?.Id && task.ExtensionId != null)
                 return; // Ignoruj taski z innych organizacji
 
             // Pobierz aktualny stan aktywnych tasków po każdej zmianie
             var activeTasks = TaskManager.GetActiveTasks(WorkspaceProvider.Organization?.Id);
             ProgressTask = activeTasks.Count > 0;
-            await InvokeAsync(StateHasChanged);
+            
+            try
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Component has been disposed, ignore
+            }
+            catch (InvalidOperationException)
+            {
+                // Component is no longer in the render tree, ignore
+            }
         });
     }
 
@@ -110,6 +153,8 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
+        
         Culture.OnChange -= StateHasChanged;
         BreadcrumbsProvider.OnChange -= StateHasChanged;
 
@@ -118,6 +163,8 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
 
     async Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs browserViewportEventArgs)
     {
+        if (_disposed) return;
+        
         _width = browserViewportEventArgs.BrowserWindowSize.Width;
         _height = browserViewportEventArgs.BrowserWindowSize.Height;
 
@@ -154,6 +201,17 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
                 break;
         }
 
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Component has been disposed, ignore
+        }
+        catch (InvalidOperationException)
+        {
+            // Component is no longer in the render tree, ignore
+        }
     }
 }
