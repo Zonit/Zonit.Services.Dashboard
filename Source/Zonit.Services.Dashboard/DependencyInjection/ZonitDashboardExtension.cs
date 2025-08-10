@@ -12,9 +12,10 @@ public sealed class ZonitDashboardExtension : ComponentBase, IDisposable
     [Inject]
     PersistentComponentState ApplicationState { get; set; } = default!;
 
-    PersistingComponentStateSubscription persistingSubscription;
+    private PersistingComponentStateSubscription _persistingSubscription;
+    private bool _disposed = false;
 
-    TransferModel Transfer { get; set; } = null!;
+    private TransferModel Transfer { get; set; } = new();
 
     public class TransferModel
     {
@@ -24,39 +25,116 @@ public sealed class ZonitDashboardExtension : ComponentBase, IDisposable
 
     protected override void OnInitialized()
     {
-        persistingSubscription = ApplicationState.RegisterOnPersisting(PersistData);
+        if (_disposed) return;
 
-        if (!ApplicationState.TryTakeFromJson<TransferModel>("ZonitDashboardExtension", out var restored))
+        try
         {
-            Transfer = new TransferModel { 
-                DashboardOptions = Settings.Settings,
-                Area = Settings.Area.GetType().AssemblyQualifiedName
-            };
-        }
-        else
-        {
-            Transfer = restored!;
-        }
-            
-        if(Transfer.DashboardOptions is not null)
-            Settings.SetSettings(Transfer.DashboardOptions);
+            // Sprawdź, czy wszystkie wymagane serwisy są dostępne
+            if (Settings is null)
+            {
+                throw new InvalidOperationException("ISettingsManager was not injected. Check DI registration.");
+            }
 
-        if (Transfer.Area is not null)
-        {
-            var areaType = Type.GetType(Transfer.Area);
-            if (areaType is not null && areaType.IsInterface)
-                Settings.SetArea(areaType);
-        }
+            if (ApplicationState is null)
+            {
+                throw new InvalidOperationException("PersistentComponentState was not injected. Check DI registration.");
+            }
 
+            // Zarejestruj subskrypcję tylko jeśli komponent nie został jeszcze usunięty
+            _persistingSubscription = ApplicationState.RegisterOnPersisting(PersistData);
+
+            // Spróbuj przywrócić dane z persystentnego stanu
+            if (!ApplicationState.TryTakeFromJson<TransferModel>("ZonitDashboardExtension", out var restored))
+            {
+                // Jeśli nie ma zapisanych danych, utwórz nowy model transferu
+                Transfer = new TransferModel();
+                
+                // Bezpiecznie pobierz ustawienia, jeśli są dostępne
+                try
+                {
+                    if (Settings.Settings is not null)
+                    {
+                        Transfer.DashboardOptions = Settings.Settings;
+                    }
+                }
+                catch (Exception)
+                {
+                    // Settings może nie być jeszcze dostępne - ignoruj
+                }
+            }
+            else
+            {
+                Transfer = restored ?? new TransferModel();
+            }
+
+            // Zastosuj przywrócone ustawienia tylko jeśli są dostępne i komponent nie został usunięty
+            if (!_disposed && Transfer.DashboardOptions is not null)
+            {
+                try
+                {
+                    Settings.SetSettings(Transfer.DashboardOptions);
+                }
+                catch (Exception)
+                {
+                    // Ignoruj błędy ustawień w przypadku problemów z DI
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // W przypadku jakichkolwiek błędów podczas inicjalizacji, po prostu utwórz pusty model
+            Transfer = new TransferModel();
+        }
     }
 
     private Task PersistData()
     {
-        ApplicationState.PersistAsJson("ZonitDashboardExtension", Transfer);
+        // Sprawdź, czy komponent nie został usunięty przed persystowaniem
+        if (_disposed || ApplicationState is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        try
+        {
+            // Aktualizuj Transfer z bieżącymi ustawieniami przed persystowaniem
+            if (Settings?.Settings is not null)
+            {
+                Transfer.DashboardOptions = Settings.Settings;
+            }
+
+            ApplicationState.PersistAsJson("ZonitDashboardExtension", Transfer);
+        }
+        catch (ObjectDisposedException)
+        {
+            // ApplicationState został usunięty - zignoruj
+        }
+        catch (Exception)
+        {
+            // Ignoruj inne błędy persystowania
+        }
 
         return Task.CompletedTask;
     }
 
     public void Dispose()
-        => persistingSubscription.Dispose();
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        try
+        {
+            _persistingSubscription.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Subskrypcja została już usunięta - zignoruj
+        }
+        catch (Exception)
+        {
+            // Ignoruj inne błędy dispose
+        }
+    }
 }

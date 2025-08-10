@@ -31,7 +31,7 @@
 </head>
 
 <body>
-    <Routes AssemblyNames="_assemblyNames" @rendermode="@RenderMode.InteractiveServer" />
+    <Routes AssemblyNames="AssemblyNames" @rendermode="@RenderMode.InteractiveServer" />
 
     <Connection />
 
@@ -72,7 +72,7 @@
         };
     </script>
 
-    @((MarkupString)SettingsProvider.Settings.CustomSnippet)
+    @CustomSnippet
 
 </body>
 </html>

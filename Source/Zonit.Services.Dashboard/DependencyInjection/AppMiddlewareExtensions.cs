@@ -1,12 +1,9 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 using Zonit.Extensions;
 using Zonit.Extensions.Reflection;
 using Zonit.Extensions.Website;
 using Zonit.Services.Dashboard.Areas.Dashboard;
-using Zonit.Services.Dashboard.Repositories;
-using Zonit.Services.Dashboard.Services;
 
 namespace Zonit.Services.Dashboard.DependencyInjection;
 
@@ -16,11 +13,13 @@ public static class AppMiddlewareExtensions
     {
         builder.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/" + options.Directory, StringComparison.OrdinalIgnoreCase), app =>
         {
+            var assembly = AssemblyProvider.GetAssemblies<T>().ToArray();
+
             app.Use(async (context, next) =>
             {
                 var settings = context.RequestServices.GetRequiredService<ISettingsManager>();
                 settings.SetSettings(options);
-                settings.SetArea(typeof(T));
+                settings.SetAssemblies(assembly);
 
                 await next();
             });
@@ -66,7 +65,7 @@ public static class AppMiddlewareExtensions
             {
                 var razor = endpoints.MapRazorComponents<App>()
                     .AddInteractiveServerRenderMode()
-                    .AddAdditionalAssemblies(AssemblyProvider.GetAssemblies<T>().ToArray());
+                    .AddAdditionalAssemblies(assembly);
 
                 // Dodanie wymaganej autoryzacji
                 if (options.Permission is not null)

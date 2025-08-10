@@ -20,28 +20,30 @@
 <MudAppBar Elevation="1" Style="z-index: 1;">
     <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
 
-    <MudBreadcrumbs Items="Breadcrumbs">
-        <ItemTemplate Context="item">
-            @if (Catalog.Project is not null && item.Href == "Catalog")
-            {
-                <MudButton OnClick="@(() => ExtensionManager.Drawer(Extensions.Projects).Toggle())" Variant="Variant.Text" EndIcon="@IconData.ChevronExpand" Color="Color.Transparent" Size="Size.Small">
-                    <MudAvatar Size=Size.Small Rounded Color="Color.Tertiary" Class="mr-2">@Catalog.Project.Name[0]</MudAvatar>
-                    @Catalog.Project.Name
-                </MudButton>
-            }
-            else if (Workspace.Organization is not null && item.Href == "Workspace")
-            {
-                <MudButton OnClick="@(() => ExtensionManager.Drawer(Extensions.Organizations).Toggle())" Variant="Variant.Text" EndIcon="@IconData.ChevronExpand" Color="Color.Transparent" Size="Size.Small">
-                    <MudAvatar Size=Size.Small Rounded Color="Color.Warning" Class="mr-2">@Workspace.Organization.Name[0]</MudAvatar> 
-                    @Workspace.Organization.Name
-                </MudButton>
-            }
-            else
-            {
-                <MudLink Href="@item.Href" Class="nav-link-style" Color="Color.Default">@Culture.Translate(item.Text)</MudLink>
-            }
-        </ItemTemplate>
-    </MudBreadcrumbs>
+    <div class="d-none d-sm-block">
+        <MudBreadcrumbs Items="Breadcrumbs">
+            <ItemTemplate Context="item">
+                @if (Catalog.Project is not null && item.Href == "Catalog")
+                {
+                    <MudButton OnClick="@(() => ExtensionManager.Drawer(Extensions.Projects).Toggle())" Variant="Variant.Text" EndIcon="@IconData.ChevronExpand" Color="Color.Transparent" Size="Size.Small">
+                        <MudAvatar Size=Size.Small Rounded Color="Color.Tertiary" Class="mr-2">@Catalog.Project.Name[0]</MudAvatar>
+                        @Catalog.Project.Name
+                    </MudButton>
+                }
+                else if (Workspace.Organization is not null && item.Href == "Workspace")
+                {
+                    <MudButton OnClick="@(() => ExtensionManager.Drawer(Extensions.Organizations).Toggle())" Variant="Variant.Text" EndIcon="@IconData.ChevronExpand" Color="Color.Transparent" Size="Size.Small">
+                        <MudAvatar Size=Size.Small Rounded Color="Color.Warning" Class="mr-2">@Workspace.Organization.Name[0]</MudAvatar> 
+                        @Workspace.Organization.Name
+                    </MudButton>
+                }
+                else
+                {
+                    <MudLink Href="@item.Href" Class="nav-link-style" Color="Color.Default">@Culture.Translate(item.Text)</MudLink>
+                }
+            </ItemTemplate>
+        </MudBreadcrumbs>
+    </div>
 
     <MudSpacer />
 
