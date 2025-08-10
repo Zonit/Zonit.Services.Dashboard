@@ -1,0 +1,153 @@
+@using Zonit.Extensions.Cultures
+@using Zonit.Extensions.Website
+@using Zonit.Services.Dashboard.Data
+
+@implements IDisposable
+
+@inject ICultureProvider Culture
+@inject ICookieProvider Cookie
+
+<MudTooltip Text="@Culture.Translate("Change theme")" Arrow="true" Placement="Placement.Top" RootStyle="width: 100%;">
+    <MudButton Variant="Variant.Text" FullWidth="true" OnClick="OpenDrawer" Class="d-flex justify-center">
+        <MudGrid Justify="Justify.Center" AlignItems="Center">
+            <MudItem xs="2" Class="d-flex align-center">
+                <MudIcon Color="Color.Dark" Icon="@_currentThemeIcon" Size="Size.Small" />
+            </MudItem>
+            <MudItem xs="6" Class="d-flex flex-column align-center">
+                <MudText Style="font-size: 10px; font-family: 'Roboto', sans-serif; font-weight: 400; letter-spacing: 0.5px; text-transform: uppercase; color: gray;">
+                    @Culture.Translate("Theme")
+                </MudText>
+                <MudText Style="font-size: 14px; font-family: 'Roboto', sans-serif; font-weight: 500; letter-spacing: 0.4px; text-transform: capitalize;">
+                    @Culture.Translate(_currentThemeLabel).ToString().ToUpper()
+                </MudText>
+            </MudItem>
+        </MudGrid>
+    </MudButton>
+</MudTooltip>
+
+<MudDivider Class="my-2" />
+
+<MudDrawer @bind-Open="@open" Width="300px" Height="100%" Anchor="Anchor.End" Elevation="3" Variant="@DrawerVariant.Temporary">
+    <MudDrawerHeader>
+        <div Class="d-flex align-center justify-space-between flex-grow-1 gap-4">
+            <MudText Typo="Typo.h6">@Culture.Translate("Select theme")</MudText>
+            <MudIconButton OnClick="@(() => OpenDrawer())"
+                           Icon=@Icons.Material.Filled.Close
+                           aria-label="@Culture.Translate("Close")" />
+        </div>
+    </MudDrawerHeader>
+    <MudNavMenu>
+        <MudPaper Elevation="0" Class="px-6 py-2">
+            <MudList T=string SelectedValueChanged="@OnThemeChanged" SelectedValue="@_selectedThemeValue">
+                <MudListItem Icon="@IconData.DarkThemeAuto" Value="@("auto")">@Culture.Translate("Auto")</MudListItem>
+                <MudListItem Icon="@IconData.DarkThemeDay" Value="@("day")">@Culture.Translate("Light")</MudListItem>
+                <MudListItem Icon="@IconData.DarkThemeNight" Value="@("night")">@Culture.Translate("Dark")</MudListItem>
+            </MudList>
+        </MudPaper>
+    </MudNavMenu>
+</MudDrawer>
+
+@code {
+    [Parameter, EditorRequired]
+    public MudThemeProvider MudThemeProvider { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public bool DarkMode { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<bool> DarkModeChanged { get; set; }
+
+    private string _selectedThemeValue = "auto";
+    private string _currentThemeIcon = IconData.DarkThemeAuto;
+    private string _currentThemeLabel = "Auto";
+    private bool open = false;
+
+    protected override void OnInitialized()
+    {
+        Culture.OnChange += StateHasChanged;
+        
+        // Initialize theme state from cookie
+        var darkMode = Cookie.Get("DarkMode");
+        if (darkMode is not null)
+        {
+            _selectedThemeValue = darkMode.Value;
+            UpdateThemeDisplay();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var darkTheme = Cookie.Get("DarkMode");
+        if (darkTheme is not null)
+        {
+            if (darkTheme.Value == "night")
+            {
+                DarkMode = true;
+                await DarkModeChanged.InvokeAsync(DarkMode);
+            }
+            else if (darkTheme.Value == "day")
+            {
+                DarkMode = false;
+                await DarkModeChanged.InvokeAsync(DarkMode);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        Culture.OnChange -= StateHasChanged;
+    }
+
+    void OpenDrawer()
+        => open = !open;
+
+    private async Task OnThemeChanged(string newValue)
+    {
+        _selectedThemeValue = newValue;
+        UpdateThemeDisplay();
+
+        switch (newValue)
+        {
+            case "night":
+                DarkMode = true;
+                await DarkModeChanged.InvokeAsync(DarkMode);
+                await Cookie.SetAsync("DarkMode", "night");
+                break;
+            case "day":
+                DarkMode = false;
+                await DarkModeChanged.InvokeAsync(DarkMode);
+                await Cookie.SetAsync("DarkMode", "day");
+                break;
+            case "auto":
+                DarkMode = await MudThemeProvider.GetSystemDarkModeAsync();
+                await DarkModeChanged.InvokeAsync(DarkMode);
+                await Cookie.SetAsync("DarkMode", "auto");
+                break;
+        }
+
+        open = false;
+    }
+
+    private void UpdateThemeDisplay()
+    {
+        (_currentThemeIcon, _currentThemeLabel) = _selectedThemeValue switch
+        {
+            "night" => (IconData.DarkThemeNight, "Dark"),
+            "day" => (IconData.DarkThemeDay, "Light"),
+            _ => (IconData.DarkThemeAuto, "Auto")
+        };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var darkTheme = Cookie.Get("DarkMode");
+            if (darkTheme is null || darkTheme.Value == "auto")
+            {
+                DarkMode = await MudThemeProvider.GetSystemDarkModeAsync();
+                await DarkModeChanged.InvokeAsync(DarkMode);
+            }
+        }
+    }
+}

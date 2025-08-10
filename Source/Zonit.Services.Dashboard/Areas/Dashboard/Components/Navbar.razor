@@ -47,18 +47,12 @@
 
     <MudSpacer />
 
-
     <ExtensionView Name="@Extensions.Task">
         <TaskButton />
     </ExtensionView>
 
-    <MudTooltip Text=@Culture.Translate(_darkModeTooltip) Placement="Placement.Bottom">
-        <MudIconButton Icon=@_darkModeIcon Color="Color.Inherit" Class="mx-1" Edge="Edge.Start" OnClick="@((e) => DarkTheme())" />
-    </MudTooltip>
     <MudIconButton Icon="@IconData.User" Color="Color.Inherit" Class="mx-1" Edge="Edge.Start" OnClick="@((e) => DrawerRightToggle())" />
 </MudAppBar>
-
-
 
 @code {
     [Parameter, EditorRequired]
@@ -76,12 +70,6 @@
     [Parameter]
     public EventCallback<bool> DrawerRightOpenChanged { get; set; }
 
-    [Parameter, EditorRequired]
-    public bool DarkMode { get; set; } = false;
-
-    [Parameter]
-    public EventCallback<bool> DarkModeChanged { get; set; }
-
     [Parameter]
     public int Width { get; set; }
 
@@ -91,53 +79,11 @@
     [Parameter]
     public List<BreadcrumbItem> Breadcrumbs { get; set; }
 
-    bool? _darkTheme;
-    string _darkModeIcon = Icons.Material.Filled.WbSunny;
-    string _darkModeTooltip = "Dark Mode";
-
     protected override void OnInitialized()
     {
         Culture.OnChange += StateHasChanged;
         Catalog.OnChange += StateHasChanged;
         Workspace.OnChange += StateHasChanged;
-
-        //TODO: Przenieś logikę darktheme do Extension Website
-        var darkMode = Cookie.Get("DarkMode");
-        if (darkMode is not null)
-        {
-            switch (darkMode.Value)
-            {
-                case "night":
-                    _darkModeIcon = IconData.DarkThemeNight;
-                    _darkModeTooltip = "Switch to Light Theme";
-                    break;
-                case "day":
-
-                    _darkModeIcon = IconData.DarkThemeDay;
-                    _darkModeTooltip = "Switch to Auto Theme";
-                    break;
-                default:
-                    _darkModeIcon = IconData.DarkThemeAuto;
-                    _darkModeTooltip = "Switch to Dark Theme";
-                    break;
-            }
-        }
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        var darkTheme = Cookie.Get("DarkMode");
-        if (darkTheme is not null)
-            if (darkTheme.Value == "night")
-            {
-                DarkMode = true;
-                await DarkModeChanged.InvokeAsync(DarkMode);
-            }
-            else if (darkTheme.Value == "day")
-            {
-                DarkMode = false;
-                await DarkModeChanged.InvokeAsync(DarkMode);
-            }
     }
 
     void IDisposable.Dispose()
@@ -171,55 +117,5 @@
         }
 
         DrawerRightOpenChanged.InvokeAsync(DrawerRightOpen);
-    }
-
-    async Task DarkTheme()
-    {
-        if (_darkTheme is null)
-        {
-            DarkMode = true;
-            await DarkModeChanged.InvokeAsync(DarkMode);
-
-            _darkTheme = true;
-            _darkModeIcon = IconData.DarkThemeNight;
-            _darkModeTooltip = "Switch to Light Theme";
-
-            await Cookie.SetAsync("DarkMode", "night");
-        }
-        else if (_darkTheme == true)
-        {
-            DarkMode = false;
-            await DarkModeChanged.InvokeAsync(DarkMode);
-
-            _darkTheme = false;
-            _darkModeIcon = IconData.DarkThemeDay;
-            _darkModeTooltip = "Switch to Auto Theme";
-
-            await Cookie.SetAsync("DarkMode", "day");
-        }
-        else
-        {
-            DarkMode = await MudThemeProvider.GetSystemPreference();
-            await DarkModeChanged.InvokeAsync(DarkMode);
-
-            _darkTheme = null;
-            _darkModeIcon = IconData.DarkThemeAuto;
-            _darkModeTooltip = "Switch to Dark Theme";
-
-            await Cookie.SetAsync("DarkMode", "auto");
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            var darkTheme = Cookie.Get("DarkMode");
-            if (darkTheme is null || darkTheme.Value == "auto")
-            {
-                DarkMode = await MudThemeProvider.GetSystemPreference();
-                await DarkModeChanged.InvokeAsync(DarkMode);
-            }
-        }
     }
 }

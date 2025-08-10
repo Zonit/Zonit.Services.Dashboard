@@ -4,6 +4,7 @@
 @using Zonit.Extensions.Website.Abstractions.Navigations.Types
 
 @using Zonit.Services.Dashboard
+@using Zonit.Services.Dashboard.Areas.Dashboard.Components
 
 @using Data
 
@@ -22,7 +23,7 @@
         {
             <MudProgressLinear Color="Color.Primary" Indeterminate="true"  Style="z-index: 2;" Size="Size.Small" />
         }
-        <Navbar MudThemeProvider=@_mudThemeProvider Breadcrumbs=@_breadcrumbItems @bind-DrawerOpen=@_drawerOpen @bind-DrawerRightOpen=@_drawerRightOpen @bind-DarkMode=@_isDarkMode Width="@_width" Hegith="@_height" />
+        <Navbar MudThemeProvider=@_mudThemeProvider Breadcrumbs=@_breadcrumbItems @bind-DrawerOpen=@_drawerOpen @bind-DrawerRightOpen=@_drawerRightOpen Width="@_width" Hegith="@_height" />
 
         <MudSwipeArea OnSwipeEnd="@OnSwipe" Style="width: 100%; touch-action: pan-y" PreventDefault="false">
             <MudDrawer @bind-Open="_drawerOpen" Variant="_drawerVariant" OpenMiniOnHover="_drawerOpenMin" Anchor="Anchor.Start" Elevation="2">
@@ -71,6 +72,8 @@
                             <MudDivider Class="my-2" />
                         }
                     </ExtensionView>
+
+                    <ThemeSelector MudThemeProvider="@_mudThemeProvider" @bind-DarkMode="@_isDarkMode" />
 
                     <ExtensionView Name="@Extensions.Organizations">
                         <ChangeOrganization />
