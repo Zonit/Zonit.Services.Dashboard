@@ -15,6 +15,7 @@
         <AuthorizeView Policy="@nav.Permission" Context="navContext">
             @if (nav.Children is null && nav.Link is not null)
             {
+                @* Pojedynczy link bez grupy *@
                 <MudNavLink Href="@nav.Link.Url"
                             Match="NavLinkMatch.Prefix"
                             Target="@nav.Link.Target"
@@ -24,28 +25,31 @@
             }
             else if (nav.Children is not null)
             {
-                <MudNavGroup Title="@Culture.Translate(nav.Title)"
-                                Icon="@nav.Icon"
-                                Expanded="@nav.Expanded">
-                    @foreach (var link in nav.Children.OrderBy(x => x.Order).ToList())
-                    {
-                        <AuthorizeView Policy="@link.Permission" Context="linkContext">
-                            <MudNavLink Href="@link.Url"
-                                        Match="@(link.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)"
-                                        Target="@link.Target"
-                                        Icon="@link.Icon">
-                                @Culture.Translate(link.Title)
-                            </MudNavLink>
-                        </AuthorizeView>
-                    }
-                </MudNavGroup>
+                @* Nagłówek grupy *@
+                <MudText Typo="Typo.overline" 
+                         Class="px-4 pt-4 pb-1 mud-text-secondary" 
+                         Style="font-weight: 500; font-size: 0.75rem; letter-spacing: 0.08em;">
+                    @Culture.Translate(nav.Title)
+                </MudText>
+                
+                @* Linki w grupie *@
+                @foreach (var link in nav.Children.OrderBy(x => x.Order).ToList())
+                {
+                    <AuthorizeView Policy="@link.Permission" Context="linkContext">
+                        <MudNavLink Href="@link.Url"
+                                    Match="@(link.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)"
+                                    Target="@link.Target"
+                                    Icon="@link.Icon"
+                                    Class="my-1">
+                            @Culture.Translate(link.Title)
+                        </MudNavLink>
+                    </AuthorizeView>
+                }
+                
+                @* Divider po grupie *@
+                <MudDivider Class="my-3" />
             }
         </AuthorizeView>
-    }
-
-    @if (NavItems.Count > 0)
-    {
-        <MudDivider Class="my-2" />
     }
 }
 

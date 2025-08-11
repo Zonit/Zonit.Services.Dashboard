@@ -15,6 +15,40 @@ body {
   font-family: 'Inter', 'Roboto', system-ui, sans-serif;
 }
 
+/* Style dla grupowanych nagłówków nawigacji */
+.mud-nav-menu .mud-typography-overline {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: var(--mud-palette-text-secondary) !important;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Styl dla linków nawigacyjnych w grupach */
+.mud-nav-menu .mud-nav-link {
+  margin: 0.125rem 0;
+  border-radius: var(--border-radius-sm);
+  transition: all var(--transition-speed) ease;
+}
+
+.mud-nav-menu .mud-nav-link:hover {
+  background-color: rgba(var(--mud-palette-primary-rgb), 0.08);
+  transform: translateX(2px);
+}
+
+.mud-nav-menu .mud-nav-link.active {
+  background-color: rgba(var(--mud-palette-primary-rgb), 0.12);
+  color: var(--mud-palette-primary);
+}
+
+/* Separatory między grupami */
+.mud-nav-menu .mud-divider {
+  margin: 1rem 0;
+  opacity: 0.6;
+}
+
 /* Style dla panelu AI */
 .ai-panel {
   border-radius: var(--border-radius-lg);
