@@ -7,9 +7,11 @@
 @using Zonit.Services.Dashboard.Areas.Dashboard.Components
 
 @using Data
+@using Zonit.Services.Dashboard.Components
 
 @inject ICultureProvider Culture
 @inject IAuthenticatedProvider Authenticated
+@inject IExtensionManager ExtensionManager
 
 <MudThemeProvider Theme="@Theme.MainLayout" @ref="@_mudThemeProvider" IsDarkMode="_isDarkMode" />  @* @bind-IsDarkMode="@_isDarkMode" *@
 <MudDialogProvider FullWidth="true" Position="DialogPosition.Center" MaxWidth="MaxWidth.ExtraSmall" CloseOnEscapeKey="true" />
@@ -84,11 +86,22 @@
                     </ExtensionView>
 
                     <ExtensionView Name="@Extensions.Cultures">
-                        <ChangeCulture />
+                        <CultureButton />
                     </ExtensionView>
 
                     <Nav AreaType="AreaType" Position="right" />
 
+
+                    @* <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Row="true" Spacing="8" Class="pa-2 pb-4" Style="fill: var(--mud-palette-text-secondary)">
+                        <MudTooltip Text="@Culture.Translate("Change language")" Placement="Placement.Top">
+                            <MudButton Variant="Variant.Text"
+                                       StartIcon="@Zonit.Services.Dashboard.Components.IconData.Language"
+                                       Color="Color.Inherit" Style="font-size: clamp(0.7rem, 2vw, 0.75rem);"
+                                       OnClick="@(() => ExtensionManager.Drawer(Extensions.Cultures).Toggle())">
+                                @Culture.Translate("Language")
+                            </MudButton>
+                        </MudTooltip>
+                    </MudStack> *@
                 </MudNavMenu>
             </MudDrawer>
 
@@ -108,6 +121,10 @@
 
         <ExtensionView Name="@Extensions.Task">
             <TaskDrawer />
+        </ExtensionView>
+
+        <ExtensionView Name="@Extensions.Cultures">
+            <CultureDrawer />
         </ExtensionView>
 
 

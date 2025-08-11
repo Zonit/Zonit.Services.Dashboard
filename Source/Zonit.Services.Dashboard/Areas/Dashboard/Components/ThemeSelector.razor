@@ -39,7 +39,7 @@
     <MudNavMenu>
         <MudPaper Elevation="0" Class="px-6 py-2">
             <MudList T=string SelectedValueChanged="@OnThemeChanged" SelectedValue="@_selectedThemeValue">
-                <MudListItem Icon="@IconData.DarkThemeAuto" Value="@("auto")">@Culture.Translate("Auto")</MudListItem>
+                <MudListItem Icon="@IconData.DarkThemeAuto" Value="@("auto")">@Culture.Translate("Automatic")</MudListItem>
                 <MudListItem Icon="@IconData.DarkThemeDay" Value="@("day")">@Culture.Translate("Light")</MudListItem>
                 <MudListItem Icon="@IconData.DarkThemeNight" Value="@("night")">@Culture.Translate("Dark")</MudListItem>
             </MudList>
@@ -59,7 +59,7 @@
 
     private string _selectedThemeValue = "auto";
     private string _currentThemeIcon = IconData.DarkThemeAuto;
-    private string _currentThemeLabel = "Auto";
+    private string _currentThemeLabel = "Automatic";
     private bool open = false;
 
     protected override void OnInitialized()
@@ -134,7 +134,7 @@
         {
             "night" => (IconData.DarkThemeNight, "Dark"),
             "day" => (IconData.DarkThemeDay, "Light"),
-            _ => (IconData.DarkThemeAuto, "Auto")
+            _ => (IconData.DarkThemeAuto, "Automatic")
         };
     }
 

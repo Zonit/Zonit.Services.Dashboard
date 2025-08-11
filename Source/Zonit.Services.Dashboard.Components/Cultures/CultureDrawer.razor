@@ -30,20 +30,45 @@
         </MudDrawerHeader>
         
         <MudNavMenu>
-            <MudPaper Elevation="0" Class="px-6 py-2">
+            <div class="px-6 py-2">
+                <MudTextField @bind-Value="searchText" 
+                              Placeholder="@Culture.Translate("Search languages...")"
+                              Variant="Variant.Outlined" 
+                              Adornment="Adornment.Start" 
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Margin="Margin.Dense"
+                              Class="mb-3"
+                              Clearable="true"
+                              Immediate="true" />
+                
                 <MudList T=string SelectedValueChanged="(async (e) => await SwitchAsync(e))" SelectedValue="@Culture.GetCulture">
-                    @foreach(var culture in CultureManager.SupportedCultures)
+                    @foreach(var culture in FilteredCultures)
                     {
-                        <MudListItem Icon="@culture.IconFlag" Value="@culture.Code">@Culture.Translate(culture.EnglishName)</MudListItem>
+                        <MudListItem Icon="@((string)culture.IconFlag)" Value="@((string)culture.Code)">@Culture.Translate((string)culture.EnglishName)</MudListItem>
                     }
                 </MudList>
-            </MudPaper>
+                
+                @if (!FilteredCultures.Any() && !string.IsNullOrWhiteSpace(searchText))
+                {
+                    <MudText Typo="Typo.body2" Class="text-center pa-4" Style="color: gray;">
+                        @Culture.Translate("No languages found")
+                    </MudText>
+                }
+            </div>
         </MudNavMenu>
     </MudDrawer>
 }
 
 @code {
     LanguageModel currentLanguage { get; set; } = null!;
+    string searchText = string.Empty;
+
+    private IEnumerable<dynamic> FilteredCultures => 
+        string.IsNullOrWhiteSpace(searchText) 
+            ? CultureManager.SupportedCultures ?? Enumerable.Empty<dynamic>()
+            : (CultureManager.SupportedCultures ?? Enumerable.Empty<dynamic>())
+                .Where(c => Culture.Translate((string)c.EnglishName).Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                           ((string)c.EnglishName).Contains(searchText, StringComparison.OrdinalIgnoreCase));
 
     protected override void OnInitialized()
     {
