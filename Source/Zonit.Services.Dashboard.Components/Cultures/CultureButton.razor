@@ -39,16 +39,22 @@
 
     protected override void OnInitialized()
     {
-        Culture.OnChange += StateHasChanged;
+        Culture.OnChange += OnCultureChanged;
         ExtensionManager.Drawer(ExtensionName)
             .OnChange += StateHasChanged;
         
         currentLanguage = Language.GetByCode(Culture.GetCulture);
     }
 
+    private void OnCultureChanged()
+    {
+        currentLanguage = Language.GetByCode(Culture.GetCulture);
+        StateHasChanged();
+    }
+
     public void Dispose()
     {
-        Culture.OnChange -= StateHasChanged;
+        Culture.OnChange -= OnCultureChanged;
         ExtensionManager.Drawer(ExtensionName)
             .OnChange -= StateHasChanged;
     }

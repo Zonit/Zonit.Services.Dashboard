@@ -22,7 +22,7 @@
     <PackageVersion Include="Microsoft.JSInterop" Version="10.0.0-preview.5.25277.114" />
   </ItemGroup>
   <ItemGroup>
-    <PackageVersion Include="MudBlazor" Version="8.7.0" />
+    <PackageVersion Include="MudBlazor" Version="8.11.0" />
     <PackageVersion Include="Zonit.SDK.Website" Version="0.1.16" />
     <PackageVersion Include="Zonit.Extensions.Website" Version="0.1.25" />
     <PackageVersion Include="Zonit.Services.EventMessage.Abstractions" Version="0.1.10" />
