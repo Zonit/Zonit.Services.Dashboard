@@ -24,7 +24,7 @@
   <ItemGroup>
     <PackageVersion Include="MudBlazor" Version="8.11.0" />
     <PackageVersion Include="Zonit.SDK.Website" Version="0.1.16" />
-    <PackageVersion Include="Zonit.Extensions.Website" Version="0.1.25" />
+    <PackageVersion Include="Zonit.Extensions.Website" Version="0.1.27" />
     <PackageVersion Include="Zonit.Services.EventMessage.Abstractions" Version="0.1.10" />
   </ItemGroup>
 </Project>
