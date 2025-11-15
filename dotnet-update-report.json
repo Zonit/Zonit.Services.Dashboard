@@ -1,56 +1,76 @@
 {
-  "ChangeSummary": [
-    "Microsoft.AspNetCore.Components.Web [net10.0]: 10.0.0-preview.5.25277.114 → 10.0.0",
-    "Microsoft.AspNetCore.Components.Web [net8.0]: 8.0.16 → 8.0.22",
-    "Microsoft.AspNetCore.Components.Web [net9.0]: 9.0.6 → 9.0.11",
-    "Microsoft.Extensions.DependencyInjection.Abstractions [net10.0]: 10.0.0-preview.5.25277.114 → 10.0.0",
-    "Microsoft.Extensions.DependencyInjection.Abstractions [net9.0]: 9.0.6 → 9.0.11"
-  ],
-  "Timestamp": "2025-11-15 19:16:00",
-  "PackagesFound": 15,
+  "ProjectsFound": 7,
   "TargetFrameworks": [
     "net8.0",
     "net9.0",
     "net10.0"
   ],
-  "PackageChanges": [
-    {
-      "Package": "Microsoft.AspNetCore.Components.Web",
-      "Framework": "net8.0",
-      "OldVersion": "8.0.16",
-      "NewVersion": "8.0.22"
-    },
-    {
-      "Package": "Microsoft.AspNetCore.Components.Web",
-      "Framework": "net9.0",
-      "OldVersion": "9.0.6",
-      "NewVersion": "9.0.11"
-    },
-    {
-      "Package": "Microsoft.Extensions.DependencyInjection.Abstractions",
-      "Framework": "net9.0",
-      "OldVersion": "9.0.6",
-      "NewVersion": "9.0.11"
-    },
-    {
-      "Package": "Microsoft.AspNetCore.Components.Web",
-      "Framework": "net10.0",
-      "OldVersion": "10.0.0-preview.5.25277.114",
-      "NewVersion": "10.0.0"
-    },
-    {
-      "Package": "Microsoft.Extensions.DependencyInjection.Abstractions",
-      "Framework": "net10.0",
-      "OldVersion": "10.0.0-preview.5.25277.114",
-      "NewVersion": "10.0.0"
-    }
-  ],
+  "Timestamp": "2025-11-15 20:46:27",
+  "ChangeSummaryText": "Microsoft.AspNetCore.Http.Abstractions : 2.3.0 → 2\nMudBlazor : 8.11.0 → 8\nMudBlazor.Translations : 2.5.0 → 2\nZonit.Extensions.Cultures : 0.1.7 → 0\nZonit.Extensions.Identity : 0.1.6 → 0\nZonit.Extensions.Organizations : 0.1.8 → 0\nZonit.Extensions.Projects : 0.1.4 → 0\nZonit.Extensions.Website : 0.1.27 → 0\nZonit.Services.EventMessage : 0.1.10 → 0",
   "Summary": {
-    "ProjectsUpdated": 7,
+    "FrameworkSpecificPackages": 4,
     "FrameworksSet": "net8.0;net9.0;net10.0",
     "PackagesConfigured": 15,
-    "PackagesChanged": 5,
-    "DirectoryPackagesPropsUpdated": true
+    "DirectoryPackagesPropsUpdated": true,
+    "CommonPackages": 11,
+    "PackagesChanged": 9,
+    "ProjectsUpdated": 7
   },
-  "ProjectsFound": 7
+  "PackageChanges": [
+    {
+      "Package": "Microsoft.AspNetCore.Http.Abstractions",
+      "Framework": "all",
+      "OldVersion": "2.3.0",
+      "NewVersion": "2"
+    },
+    {
+      "Package": "MudBlazor",
+      "Framework": "all",
+      "OldVersion": "8.11.0",
+      "NewVersion": "8"
+    },
+    {
+      "Package": "MudBlazor.Translations",
+      "Framework": "all",
+      "OldVersion": "2.5.0",
+      "NewVersion": "2"
+    },
+    {
+      "Package": "Zonit.Extensions.Cultures",
+      "Framework": "all",
+      "OldVersion": "0.1.7",
+      "NewVersion": "0"
+    },
+    {
+      "Package": "Zonit.Extensions.Identity",
+      "Framework": "all",
+      "OldVersion": "0.1.6",
+      "NewVersion": "0"
+    },
+    {
+      "Package": "Zonit.Extensions.Organizations",
+      "Framework": "all",
+      "OldVersion": "0.1.8",
+      "NewVersion": "0"
+    },
+    {
+      "Package": "Zonit.Extensions.Projects",
+      "Framework": "all",
+      "OldVersion": "0.1.4",
+      "NewVersion": "0"
+    },
+    {
+      "Package": "Zonit.Extensions.Website",
+      "Framework": "all",
+      "OldVersion": "0.1.27",
+      "NewVersion": "0"
+    },
+    {
+      "Package": "Zonit.Services.EventMessage",
+      "Framework": "all",
+      "OldVersion": "0.1.10",
+      "NewVersion": "0"
+    }
+  ],
+  "PackagesFound": 15
 }
