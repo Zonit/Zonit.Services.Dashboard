@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.SDK.Razor">
+<Project Sdk="Microsoft.NET.SDK.Razor">
 
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />

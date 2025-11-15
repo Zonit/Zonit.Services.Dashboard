@@ -1,37 +1,31 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
-	
-	<PropertyGroup>
-		<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
-		<PackageReference Include="MudBlazor" />
-		<PackageReference Include="MudBlazor.Translations" />
-		<!--<PackageReference Include="Zonit.SDK.Website" />-->
-		<PackageReference Include="Zonit.Extensions.Cultures" />
-		<PackageReference Include="Zonit.Extensions.Identity" />
-		<PackageReference Include="Zonit.Extensions.Organizations" />
-		<PackageReference Include="Zonit.Extensions.Projects" />
-		<PackageReference Include="Zonit.Extensions.Website" />
-		<PackageReference Include="Zonit.Services.EventMessage" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="Areas\Dashboard\Components\CultureManager\" />
-		<Folder Include="Areas\Dashboard\Components\ProjectManager\" />
-		<Folder Include="Areas\Dashboard\Components\OrganizationManager\" />
-		<Folder Include="Middlewares\" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <ProjectReference Include="..\Zonit.Services.Dashboard.Abstractions\Zonit.Services.Dashboard.Abstractions.csproj" />
-	  <ProjectReference Include="..\Zonit.Services.Dashboard.Application\Zonit.Services.Dashboard.Application.csproj" />
-	  <ProjectReference Include="..\Zonit.Services.Dashboard.Components\Zonit.Services.Dashboard.Components.csproj" />
-	</ItemGroup>
-
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
+    <PackageReference Include="MudBlazor" />
+    <PackageReference Include="MudBlazor.Translations" />
+    <!--<PackageReference Include="Zonit.SDK.Website" />-->
+    <PackageReference Include="Zonit.Extensions.Cultures" />
+    <PackageReference Include="Zonit.Extensions.Identity" />
+    <PackageReference Include="Zonit.Extensions.Organizations" />
+    <PackageReference Include="Zonit.Extensions.Projects" />
+    <PackageReference Include="Zonit.Extensions.Website" />
+    <PackageReference Include="Zonit.Services.EventMessage" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Areas\Dashboard\Components\CultureManager\" />
+    <Folder Include="Areas\Dashboard\Components\ProjectManager\" />
+    <Folder Include="Areas\Dashboard\Components\OrganizationManager\" />
+    <Folder Include="Middlewares\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Zonit.Services.Dashboard.Abstractions\Zonit.Services.Dashboard.Abstractions.csproj" />
+    <ProjectReference Include="..\Zonit.Services.Dashboard.Application\Zonit.Services.Dashboard.Application.csproj" />
+    <ProjectReference Include="..\Zonit.Services.Dashboard.Components\Zonit.Services.Dashboard.Components.csproj" />
+  </ItemGroup>
 </Project>
