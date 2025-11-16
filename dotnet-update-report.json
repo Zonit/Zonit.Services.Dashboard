@@ -1,56 +1,21 @@
 {
-  "ChangeSummary": [
-    "Microsoft.AspNetCore.Components.Web [net10.0]: 10.0.0-preview.5.25277.114 → 10.0.0",
-    "Microsoft.AspNetCore.Components.Web [net8.0]: 8.0.16 → 8.0.22",
-    "Microsoft.AspNetCore.Components.Web [net9.0]: 9.0.6 → 9.0.11",
-    "Microsoft.Extensions.DependencyInjection.Abstractions [net10.0]: 10.0.0-preview.5.25277.114 → 10.0.0",
-    "Microsoft.Extensions.DependencyInjection.Abstractions [net9.0]: 9.0.6 → 9.0.11"
-  ],
-  "Timestamp": "2025-11-15 19:16:00",
-  "PackagesFound": 15,
+  "PackageChanges": [],
+  "Summary": {
+    "PackagesConfigured": 15,
+    "DirectoryPackagesPropsUpdated": true,
+    "FrameworkSpecificPackages": 0,
+    "FrameworksSet": "net8.0;net9.0;net10.0",
+    "PackagesChanged": 0,
+    "ProjectsUpdated": 7,
+    "CommonPackages": 15
+  },
   "TargetFrameworks": [
     "net8.0",
     "net9.0",
     "net10.0"
   ],
-  "PackageChanges": [
-    {
-      "Package": "Microsoft.AspNetCore.Components.Web",
-      "Framework": "net8.0",
-      "OldVersion": "8.0.16",
-      "NewVersion": "8.0.22"
-    },
-    {
-      "Package": "Microsoft.AspNetCore.Components.Web",
-      "Framework": "net9.0",
-      "OldVersion": "9.0.6",
-      "NewVersion": "9.0.11"
-    },
-    {
-      "Package": "Microsoft.Extensions.DependencyInjection.Abstractions",
-      "Framework": "net9.0",
-      "OldVersion": "9.0.6",
-      "NewVersion": "9.0.11"
-    },
-    {
-      "Package": "Microsoft.AspNetCore.Components.Web",
-      "Framework": "net10.0",
-      "OldVersion": "10.0.0-preview.5.25277.114",
-      "NewVersion": "10.0.0"
-    },
-    {
-      "Package": "Microsoft.Extensions.DependencyInjection.Abstractions",
-      "Framework": "net10.0",
-      "OldVersion": "10.0.0-preview.5.25277.114",
-      "NewVersion": "10.0.0"
-    }
-  ],
-  "Summary": {
-    "ProjectsUpdated": 7,
-    "FrameworksSet": "net8.0;net9.0;net10.0",
-    "PackagesConfigured": 15,
-    "PackagesChanged": 5,
-    "DirectoryPackagesPropsUpdated": true
-  },
-  "ProjectsFound": 7
+  "ChangeSummaryText": "No package version changes - this might be a new setup or no updates available",
+  "PackagesFound": 15,
+  "ProjectsFound": 7,
+  "Timestamp": "2025-11-16 16:18:40"
 }
