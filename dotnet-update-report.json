@@ -1,56 +1,94 @@
 {
-  "ChangeSummary": [
-    "Microsoft.AspNetCore.Components.Web [net10.0]: 10.0.0-preview.5.25277.114 → 10.0.0",
-    "Microsoft.AspNetCore.Components.Web [net8.0]: 8.0.16 → 8.0.22",
-    "Microsoft.AspNetCore.Components.Web [net9.0]: 9.0.6 → 9.0.11",
-    "Microsoft.Extensions.DependencyInjection.Abstractions [net10.0]: 10.0.0-preview.5.25277.114 → 10.0.0",
-    "Microsoft.Extensions.DependencyInjection.Abstractions [net9.0]: 9.0.6 → 9.0.11"
-  ],
-  "Timestamp": "2025-11-15 19:16:00",
-  "PackagesFound": 15,
   "TargetFrameworks": [
     "net8.0",
     "net9.0",
     "net10.0"
   ],
+  "ProjectsFound": 7,
+  "Summary": {
+    "CommonPackages": 12,
+    "PackagesConfigured": 15,
+    "FrameworkSpecificPackages": 3,
+    "DirectoryPackagesPropsUpdated": true,
+    "PackagesChanged": 12,
+    "FrameworksSet": "net8.0;net9.0;net10.0",
+    "ProjectsUpdated": 7
+  },
   "PackageChanges": [
     {
-      "Package": "Microsoft.AspNetCore.Components.Web",
-      "Framework": "net8.0",
-      "OldVersion": "8.0.16",
-      "NewVersion": "8.0.22"
+      "Package": "Microsoft.AspNetCore.Http.Abstractions",
+      "Framework": "common",
+      "OldVersion": "2.3.0",
+      "NewVersion": "2"
     },
     {
-      "Package": "Microsoft.AspNetCore.Components.Web",
-      "Framework": "net9.0",
-      "OldVersion": "9.0.6",
-      "NewVersion": "9.0.11"
+      "Package": "Microsoft.JSInterop",
+      "Framework": "common",
+      "OldVersion": "(new)",
+      "NewVersion": "1"
     },
     {
-      "Package": "Microsoft.Extensions.DependencyInjection.Abstractions",
-      "Framework": "net9.0",
-      "OldVersion": "9.0.6",
-      "NewVersion": "9.0.11"
+      "Package": "MudBlazor",
+      "Framework": "common",
+      "OldVersion": "8.11.0",
+      "NewVersion": "8"
     },
     {
-      "Package": "Microsoft.AspNetCore.Components.Web",
-      "Framework": "net10.0",
-      "OldVersion": "10.0.0-preview.5.25277.114",
-      "NewVersion": "10.0.0"
+      "Package": "MudBlazor.Translations",
+      "Framework": "common",
+      "OldVersion": "2.5.0",
+      "NewVersion": "2"
     },
     {
-      "Package": "Microsoft.Extensions.DependencyInjection.Abstractions",
-      "Framework": "net10.0",
-      "OldVersion": "10.0.0-preview.5.25277.114",
-      "NewVersion": "10.0.0"
+      "Package": "Zonit.Extensions.Cultures",
+      "Framework": "common",
+      "OldVersion": "0.1.7",
+      "NewVersion": "0"
+    },
+    {
+      "Package": "Zonit.Extensions.Identity",
+      "Framework": "common",
+      "OldVersion": "0.1.6",
+      "NewVersion": "0"
+    },
+    {
+      "Package": "Zonit.Extensions.Organizations",
+      "Framework": "common",
+      "OldVersion": "0.1.8",
+      "NewVersion": "0"
+    },
+    {
+      "Package": "Zonit.Extensions.Projects",
+      "Framework": "common",
+      "OldVersion": "0.1.4",
+      "NewVersion": "0"
+    },
+    {
+      "Package": "Zonit.Extensions.Website",
+      "Framework": "common",
+      "OldVersion": "0.1.27",
+      "NewVersion": "0"
+    },
+    {
+      "Package": "Zonit.SDK.Website",
+      "Framework": "common",
+      "OldVersion": "(new)",
+      "NewVersion": "0"
+    },
+    {
+      "Package": "Zonit.Services.EventMessage",
+      "Framework": "common",
+      "OldVersion": "0.1.10",
+      "NewVersion": "0"
+    },
+    {
+      "Package": "Zonit.Services.EventMessage.Abstractions",
+      "Framework": "common",
+      "OldVersion": "(new)",
+      "NewVersion": "0"
     }
   ],
-  "Summary": {
-    "ProjectsUpdated": 7,
-    "FrameworksSet": "net8.0;net9.0;net10.0",
-    "PackagesConfigured": 15,
-    "PackagesChanged": 5,
-    "DirectoryPackagesPropsUpdated": true
-  },
-  "ProjectsFound": 7
+  "PackagesFound": 15,
+  "Timestamp": "2025-11-17 05:24:54",
+  "ChangeSummaryText": "Microsoft.AspNetCore.Http.Abstractions : 2.3.0 -> 2\nMicrosoft.JSInterop : (new) -> 1\nMudBlazor : 8.11.0 -> 8\nMudBlazor.Translations : 2.5.0 -> 2\nZonit.Extensions.Cultures : 0.1.7 -> 0\nZonit.Extensions.Identity : 0.1.6 -> 0\nZonit.Extensions.Organizations : 0.1.8 -> 0\nZonit.Extensions.Projects : 0.1.4 -> 0\nZonit.Extensions.Website : 0.1.27 -> 0\nZonit.SDK.Website : (new) -> 0\nZonit.Services.EventMessage : 0.1.10 -> 0\nZonit.Services.EventMessage.Abstractions : (new) -> 0"
 }
