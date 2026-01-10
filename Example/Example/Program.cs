@@ -1,6 +1,4 @@
 using Example.Components;
-using Example.Events;
-using Example.Presentation.Manager.Pages;
 using Example.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
@@ -46,11 +44,10 @@ public class Program
         builder.Services.AddTransient<ISessionProvider, SessionService>();
         builder.Services.AddTransient<IOrganizationProjectManager, ProjectService>();
 
-        // EVENT MESSAGE
-        builder.Services.AddEventMessageService();
-
         builder.Services.AddExampleManager();
         builder.Services.AddExampleManagement();
+
+        builder.Services.AddTaskHandlers();
 
         builder.Services.AddLogging(logging =>
         {
@@ -67,20 +64,6 @@ public class Program
         StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);
 
         var app = builder.Build();
-        
-        // Register task handlers
-        var taskManager = app.Services.GetRequiredService<ITaskManager>();
-        var testEventHandler = new TestEvent();
-        taskManager.Subscribe<TestModel>(
-            async payload => await ((ITaskHandler<TestModel>)testEventHandler).HandleAsync(payload),
-            new TaskSubscriptionOptions
-            {
-                WorkerCount = testEventHandler.WorkerCount,
-                Timeout = testEventHandler.Timeout,
-                ProgressSteps = testEventHandler.ProgressSteps,
-                Title = testEventHandler.Title,
-                Description = testEventHandler.Description
-            });
         
         if (!app.Environment.IsDevelopment())
         {

@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\..\Zonit.Services.EventMessage\Source\Zonit.Messaging.Tasks\Zonit.Messaging.Tasks.csproj" />
+		<ProjectReference Include="..\..\..\Zonit.Services.EventMessage\Source\Zonit.Messaging.Tasks.SourceGenerators\Zonit.Messaging.Tasks.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\..\Example\Example.Presentation.Management\Example.Presentation.Management.csproj" />
 		<ProjectReference Include="..\..\Example\Example.Presentation.Manager\Example.Presentation.Manager.csproj" />
 		<ProjectReference Include="..\..\Source\Zonit.Services.Dashboard\Zonit.Services.Dashboard.csproj" />
