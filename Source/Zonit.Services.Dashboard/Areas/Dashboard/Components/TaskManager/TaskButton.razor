@@ -1,6 +1,6 @@
 ﻿@using Zonit.Extensions.Cultures
 @using Zonit.Extensions.Organizations
-@using Zonit.Services.EventMessage
+@using Zonit.Messaging.Tasks
 
 @using Zonit.Services.Dashboard.Data
 
@@ -28,13 +28,14 @@
 
 
 @code {
-    static readonly string ExtensionName = Extensions.Task;
-    private Timer? _refreshTimer;
-    private bool _disposed = false;
+static readonly string ExtensionName = Extensions.Task;
+private Timer? _refreshTimer;
+private bool _disposed = false;
+private IDisposable? _taskSubscription;
 
-    private IReadOnlyCollection<TaskEventModel> ActiveTasks { get; set; } = [];
-    private bool HasProcessingTasks => ActiveTasks.Any(t => t.Status == TaskEventStatus.Processing);
-    private bool HasFailedTasks => ActiveTasks.Any(t => t.Status == TaskEventStatus.Failed);
+    private IReadOnlyCollection<TaskState> ActiveTasks { get; set; } = [];
+    private bool HasProcessingTasks => ActiveTasks.Any(t => t.Status == Zonit.Messaging.Tasks.TaskStatus.Processing);
+    private bool HasFailedTasks => ActiveTasks.Any(t => t.Status == Zonit.Messaging.Tasks.TaskStatus.Failed);
 
     protected override void OnInitialized()
     {
@@ -47,28 +48,52 @@
         _refreshTimer = new Timer(OnTimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
 
         ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization?.Id);
-        TaskManager.EventOnChange(async task =>
+        
+        // Subscribe to task changes
+        if (Workspace.Organization?.Id != null)
         {
-            if (_disposed) return;
-            
-            if (task.ExtensionId != Workspace.Organization?.Id && task.ExtensionId != null)
-                return; // Ignoruj taski z innych organizacji
-
-            ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization?.Id);
-            
-            try
+            _taskSubscription = TaskManager.OnChange(Workspace.Organization.Id, task =>
             {
-                await InvokeAsync(StateHasChanged);
-            }
-            catch (ObjectDisposedException)
+                if (_disposed) return;
+                
+                ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization.Id);
+                
+                try
+                {
+                    InvokeAsync(StateHasChanged);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Component has been disposed, ignore
+                }
+                catch (InvalidOperationException)
+                {
+                    // Component is no longer in the render tree, ignore
+                }
+            });
+        }
+        else
+        {
+            _taskSubscription = TaskManager.OnChange(task =>
             {
-                // Component has been disposed, ignore
-            }
-            catch (InvalidOperationException)
-            {
-                // Component is no longer in the render tree, ignore
-            }
-        });
+                if (_disposed) return;
+                
+                ActiveTasks = TaskManager.GetActiveTasks();
+                
+                try
+                {
+                    InvokeAsync(StateHasChanged);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Component has been disposed, ignore
+                }
+                catch (InvalidOperationException)
+                {
+                    // Component is no longer in the render tree, ignore
+                }
+            });
+        }
     }
 
     private async void OnTimerCallback(object? state)
@@ -120,6 +145,9 @@
         Workspace.OnChange -= StateHasChanged;
         ExtensionManager.Drawer(ExtensionName)
             .OnChange -= StateHasChanged;
+            
+        _taskSubscription?.Dispose();
+        _taskSubscription = null;
             
         if (_refreshTimer != null)
         {

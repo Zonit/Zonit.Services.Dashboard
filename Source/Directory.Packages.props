@@ -4,7 +4,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyVersion>0.1.50</AssemblyVersion>
+    <AssemblyVersion>0.1.51</AssemblyVersion>
     <!-- Package info -->
     <FileVersion>$(AssemblyVersion)</FileVersion>
     <Version>$(AssemblyVersion)</Version>
@@ -25,12 +25,12 @@
     <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
     <PackageVersion Include="MudBlazor" Version="8.11.0" />
     <PackageVersion Include="MudBlazor.Translations" Version="2.5.0" />
-    <PackageVersion Include="Zonit.Extensions.Cultures" Version="0.1.7" />
-    <PackageVersion Include="Zonit.Extensions.Identity" Version="0.1.6" />
-    <PackageVersion Include="Zonit.Extensions.Organizations" Version="0.1.8" />
-    <PackageVersion Include="Zonit.Extensions.Projects" Version="0.1.4" />
-    <PackageVersion Include="Zonit.Extensions.Website" Version="0.1.27" />
-    <PackageVersion Include="Zonit.Services.EventMessage" Version="0.1.10" />
+    <PackageVersion Include="Zonit.Extensions.Cultures" Version="0.1.50" />
+    <PackageVersion Include="Zonit.Extensions.Identity" Version="0.1.50" />
+    <PackageVersion Include="Zonit.Extensions.Organizations" Version="0.1.51" />
+    <PackageVersion Include="Zonit.Extensions.Projects" Version="0.1.50" />
+    <PackageVersion Include="Zonit.Extensions.Website" Version="0.1.54" />
+    <PackageVersion Include="Zonit.Services.EventMessage" Version="1.0.2" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Readme.md" Pack="true" PackagePath="" Visible="false" />

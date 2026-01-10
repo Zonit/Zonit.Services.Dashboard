@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Zonit.Extensions.Website;
-using Zonit.Services.EventMessage;
+using Zonit.Messaging.Tasks;
 
 namespace Example.Presentation.Manager.Pages
 {
@@ -36,9 +36,18 @@ namespace Example.Presentation.Manager.Pages
 
         public void PublishTask()
         {
-            TaskProvider.Publish(new TestModel { 
-                Name = "test"
-            }, Workspace.Organization?.Id);
+            if (Workspace.Organization?.Id != null)
+            {
+                TaskProvider.Publish(new TestModel { 
+                    Name = "test"
+                }, Workspace.Organization.Id);
+            }
+            else
+            {
+                TaskProvider.Publish(new TestModel { 
+                    Name = "test"
+                });
+            }
         }
     }
 

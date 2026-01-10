@@ -6,7 +6,7 @@ using Zonit.Extensions.Organizations;
 using Zonit.Extensions.Website;
 using Zonit.Extensions.Website.Abstractions.Navigations.Types;
 using Zonit.Services.Dashboard.Abstractions;
-using Zonit.Services.EventMessage;
+using Zonit.Messaging.Tasks;
 
 namespace Zonit.Services.Dashboard.Areas.Dashboard.Layouts;
 
@@ -38,7 +38,8 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
     List<BreadcrumbItem>? _breadcrumbItems = null;
 
     public bool ProgressTask = false;
-    IReadOnlyCollection<TaskEventModel> _activeTasks = new List<TaskEventModel>();
+    IReadOnlyCollection<TaskState> _activeTasks = new List<TaskState>();
+    private IDisposable? _taskSubscription;
 
     private bool _disposed = false;
 
@@ -118,29 +119,53 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
         var activeTasks = TaskManager.GetActiveTasks(WorkspaceProvider.Organization?.Id);
         ProgressTask = activeTasks.Count > 0;
 
-        TaskManager.EventOnChange(async task => {
-            if (_disposed) return;
-            
-            if (task.ExtensionId != WorkspaceProvider.Organization?.Id && task.ExtensionId != null)
-                return; // Ignoruj taski z innych organizacji
-
-            // Pobierz aktualny stan aktywnych tasków po każdej zmianie
-            var activeTasks = TaskManager.GetActiveTasks(WorkspaceProvider.Organization?.Id);
-            ProgressTask = activeTasks.Count > 0;
-            
-            try
+        // Subscribe to task changes
+        if (WorkspaceProvider.Organization?.Id != null)
+        {
+            _taskSubscription = TaskManager.OnChange(WorkspaceProvider.Organization.Id, task =>
             {
-                await InvokeAsync(StateHasChanged);
-            }
-            catch (ObjectDisposedException)
+                if (_disposed) return;
+                
+                var activeTasks = TaskManager.GetActiveTasks(WorkspaceProvider.Organization.Id);
+                ProgressTask = activeTasks.Count > 0;
+                
+                try
+                {
+                    InvokeAsync(StateHasChanged);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Component has been disposed, ignore
+                }
+                catch (InvalidOperationException)
+                {
+                    // Component is no longer in the render tree, ignore
+                }
+            });
+        }
+        else
+        {
+            _taskSubscription = TaskManager.OnChange(task =>
             {
-                // Component has been disposed, ignore
-            }
-            catch (InvalidOperationException)
-            {
-                // Component is no longer in the render tree, ignore
-            }
-        });
+                if (_disposed) return;
+                
+                var activeTasks = TaskManager.GetActiveTasks();
+                ProgressTask = activeTasks.Count > 0;
+                
+                try
+                {
+                    InvokeAsync(StateHasChanged);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Component has been disposed, ignore
+                }
+                catch (InvalidOperationException)
+                {
+                    // Component is no longer in the render tree, ignore
+                }
+            });
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -157,6 +182,9 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
         
         Culture.OnChange -= StateHasChanged;
         BreadcrumbsProvider.OnChange -= StateHasChanged;
+        
+        _taskSubscription?.Dispose();
+        _taskSubscription = null;
 
         await BrowserViewportService.UnsubscribeAsync(this); 
     }

@@ -1,4 +1,6 @@
 using Example.Components;
+using Example.Events;
+using Example.Presentation.Manager.Pages;
 using Example.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
@@ -6,6 +8,7 @@ using Zonit.Extensions.Identity;
 using Zonit.Extensions.Organizations;
 using Zonit.Extensions.Projects;
 using Zonit.Extensions.Website;
+using Zonit.Messaging.Tasks;
 using Zonit.Services;
 using Zonit.Services.Dashboard;
 using Zonit.Services.Dashboard.DependencyInjection;
@@ -64,6 +67,21 @@ public class Program
         StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);
 
         var app = builder.Build();
+        
+        // Register task handlers
+        var taskManager = app.Services.GetRequiredService<ITaskManager>();
+        var testEventHandler = new TestEvent();
+        taskManager.Subscribe<TestModel>(
+            async payload => await ((ITaskHandler<TestModel>)testEventHandler).HandleAsync(payload),
+            new TaskSubscriptionOptions
+            {
+                WorkerCount = testEventHandler.WorkerCount,
+                Timeout = testEventHandler.Timeout,
+                ProgressSteps = testEventHandler.ProgressSteps,
+                Title = testEventHandler.Title,
+                Description = testEventHandler.Description
+            });
+        
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Error");
