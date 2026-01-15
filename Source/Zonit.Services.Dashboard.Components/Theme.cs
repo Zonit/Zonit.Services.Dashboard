@@ -6,7 +6,7 @@ public class Theme
 {
     public static MudTheme MainLayout => new()
     {
-        PaletteLight = new()
+        PaletteLight = new PaletteLight
         {
             // Główne kolory dla AI
             Primary = "#7764e5",          // Odcień fioletowy - główny kolor akcji
@@ -53,7 +53,7 @@ public class Theme
             RippleOpacity = 0.10,
             RippleOpacitySecondary = 0.38,
         },
-        PaletteDark = new()
+        PaletteDark = new PaletteDark
         {
             // Główne kolory dla AI - jaśniejsze w trybie ciemnym
             Primary = "#8a7deb",          // Jaśniejszy fiolet - główny kolor akcji
