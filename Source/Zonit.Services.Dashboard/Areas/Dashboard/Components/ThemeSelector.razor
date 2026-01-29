@@ -1,15 +1,22 @@
+@*
+    ThemeSelector - Theme and appearance settings component.
+    Allows users to select theme mode (Light/Dark/Auto) and theme style.
+*@
+
 @using Zonit.Extensions.Cultures
 @using Zonit.Extensions.Website
+@using Zonit.Services.Dashboard.Abstractions
 @using Zonit.Services.Dashboard.Data
 
 @implements IDisposable
 
 @inject ICultureProvider Culture
 @inject ICookieProvider Cookie
+@inject IThemeManager ThemeManager
 
 <MudTooltip Text="@Culture.Translate("Change theme")" Arrow="true" Placement="Placement.Top" RootStyle="width: 100%;">
     <MudButton Variant="Variant.Text" FullWidth="true" OnClick="OpenDrawer" Class="d-flex justify-center">
-        <MudGrid Justify="Justify.Center" AlignItems="Center">
+        <MudGrid Justify="Justify.Center" AlignItems="AlignItems.Center">
             <MudItem xs="2" Class="d-flex align-center">
                 <MudIcon Color="Color.Dark" Icon="@_currentThemeIcon" Size="Size.Small" />
             </MudItem>
@@ -27,22 +34,68 @@
 
 <MudDivider Class="my-2" />
 
-<MudDrawer @bind-Open="@open" Width="300px" Height="100%" Anchor="Anchor.End" Elevation="3" Variant="@DrawerVariant.Temporary">
+<MudDrawer @bind-Open="@_drawerOpen" Width="320px" Height="100%" Anchor="Anchor.End" Elevation="3" Variant="@DrawerVariant.Temporary">
     <MudDrawerHeader>
         <div Class="d-flex align-center justify-space-between flex-grow-1 gap-4">
-            <MudText Typo="Typo.h6">@Culture.Translate("Select theme")</MudText>
+            <MudText Typo="Typo.h6">@Culture.Translate("Appearance")</MudText>
             <MudIconButton OnClick="@(() => OpenDrawer())"
-                           Icon=@Icons.Material.Filled.Close
+                           Icon="@Icons.Material.Filled.Close"
                            aria-label="@Culture.Translate("Close")" />
         </div>
     </MudDrawerHeader>
+    
     <MudNavMenu>
-        <MudPaper Elevation="0" Class="px-6 py-2">
-            <MudList T=string SelectedValueChanged="@OnThemeChanged" SelectedValue="@_selectedThemeValue">
-                <MudListItem Icon="@IconData.DarkThemeAuto" Value="@("auto")">@Culture.Translate("Automatic")</MudListItem>
-                <MudListItem Icon="@IconData.DarkThemeDay" Value="@("day")">@Culture.Translate("Light")</MudListItem>
-                <MudListItem Icon="@IconData.DarkThemeNight" Value="@("night")">@Culture.Translate("Dark")</MudListItem>
+        @* Theme Mode Section *@
+        <MudPaper Elevation="0" Class="px-4 py-2">
+            <MudText Typo="Typo.overline" Class="mud-text-secondary">
+                @Culture.Translate("Mode")
+            </MudText>
+            <MudList T="string" SelectedValueChanged="@OnThemeModeChanged" SelectedValue="@_selectedModeValue" Class="py-0">
+                <MudListItem Icon="@IconData.DarkThemeAuto" Value="@("auto")" Class="rounded">
+                    @Culture.Translate("Automatic")
+                </MudListItem>
+                <MudListItem Icon="@IconData.DarkThemeDay" Value="@("day")" Class="rounded">
+                    @Culture.Translate("Light")
+                </MudListItem>
+                <MudListItem Icon="@IconData.DarkThemeNight" Value="@("night")" Class="rounded">
+                    @Culture.Translate("Dark")
+                </MudListItem>
             </MudList>
+        </MudPaper>
+
+        <MudDivider Class="my-2" />
+
+        @* Theme Style Section *@
+        <MudPaper Elevation="0" Class="px-4 py-2">
+            <MudText Typo="Typo.overline" Class="mud-text-secondary">
+                @Culture.Translate("Style")
+            </MudText>
+            <MudGrid Spacing="2" Class="mt-2">
+                @foreach (var theme in ThemeManager.Themes)
+                {
+                    var isSelected = theme.Id == ThemeManager.CurrentTheme.Id;
+                    var palette = ThemeManager.IsDarkMode && theme.DarkPalette is not null 
+                        ? theme.DarkPalette 
+                        : theme.LightPalette;
+                    
+                    <MudItem xs="4">
+                        <MudPaper Elevation="@(isSelected ? 3 : 0)" 
+                                  Class="@($"pa-2 rounded-lg cursor-pointer {(isSelected ? "mud-border-primary" : "")}")"
+                                  Style="@($"border: 2px solid {(isSelected ? palette.Primary : "transparent")}; transition: all 0.2s ease;")"
+                                  @onclick="@(() => OnThemeStyleChanged(theme.Id))">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                <div style="display: flex; gap: 2px;">
+                                    <div style="width: 16px; height: 16px; border-radius: 50%; background-color: @palette.Primary;"></div>
+                                    <div style="width: 16px; height: 16px; border-radius: 50%; background-color: @palette.Secondary;"></div>
+                                </div>
+                                <MudText Typo="Typo.caption" Align="Align.Center" Class="@(isSelected ? "mud-primary-text" : "")">
+                                    @Culture.Translate(theme.Name)
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
         </MudPaper>
     </MudNavMenu>
 </MudDrawer>
@@ -57,38 +110,52 @@
     [Parameter]
     public EventCallback<bool> DarkModeChanged { get; set; }
 
-    private string _selectedThemeValue = "auto";
+    private string _selectedModeValue = "auto";
     private string _currentThemeIcon = IconData.DarkThemeAuto;
     private string _currentThemeLabel = "Automatic";
-    private bool open = false;
+    private bool _drawerOpen = false;
 
     protected override void OnInitialized()
     {
         Culture.OnChange += StateHasChanged;
+        ThemeManager.OnThemeChanged += OnThemeManagerChanged;
         
         // Initialize theme state from cookie
         var darkMode = Cookie.Get("DarkMode");
         if (darkMode is not null)
         {
-            _selectedThemeValue = darkMode.Value;
+            _selectedModeValue = darkMode.Value;
             UpdateThemeDisplay();
         }
     }
 
     protected override async Task OnInitializedAsync()
     {
+        // Load saved theme from cookie
+        var savedTheme = Cookie.Get("ThemeId");
+        if (savedTheme is not null && !string.IsNullOrEmpty(savedTheme.Value))
+        {
+            ThemeManager.SetTheme(savedTheme.Value);
+        }
+        
         var darkTheme = Cookie.Get("DarkMode");
         if (darkTheme is not null)
         {
             if (darkTheme.Value == "night")
             {
+                ThemeManager.SetMode(ThemeMode.Dark);
                 DarkMode = true;
                 await DarkModeChanged.InvokeAsync(DarkMode);
             }
             else if (darkTheme.Value == "day")
             {
+                ThemeManager.SetMode(ThemeMode.Light);
                 DarkMode = false;
                 await DarkModeChanged.InvokeAsync(DarkMode);
+            }
+            else
+            {
+                ThemeManager.SetMode(ThemeMode.Auto);
             }
         }
     }
@@ -96,41 +163,55 @@
     public void Dispose()
     {
         Culture.OnChange -= StateHasChanged;
+        ThemeManager.OnThemeChanged -= OnThemeManagerChanged;
     }
 
-    void OpenDrawer()
-        => open = !open;
-
-    private async Task OnThemeChanged(string newValue)
+    private void OnThemeManagerChanged()
     {
-        _selectedThemeValue = newValue;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OpenDrawer()
+        => _drawerOpen = !_drawerOpen;
+
+    private async Task OnThemeModeChanged(string newValue)
+    {
+        _selectedModeValue = newValue;
         UpdateThemeDisplay();
 
         switch (newValue)
         {
             case "night":
+                ThemeManager.SetMode(ThemeMode.Dark);
                 DarkMode = true;
                 await DarkModeChanged.InvokeAsync(DarkMode);
                 await Cookie.SetAsync("DarkMode", "night");
                 break;
             case "day":
+                ThemeManager.SetMode(ThemeMode.Light);
                 DarkMode = false;
                 await DarkModeChanged.InvokeAsync(DarkMode);
                 await Cookie.SetAsync("DarkMode", "day");
                 break;
             case "auto":
+                ThemeManager.SetMode(ThemeMode.Auto);
                 DarkMode = await MudThemeProvider.GetSystemDarkModeAsync();
+                ThemeManager.UpdateSystemDarkMode(DarkMode);
                 await DarkModeChanged.InvokeAsync(DarkMode);
                 await Cookie.SetAsync("DarkMode", "auto");
                 break;
         }
+    }
 
-        open = false;
+    private async Task OnThemeStyleChanged(string themeId)
+    {
+        ThemeManager.SetTheme(themeId);
+        await Cookie.SetAsync("ThemeId", themeId);
     }
 
     private void UpdateThemeDisplay()
     {
-        (_currentThemeIcon, _currentThemeLabel) = _selectedThemeValue switch
+        (_currentThemeIcon, _currentThemeLabel) = _selectedModeValue switch
         {
             "night" => (IconData.DarkThemeNight, "Dark"),
             "day" => (IconData.DarkThemeDay, "Light"),
@@ -146,6 +227,7 @@
             if (darkTheme is null || darkTheme.Value == "auto")
             {
                 DarkMode = await MudThemeProvider.GetSystemDarkModeAsync();
+                ThemeManager.UpdateSystemDarkMode(DarkMode);
                 await DarkModeChanged.InvokeAsync(DarkMode);
             }
         }

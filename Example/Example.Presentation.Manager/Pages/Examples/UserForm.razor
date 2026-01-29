@@ -1,0 +1,268 @@
+@page "/examples/users/create"
+@page "/examples/users/{UserId:guid}/edit"
+@rendermode InteractiveServer
+
+<PageTitle>@(_isEditMode ? "Edit User" : "Create User")</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+    @* Breadcrumb *@
+    <MudBreadcrumbs Items="_breadcrumbs" Class="mb-4 px-0" />
+
+    @* Form Header *@
+    <div class="d-flex justify-space-between align-center mb-4">
+        <div>
+            <MudText Typo="Typo.h4">@(_isEditMode ? "Edit User" : "Create User")</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                @(_isEditMode ? "Update user information and permissions" : "Add a new team member to your organization")
+            </MudText>
+        </div>
+    </div>
+
+    <EditForm Model="_model" OnValidSubmit="OnSubmit">
+        <DataAnnotationsValidator />
+        
+        @* Basic Information Section *@
+        <MudPaper Elevation="0" Class="pa-6 mb-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+            <MudText Typo="Typo.h6" Class="mb-4">Basic Information</MudText>
+            
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_model.FirstName" Label="First Name" 
+                                  Variant="Variant.Outlined" Required="true" 
+                                  RequiredError="First name is required" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_model.LastName" Label="Last Name" 
+                                  Variant="Variant.Outlined" Required="true" 
+                                  RequiredError="Last name is required" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_model.Email" Label="Email Address" 
+                                  Variant="Variant.Outlined" InputType="InputType.Email"
+                                  Required="true" RequiredError="Email is required" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_model.Phone" Label="Phone Number" 
+                                  Variant="Variant.Outlined" 
+                                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Phone" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_model.Title" Label="Job Title" 
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+
+        @* Avatar Upload Section *@
+        <MudPaper Elevation="0" Class="pa-6 mb-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+            <MudText Typo="Typo.h6" Class="mb-4">Profile Photo</MudText>
+            
+            <div class="d-flex align-center gap-6">
+                <MudAvatar Size="Size.Large" Style="width: 100px; height: 100px;">
+                    @if (!string.IsNullOrEmpty(_model.AvatarUrl))
+                    {
+                        <MudImage Src="@_model.AvatarUrl" />
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" />
+                    }
+                </MudAvatar>
+                <div>
+                    <MudStack Row="true" Spacing="2" Class="mb-2">
+                        <MudFileUpload T="IBrowserFile" Accept=".png,.jpg,.jpeg,.gif" FilesChanged="OnAvatarUpload">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Upload">
+                                    Upload Photo
+                                </MudButton>
+                            </ActivatorContent>
+                        </MudFileUpload>
+                        @if (!string.IsNullOrEmpty(_model.AvatarUrl))
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="RemoveAvatar">
+                                Remove
+                            </MudButton>
+                        }
+                    </MudStack>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Allowed formats: JPG, PNG, GIF. Max size: 2MB
+                    </MudText>
+                </div>
+            </div>
+        </MudPaper>
+
+        @* Role & Permissions Section *@
+        <MudPaper Elevation="0" Class="pa-6 mb-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+            <MudText Typo="Typo.h6" Class="mb-4">Role & Permissions</MudText>
+            
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" @bind-Value="_model.Role" Label="Role" Variant="Variant.Outlined" Required="true">
+                        <MudSelectItem Value="@("Admin")">Admin</MudSelectItem>
+                        <MudSelectItem Value="@("Editor")">Editor</MudSelectItem>
+                        <MudSelectItem Value="@("Viewer")">Viewer</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" @bind-Value="_model.Department" Label="Department" Variant="Variant.Outlined">
+                        <MudSelectItem Value="@("Engineering")">Engineering</MudSelectItem>
+                        <MudSelectItem Value="@("Design")">Design</MudSelectItem>
+                        <MudSelectItem Value="@("Marketing")">Marketing</MudSelectItem>
+                        <MudSelectItem Value="@("Sales")">Sales</MudSelectItem>
+                        <MudSelectItem Value="@("HR")">Human Resources</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Additional Permissions</MudText>
+                    <MudStack Spacing="2">
+                        <MudCheckBox @bind-Value="_model.CanInviteMembers" Label="Can invite new team members" Color="Color.Primary" />
+                        <MudCheckBox @bind-Value="_model.CanManageProjects" Label="Can create and manage projects" Color="Color.Primary" />
+                        <MudCheckBox @bind-Value="_model.CanAccessBilling" Label="Can access billing information" Color="Color.Primary" />
+                        <MudCheckBox @bind-Value="_model.CanExportData" Label="Can export data and reports" Color="Color.Primary" />
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+
+        @* Notification Preferences *@
+        <MudPaper Elevation="0" Class="pa-6 mb-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+            <MudText Typo="Typo.h6" Class="mb-4">Notification Preferences</MudText>
+            
+            <MudStack Spacing="3">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.body1">Email Notifications</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Receive updates via email</MudText>
+                    </div>
+                    <MudSwitch @bind-Value="_model.EmailNotifications" Color="Color.Primary" />
+                </div>
+                <MudDivider />
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.body1">Push Notifications</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Receive browser push notifications</MudText>
+                    </div>
+                    <MudSwitch @bind-Value="_model.PushNotifications" Color="Color.Primary" />
+                </div>
+                <MudDivider />
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.body1">Weekly Digest</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Receive weekly summary reports</MudText>
+                    </div>
+                    <MudSwitch @bind-Value="_model.WeeklyDigest" Color="Color.Primary" />
+                </div>
+            </MudStack>
+        </MudPaper>
+
+        @* Form Actions *@
+        <div class="d-flex justify-space-between mb-6">
+            <MudButton Variant="Variant.Outlined" Href="/examples/users">Cancel</MudButton>
+            <MudStack Row="true" Spacing="2">
+                @if (_isEditMode)
+                {
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="ShowDeleteDialog">
+                        Delete User
+                    </MudButton>
+                }
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit" 
+                           Disabled="@_saving" StartIcon="@(_saving ? null : Icons.Material.Filled.Save)">
+                    @if (_saving)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>@(_isEditMode ? "Update User" : "Create User")</span>
+                    }
+                </MudButton>
+            </MudStack>
+        </div>
+    </EditForm>
+</MudContainer>
+
+@code {
+    public static string Route => "examples/users/create";
+    
+    [Parameter] public Guid? UserId { get; set; }
+    
+    private bool _isEditMode => UserId.HasValue;
+    private bool _saving = false;
+    private UserFormModel _model = new();
+
+    private List<BreadcrumbItem> _breadcrumbs = null!;
+
+    protected override void OnInitialized()
+    {
+        _breadcrumbs =
+        [
+            new("Users", "examples/users", false, Icons.Material.Filled.People),
+            new(_isEditMode ? "Edit User" : "Create User", null, true)
+        ];
+
+        if (_isEditMode)
+        {
+            // Load existing user data
+            _model = new UserFormModel
+            {
+                FirstName = "John",
+                LastName = "Smith",
+                Email = "john.smith@example.com",
+                Phone = "+1 234 567 890",
+                Title = "Product Designer",
+                Role = "Admin",
+                Department = "Design",
+                CanInviteMembers = true,
+                CanManageProjects = true,
+                EmailNotifications = true
+            };
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        _saving = true;
+        StateHasChanged();
+        
+        await Task.Delay(1500); // Simulate save
+        
+        _saving = false;
+        // Navigate back or show success message
+    }
+
+    private void OnAvatarUpload(IBrowserFile file)
+    {
+        // Handle file upload
+        _model.AvatarUrl = "https://via.placeholder.com/100";
+    }
+
+    private void RemoveAvatar()
+    {
+        _model.AvatarUrl = null;
+    }
+
+    private void ShowDeleteDialog()
+    {
+        // Show confirmation dialog
+    }
+
+    private class UserFormModel
+    {
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string? Phone { get; set; }
+        public string? Title { get; set; }
+        public string? AvatarUrl { get; set; }
+        public string Role { get; set; } = "Viewer";
+        public string? Department { get; set; }
+        public bool CanInviteMembers { get; set; }
+        public bool CanManageProjects { get; set; }
+        public bool CanAccessBilling { get; set; }
+        public bool CanExportData { get; set; }
+        public bool EmailNotifications { get; set; } = true;
+        public bool PushNotifications { get; set; }
+        public bool WeeklyDigest { get; set; }
+    }
+}

@@ -1,11 +1,10 @@
-﻿namespace Zonit.Services.Dashboard;
+namespace Zonit.Services.Dashboard.Abstractions;
 
 /// <summary>
-/// Legacy extension identifiers for backward compatibility.
-/// Consider using <see cref="Abstractions.DashboardExtensions"/> instead.
+/// Well-known extension identifiers.
+/// Use these constants when referencing built-in extensions.
 /// </summary>
-[Obsolete("Use DashboardExtensions from Zonit.Services.Dashboard.Abstractions namespace instead.")]
-public static class Extensions
+public static class DashboardExtensions
 {
     /// <summary>Culture/language selection extension.</summary>
     public const string Cultures = "cultures";
@@ -25,10 +24,15 @@ public static class Extensions
     /// <summary>Social media links extension.</summary>
     public const string SocialMedia = "socialmedia";
 
-    /// <summary>Background task manager extension (legacy name).</summary>
-    [Obsolete("Use Tasks instead.")]
-    public const string Task = "tasks";
-
     /// <summary>Background task manager extension.</summary>
     public const string Tasks = "tasks";
+
+    /// <summary>Theme selector extension.</summary>
+    public const string Theme = "theme";
+
+    /// <summary>Notifications extension.</summary>
+    public const string Notifications = "notifications";
+
+    /// <summary>Help and documentation extension.</summary>
+    public const string Help = "help";
 }

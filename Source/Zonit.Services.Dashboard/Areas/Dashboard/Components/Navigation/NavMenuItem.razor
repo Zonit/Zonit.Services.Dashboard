@@ -1,0 +1,161 @@
+@using Zonit.Extensions.Cultures
+@using Zonit.Services.Dashboard.Abstractions
+
+@inject ICultureProvider Culture
+
+@* 
+    NavMenuItem - Recursive navigation item component.
+    Supports: single links, expandable groups, and nested multi-level menus.
+*@
+
+@if (Item.IsExpandable)
+{
+    @* Expandable group with children - uses MudNavGroup *@
+    <MudNavGroup Title="@Culture.Translate(Item.Title)"              Icon="@GetIcon()"           IconColor="Color.Inherit"       Expanded="@_expanded"
+                 ExpandedChanged="@OnExpandedChanged"                 Disabled="@Item.Disabled"             Class="nav-group">
+        @if (Item.Children is not null)
+        {
+            @foreach (var child in Item.Children.OrderBy(x => x.Order))
+            {
+                <AuthorizeView Policy="@child.Permission" Context="childContext">
+                    <NavMenuItem Item="child" Level="@(Level + 1)" />
+                </AuthorizeView>
+            }
+        }
+    </MudNavGroup>
+}
+else if (Item.IsGroup && Item.Url is not null)
+{
+    @* Group header with link - shows as header text with link *@
+    <MudText Typo="Typo.overline"     Class="px-4 pt-4 pb-1 mud-text-secondary nav-group-header"
+             Style="font-weight: 500; font-size: 0.75rem; letter-spacing: 0.08em;">
+        <MudLink Href="@Item.Url"                Target="@Item.Target"              Color="Color.Inherit"                 Underline="Underline.None">
+            @Culture.Translate(Item.Title)
+        </MudLink>
+    </MudText>
+
+    @if (Item.Children is not null)
+    {
+        @foreach (var child in Item.Children.OrderBy(x => x.Order))
+        {
+            <AuthorizeView Policy="@child.Permission" Context="childContext">
+                <NavMenuItem Item="child" Level="@(Level + 1)" />
+            </AuthorizeView>
+        }
+    }
+
+    <MudDivider Class="my-3" />
+}
+else if (Item.Url is not null)
+{
+    @* Single navigation link *@
+    @if (Item.Badge is not null)
+    {
+        <MudBadge Content="@Item.Badge" Color="@GetBadgeColor()" Overlap="true" Class="nav-badge">
+            <MudNavLink Href="@Item.Url"                        Match="@(Item.ExactMatch? NavLinkMatch.All: NavLinkMatch.Prefix)"
+                        Target="@Item.Target" Icon="@GetIcon()" IconColor="Color.Inherit" Disabled="@Item.Disabled"
+                        Class="@GetNavLinkClass()">
+                @if (!string.IsNullOrEmpty(Item.Tooltip))
+                {
+                    <MudTooltip Text="@Culture.Translate(Item.Tooltip)" Placement="Placement.Right">
+                        @Culture.Translate(Item.Title)
+                    </MudTooltip>
+                }
+                else
+                {
+                    @Culture.Translate(Item.Title)
+                }
+            </MudNavLink>
+        </MudBadge>
+    }
+    else
+    {
+        <MudNavLink Href="@Item.Url"                    Match="@(Item.ExactMatch? NavLinkMatch.All: NavLinkMatch.Prefix)"                    Target="@Item.Target"
+                    Icon="@GetIcon()"                    IconColor="Color.Inherit"                    Disabled="@Item.Disabled"                    Class="@GetNavLinkClass()">
+            @if (!string.IsNullOrEmpty(Item.Tooltip))
+            {
+                <MudTooltip Text="@Culture.Translate(Item.Tooltip)" Placement="Placement.Right">
+                    @Culture.Translate(Item.Title)
+                </MudTooltip>
+            }
+            else
+            {
+                @Culture.Translate(Item.Title)
+            }
+        </MudNavLink>
+    }
+}
+else
+{
+    @* Group header without link - just text header *@
+    <MudText Typo="Typo.overline" Class="px-4 pt-4 pb-1 mud-text-secondary nav-group-header"
+             Style="font-weight: 500; font-size: 0.75rem; letter-spacing: 0.08em;">
+        @Culture.Translate(Item.Title)
+    </MudText>
+
+    @if (Item.Children is not null)
+    {
+        @foreach (var child in Item.Children.OrderBy(x => x.Order))
+        {
+            <AuthorizeView Policy="@child.Permission" Context="childContext">
+                <NavMenuItem Item="child" Level="@(Level + 1)" />
+            </AuthorizeView>
+        }
+    }
+
+    <MudDivider Class="my-3" />
+}
+
+@code {
+    /// <summary>
+    /// The navigation item to render.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public NavigationItem Item { get; set; } = null!;
+
+    /// <summary>
+    /// The nesting level (0 = root level).
+    /// </summary>
+    [Parameter]
+    public int Level { get; set; } = 0;
+
+    private bool _expanded = false;
+
+    private void OnExpandedChanged(bool expanded)
+    {
+        _expanded = expanded;
+    }
+
+    private string? GetIcon()
+    {
+        // SVG icon takes precedence
+        if (!string.IsNullOrEmpty(Item.SvgIcon))
+            return Item.SvgIcon;
+
+        return Item.Icon;
+    }
+
+    private Color GetBadgeColor() => Item.BadgeColor switch
+    {
+        NavigationBadgeColor.Primary => Color.Primary,
+        NavigationBadgeColor.Secondary => Color.Secondary,
+        NavigationBadgeColor.Success => Color.Success,
+        NavigationBadgeColor.Warning => Color.Warning,
+        NavigationBadgeColor.Error => Color.Error,
+        NavigationBadgeColor.Info => Color.Info,
+        _ => Color.Default
+    };
+
+    private string GetNavLinkClass()
+    {
+        var baseClass = "my-1";
+
+        // Add indentation for nested items
+        if (Level > 0)
+        {
+            baseClass += $" ml-{Level * 2}";
+        }
+
+        return baseClass;
+    }
+}

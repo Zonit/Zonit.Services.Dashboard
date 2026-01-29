@@ -12,13 +12,8 @@
 @inject ITaskManager TaskManager
 @implements IAsyncDisposable
 
-<MudChip T="string"
-         Label="true"
-         Icon="@IconData.TaskIcon"
-         Color="@(HasProcessingTasks ? Color.Warning : Color.Default)"
-         OnClick="@(() => ExtensionManager.Drawer(ExtensionName).Toggle())"
-         Size="Size.Medium"
-         Variant="Variant.Outlined"
+<MudChip T="string"         Label="true"         Icon="@IconData.TaskIcon"         Color="@(HasProcessingTasks? Color.Warning: Color.Default)"
+         OnClick="@(() => ExtensionManager.Drawer(ExtensionName).Toggle())"         Size="Size.Medium"         Variant="Variant.Outlined"
          Class="mx-1 my-1">
 
     <div class="d-flex align-center" style="gap: 6px;">
@@ -28,11 +23,11 @@
 
 
 @code {
-static readonly string ExtensionName = Extensions.Task;
-private Timer? _refreshTimer;
-private volatile bool _disposed = false;
-private IDisposable? _taskSubscription;
-private readonly object _lock = new();
+    static readonly string ExtensionName = Extensions.Task;
+    private Timer? _refreshTimer;
+    private volatile bool _disposed = false;
+    private IDisposable? _taskSubscription;
+    private readonly object _lock = new();
 
     private IReadOnlyCollection<TaskState> ActiveTasks { get; set; } = [];
     private bool HasProcessingTasks => ActiveTasks.Any(t => t.Status == Zonit.Messaging.Tasks.TaskStatus.Processing);
@@ -49,14 +44,14 @@ private readonly object _lock = new();
         _refreshTimer = new Timer(OnTimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
 
         ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization?.Id);
-        
+
         // Subscribe to task changes
         if (Workspace.Organization?.Id != null)
         {
             _taskSubscription = TaskManager.OnChange(Workspace.Organization.Id, task =>
             {
                 if (_disposed) return;
-                
+
                 ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization.Id);
                 InvokeStateHasChangedSafe();
             });
@@ -66,7 +61,7 @@ private readonly object _lock = new();
             _taskSubscription = TaskManager.OnChange(task =>
             {
                 if (_disposed) return;
-                
+
                 ActiveTasks = TaskManager.GetActiveTasks();
                 InvokeStateHasChangedSafe();
             });
@@ -82,7 +77,7 @@ private readonly object _lock = new();
     private void InvokeStateHasChangedSafe()
     {
         if (_disposed) return;
-        
+
         try
         {
             _ = InvokeAsync(() =>
@@ -100,12 +95,12 @@ private readonly object _lock = new();
     private void OnTimerCallback(object? state)
     {
         if (_disposed) return;
-        
+
         lock (_lock)
         {
             if (_disposed) return;
         }
-        
+
         InvokeStateHasChangedSafe();
     }
 
@@ -131,20 +126,20 @@ private readonly object _lock = new();
         {
             _disposed = true;
         }
-        
+
         // First dispose the timer to prevent new callbacks
         if (_refreshTimer != null)
         {
             await _refreshTimer.DisposeAsync();
             _refreshTimer = null;
         }
-        
+
         // Unsubscribe from events
         Culture.OnChange -= OnStateChanged;
         Workspace.OnChange -= OnStateChanged;
         ExtensionManager.Drawer(ExtensionName)
             .OnChange -= OnStateChanged;
-            
+
         _taskSubscription?.Dispose();
         _taskSubscription = null;
     }

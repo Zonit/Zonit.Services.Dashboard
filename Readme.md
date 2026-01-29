@@ -1,77 +1,297 @@
 # Zonit.Services.Dashboard
 
-## Overview
+A modern, modular administration panel framework for Blazor with **full AOT/Trimming support**.
 
-**Zonit Dashboard** is an advanced solution for building modern, modular, and flexible administration panels using the Blazor framework. It enables the creation of interactive web applications with a rich user interface based on the [MudBlazor](https://mudblazor.com/) component library.
+---
 
-The dashboard is designed with scalability and flexibility in mind—it can be duplicated to provide multiple layered panels (such as user, admin, or manager dashboards) within a single project, each accessible from different URL addresses depending on middleware and configuration. The project is fully modular, supports dynamic extensions and modeling, and comes with comprehensive Zonit.Extensions out-of-the-box.
+## :package: NuGet Packages
+
+| Package | Description |
+|---------|-------------|
+| **Zonit.Services.Dashboard** | Main dashboard implementation |
+| **Zonit.Services.Dashboard.Abstractions** | Interfaces and base classes |
+| **Zonit.Services.Dashboard.Application** | Application layer services |
+| **Zonit.Services.Dashboard.Components** | Shared Blazor components |
+
+---
 
 ## Features
 
-- **Modular Architecture**  
-  Easily extend functionality through a powerful extensions system (e.g., for identity, projects, organizations, finances, tasks, and more).
+- **Multi-Area Architecture** — Create multiple independent dashboards (user, admin, management) under different URLs
+- **Extension System** — Modular, pluggable extensions for drawers, toolbars, navigation, and settings
+- **AOT/Trimming Safe** — No runtime reflection, uses `RenderFragment` factories
+- **MudBlazor UI** — Material Design components with dark/light theme support
+- **Built-in Extensions** — Identity, Cultures, Projects, Organizations, Tasks
+- **Responsive Layout** — Desktop and mobile-optimized
 
-- **Advanced Customization**  
-  Configurable themes with full support for both light and dark modes.
+---
 
-- **Organization Management**  
-  Built-in mechanisms for managing users and organizational structures.
+## Requirements
 
-- **Project & Task Management**  
-  Modules to facilitate project tracking and task management.
+- .NET 8, .NET 9 or .NET 10
+- MudBlazor 8+
 
-- **Authentication & Authorization**  
-  Comprehensive access control with integrated role management.
-
-- **Multi-Culture Support**  
-  Complete internationalization support for global applications.
-
-- **Modern UI/UX**  
-  Responsive design powered by MudBlazor components.
-
-## Technologies Used
-
-- **[Blazor Server](https://docs.microsoft.com/en-us/aspnet/core/blazor/)** — Interactive web UI framework
-- **[MudBlazor](https://mudblazor.com/)** — Material design components for Blazor
-- **Zonit.Extensions:**  
-  - `Identity` — Identity and authentication management  
-  - `Cultures` — Multi-culture and localization support  
-  - `Projects` — Project management tools  
-  - `Organizations` — Organization administration  
-  - `Wallets` — Finance and wallet management  
-  - `Task` — Task and to-do modules
+---
 
 ## Quick Start
 
-Here's an example of how to configure the dashboard with different areas in your `.NET` application:
+### 1. Install Package
+
+```powershell
+dotnet add package Zonit.Services.Dashboard
+```
+
+### 2. Register Services
 
 ```csharp
-// Register dashboard services
+// Program.cs
 builder.Services.AddDashboardService();
+```
 
+### 3. Configure Areas
+
+```csharp
 // Configure Manager Area
 app.UseDashboardServices<IAreaManager>(new DashboardOptions
 {
     Directory = "Manager",
     Title = "Manager",
-    Extensions = [ Extensions.Identity, Extensions.Cultures, Extensions.Projects, Extensions.Organizations ]
+    Extensions = [ Extensions.Identity, Extensions.Cultures, Extensions.Projects ]
 });
 
-// Configure Management Area
+// Configure Admin Area (with permission requirement)
 app.UseDashboardServices<IAreaManagement>(new DashboardOptions
 {
     Directory = "management",
-    Title = "Management"
+    Title = "Management",
+    Permission = "AllowManagement",
+    Extensions = [ Extensions.Identity, Extensions.Cultures ]
 });
 ```
-> **Note:** The dashboard architecture supports multiple independent panels (e.g., user, admin, management) under different URLs, all within a single project instance.
 
-## Out-of-the-Box Functionality
+### 4. Define Area Marker
 
-- Turnkey integration—works instantly with all included Zonit.Extensions
-- Ready for modeling and customization per panel/layer
-- Scalable to any number of dashboards as required by your middleware configuration
+```csharp
+// IAreaManager.cs
+public interface IAreaManager : IDashboardArea { }
+```
 
-## Examples
+---
 
-Find comprehensive usage examples in the `example` directory for inspiration and typical setups.
+## DashboardOptions
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Directory` | `string` | `"dashboard"` | URL path segment (e.g., `/manager`) |
+| `Title` | `string` | `"Dashboard"` | Dashboard title displayed in UI |
+| `Permission` | `string?` | `null` | Required authorization policy |
+| `Extensions` | `string[]` | `[]` | Enabled extension identifiers |
+| `ThemeColor` | `string` | `"#ff6100"` | Primary theme color |
+| `FavIcon` | `string` | `"favicon.svg"` | Favicon path |
+| `EnableAntiforgery` | `bool` | `true` | Enable CSRF protection |
+| `CustomSnippet` | `string?` | `null` | Custom HTML/JS snippet |
+
+---
+
+## Extension System
+
+Dashboard uses a modular extension system that is **fully AOT-safe**. Extensions provide:
+
+- **Navigation** — Menu items
+- **Drawers** — Slide-out panels
+- **Toolbar** — AppBar buttons
+- **Settings** — Configuration panels
+
+### Built-in Extensions
+
+| Extension | ID | Description |
+|-----------|-----|-------------|
+| Identity | `Extensions.Identity` | User profile and authentication |
+| Cultures | `Extensions.Cultures` | Language/culture selector |
+| Projects | `Extensions.Projects` | Project management |
+| Organizations | `Extensions.Organizations` | Organization management |
+| Tasks | `Extensions.Task` | Background task monitoring |
+| Wallets | `Extensions.Wallets` | Finance/wallet module |
+
+### Creating Custom Extensions
+
+#### Drawer Extension (AOT-Safe)
+
+```csharp
+using Zonit.Services.Dashboard.Abstractions;
+
+public class NotificationDrawerExtension : DrawerExtensionBase<NotificationDrawer>
+{
+    public override string Id => "notifications";
+    public override string Name => "Notifications";
+    public override int Order => 100;
+    public override DrawerAnchor Anchor => DrawerAnchor.End;
+    public override int Width => 400;
+}
+```
+
+#### Register Extension
+
+```csharp
+// In DI configuration - uses factory delegate (AOT-safe)
+services.AddDrawerExtension<NotificationDrawerExtension>(
+    _ => new NotificationDrawerExtension()
+);
+```
+
+### Extension Interfaces
+
+| Interface | Purpose |
+|-----------|---------|
+| `IDrawerExtension` | Slide-out drawer panel |
+| `IToolbarExtension` | AppBar toolbar items |
+| `INavigationExtension` | Navigation menu items |
+| `ISettingsExtension` | Settings panel sections |
+
+### Base Classes (AOT-Safe)
+
+| Base Class | For |
+|------------|-----|
+| `DrawerExtensionBase<TComponent>` | Drawer extensions with typed component |
+| `ToolbarExtensionBase<TComponent>` | Toolbar extensions |
+| `SettingsExtensionBase<TComponent>` | Settings extensions |
+| `NavigationExtensionBase` | Navigation extensions |
+
+---
+
+## Managing Drawers
+
+```csharp
+@inject IExtensionDrawerManager DrawerManager
+
+@code {
+    private void OpenNotifications()
+    {
+        var drawer = DrawerManager.GetDrawer("notifications");
+        drawer.Open();
+    }
+    
+    private void ToggleCultures()
+    {
+        var drawer = DrawerManager.GetDrawer("cultures");
+        drawer.Toggle();
+    }
+}
+```
+
+### IExtensionDrawer API
+
+| Method | Description |
+|--------|-------------|
+| `Open()` | Opens the drawer |
+| `Close()` | Closes the drawer |
+| `Toggle()` | Toggles drawer state, returns new state |
+| `SetOpen(bool)` | Sets drawer state explicitly |
+| `IsOpen` | Current drawer state |
+| `OnChange` | Event when state changes |
+
+---
+
+## Navigation Provider
+
+Provide navigation items for the dashboard sidebar:
+
+```csharp
+public class MyNavigation : INavigationProvider
+{
+    public IEnumerable<NavigationItem> GetNavigation()
+    {
+        yield return new NavigationItem
+        {
+            Title = "Dashboard",
+            Url = "/manager",
+            Icon = Icons.Material.Filled.Dashboard,
+            Order = 1
+        };
+        
+        yield return new NavigationItem
+        {
+            Title = "Users",
+            Url = "/manager/users",
+            Icon = Icons.Material.Filled.People,
+            Order = 2,
+            Children = [
+                new() { Title = "List", Url = "/manager/users", Order = 1 },
+                new() { Title = "Add", Url = "/manager/users/add", Order = 2 }
+            ]
+        };
+    }
+}
+```
+
+Register in DI:
+
+```csharp
+services.AddScoped<INavigationProvider, MyNavigation>();
+```
+
+---
+
+## Project Structure
+
+```
+Source/
+├── Zonit.Services.Dashboard/              # Main implementation
+│   ├── Areas/Dashboard/
+│   │   ├── Layouts/                       # MainLayout.razor
+│   │   └── Components/                    # Navbar, Sidebar, etc.
+│   └── DependencyInjection/               # Service registration
+├── Zonit.Services.Dashboard.Abstractions/ # Interfaces & types
+│   ├── IDashboardExtension.cs             # Extension interfaces
+│   ├── ExtensionBases.cs                  # Base classes (AOT-safe)
+│   ├── IExtensionDrawerManager.cs         # Drawer management
+│   └── IExtensionRegistry.cs              # Extension registry
+├── Zonit.Services.Dashboard.Application/  # Application services
+└── Zonit.Services.Dashboard.Components/   # Shared components
+```
+
+---
+
+## Example Project
+
+See the `Example/` directory for a complete working example including:
+
+- Multiple dashboard areas (Manager, Management, Diagnostic)
+- Custom navigation provider
+- Task management integration
+- Role-based authorization
+
+### Running the Example
+
+```powershell
+cd Example/Example
+dotnet run
+```
+
+Navigate to:
+- `/manager` — Manager dashboard
+- `/management` — Management dashboard (requires "Worker" role)
+- `/diagnostic` — Diagnostic dashboard (requires "Developer" role)
+
+---
+
+## AOT/Trimming Compatibility
+
+This library is designed for full Native AOT and trimming support:
+
+:white_check_mark: **No reflection** — Uses `RenderFragment` factories  
+:white_check_mark: **No `Activator.CreateInstance`** — Uses DI factory delegates  
+:white_check_mark: **No `[DynamicallyAccessedMembers]`** — Type-safe generics  
+:white_check_mark: **Source Generator ready** — For extension auto-discovery
+
+---
+
+## Contributing & Support
+
+Found a bug or have a feature request? Open an [issue](https://github.com/Zonit/Zonit.Services.Dashboard/issues/new) on GitHub!
+
+---
+
+## License
+
+[MIT](LICENSE)

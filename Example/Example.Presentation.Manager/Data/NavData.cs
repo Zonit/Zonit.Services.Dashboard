@@ -1,4 +1,5 @@
 ﻿using Example.Presentation.Manager.Pages;
+using Example.Presentation.Manager.Pages.Examples;
 using Microsoft.Extensions.Hosting;
 using MudBlazor;
 using Zonit.Extensions.Website;
@@ -18,6 +19,66 @@ internal class NavData(INavigationProvider _navigation) : IHostedService
             Order = 5,
             Icon = Icons.Material.Filled.Dashboard,
             Link = new("Home", "home"),
+        });
+
+        // Example Pages - różne layouty dashboardu
+        _navigation.Add(new()
+        {
+            Title = "Examples",
+            Area = AreaType.Manager,
+            Order = 6,
+            Icon = Icons.Material.Filled.Widgets,
+            Children = [
+                new()
+                {
+                    Title = "All Examples",
+                    Url = "examples",
+                    Order = 1,
+                    Icon = Icons.Material.Filled.Apps
+                },
+                new()
+                {
+                    Title = "Dashboard",
+                    Url = Dashboard.Route,
+                    Order = 10,
+                    Icon = Icons.Material.Filled.Dashboard
+                },
+                new()
+                {
+                    Title = "Users List",
+                    Url = UsersList.Route,
+                    Order = 20,
+                    Icon = Icons.Material.Filled.People
+                },
+                new()
+                {
+                    Title = "User Form",
+                    Url = UserForm.Route,
+                    Order = 30,
+                    Icon = Icons.Material.Filled.PersonAdd
+                },
+                new()
+                {
+                    Title = "Profile",
+                    Url = Profile.Route,
+                    Order = 40,
+                    Icon = Icons.Material.Filled.AccountCircle
+                },
+                new()
+                {
+                    Title = "Settings",
+                    Url = Settings.Route,
+                    Order = 50,
+                    Icon = Icons.Material.Filled.Settings
+                },
+                new()
+                {
+                    Title = "Error Pages",
+                    Url = Error404.Route,
+                    Order = 60,
+                    Icon = Icons.Material.Filled.ErrorOutline
+                }
+            ]
         });
 
         // Grupa Content

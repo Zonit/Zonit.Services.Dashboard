@@ -1,0 +1,74 @@
+@*
+    LoadingSpinner - Standard loading indicator component.
+    Use for consistent loading states across the dashboard.
+*@
+
+@inject ICultureProvider Culture
+
+@if (IsLoading)
+{
+    <div class="@GetContainerClass()">
+        <MudProgressCircular Color="@Color" Size="@Size" Indeterminate="true" />
+        @if (!string.IsNullOrEmpty(Message))
+        {
+            <MudText Typo="Typo.body2" Class="mt-2 mud-text-secondary">
+                @Culture.Translate(Message)
+            </MudText>
+        }
+    </div>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    /// <summary>
+    /// Whether the loading spinner should be displayed.
+    /// </summary>
+    [Parameter]
+    public bool IsLoading { get; set; } = true;
+
+    /// <summary>
+    /// Optional loading message.
+    /// </summary>
+    [Parameter]
+    public string? Message { get; set; }
+
+    /// <summary>
+    /// Color of the spinner.
+    /// </summary>
+    [Parameter]
+    public Color Color { get; set; } = Color.Primary;
+
+    /// <summary>
+    /// Size of the spinner.
+    /// </summary>
+    [Parameter]
+    public Size Size { get; set; } = Size.Large;
+
+    /// <summary>
+    /// Whether to center the spinner in the container.
+    /// </summary>
+    [Parameter]
+    public bool Center { get; set; } = true;
+
+    /// <summary>
+    /// Minimum height of the loading container.
+    /// </summary>
+    [Parameter]
+    public string MinHeight { get; set; } = "200px";
+
+    /// <summary>
+    /// Content to display when not loading.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private string GetContainerClass()
+    {
+        return Center
+            ? $"d-flex flex-column align-center justify-center"
+            : "d-flex flex-column";
+    }
+}

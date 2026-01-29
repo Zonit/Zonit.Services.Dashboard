@@ -1,0 +1,266 @@
+@page "/examples/profile"
+@rendermode InteractiveServer
+
+<PageTitle>My Profile</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    @* Profile Header *@
+    <MudPaper Elevation="0" Class="rounded-lg mb-4" Style="border: 1px solid var(--mud-palette-lines-default); overflow: hidden;">
+        @* Cover Photo *@
+        <div style="height: 200px; background: linear-gradient(135deg, var(--mud-palette-primary) 0%, var(--mud-palette-primary-darken) 100%); position: relative;">
+            <MudIconButton Icon="@Icons.Material.Filled.PhotoCamera" Color="Color.Inherit" 
+                           Style="position: absolute; right: 16px; top: 16px; background: rgba(0,0,0,0.3); color: white;" />
+        </div>
+        
+        @* Profile Info *@
+        <div class="pa-6" style="margin-top: -60px;">
+            <div class="d-flex flex-wrap gap-4 justify-space-between align-end">
+                <div class="d-flex gap-4 align-end">
+                    <MudAvatar Size="Size.Large" Style="width: 120px; height: 120px; border: 4px solid var(--mud-palette-surface);" Color="Color.Primary">
+                        <MudText Typo="Typo.h3">JS</MudText>
+                    </MudAvatar>
+                    <div class="pb-2">
+                        <MudText Typo="Typo.h4">John Smith</MudText>
+                        <MudText Typo="Typo.body1" Color="Color.Secondary">Product Designer at Acme Corp</MudText>
+                        <div class="d-flex align-center gap-2 mt-1">
+                            <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Color="Color.Secondary" />
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Warsaw, Poland</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">•</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.Link" Size="Size.Small" Color="Color.Secondary" />
+                            <MudLink Typo="Typo.caption" Href="https://johnsmith.design">johnsmith.design</MudLink>
+                        </div>
+                    </div>
+                </div>
+                <MudStack Row="true" Spacing="2" Class="pb-2">
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Share">Share</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit">Edit Profile</MudButton>
+                </MudStack>
+            </div>
+        </div>
+    </MudPaper>
+
+    @* Stats Row *@
+    <MudGrid Class="mb-4">
+        <MudItem xs="6" sm="3">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg text-center" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h4" Color="Color.Primary">45</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Projects</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6" sm="3">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg text-center" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h4" Color="Color.Primary">128</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Tasks Done</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6" sm="3">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg text-center" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h4" Color="Color.Primary">24</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Team Members</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6" sm="3">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg text-center" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h4" Color="Color.Primary">98%</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Success Rate</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid>
+        @* Main Content *@
+        <MudItem xs="12" md="8">
+            @* About Section *@
+            <MudPaper Elevation="0" Class="pa-6 mb-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h6" Class="mb-3">About</MudText>
+                <MudText Typo="Typo.body1" Style="line-height: 1.7;">
+                    I'm a passionate Product Designer with over 8 years of experience crafting digital experiences 
+                    that users love. I specialize in design systems, user research, and creating intuitive interfaces 
+                    for complex applications. When I'm not designing, you can find me exploring new coffee shops 
+                    or hiking in the mountains.
+                </MudText>
+            </MudPaper>
+
+            @* Skills Section *@
+            <MudPaper Elevation="0" Class="pa-6 mb-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h6" Class="mb-3">Skills</MudText>
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                    @foreach (var skill in _skills)
+                    {
+                        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Primary">@skill</MudChip>
+                    }
+                </MudStack>
+            </MudPaper>
+
+            @* Recent Projects *@
+            <MudPaper Elevation="0" Class="pa-6 mb-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <MudText Typo="Typo.h6">Recent Projects</MudText>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary">View All</MudButton>
+                </div>
+
+                <MudGrid Spacing="3">
+                    @foreach (var project in _projects)
+                    {
+                        <MudItem xs="12" sm="6">
+                            <MudCard Elevation="0" Style="border: 1px solid var(--mud-palette-lines-default);">
+                                <div style="height: 120px; background: @project.GradientBg;"></div>
+                                <MudCardContent>
+                                    <MudText Typo="Typo.subtitle1">@project.Name</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@project.Description</MudText>
+                                </MudCardContent>
+                                <MudCardActions>
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@project.Role</MudChip>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+
+            @* Activity Timeline *@
+            <MudPaper Elevation="0" Class="pa-6 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h6" Class="mb-4">Recent Activity</MudText>
+                
+                <MudTimeline TimelinePosition="TimelinePosition.Start">
+                    @foreach (var activity in _activities)
+                    {
+                        <MudTimelineItem Color="@activity.Color" Size="Size.Small" Icon="@activity.Icon">
+                            <ItemContent>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div>
+                                        <MudText Typo="Typo.body2">@activity.Title</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@activity.Description</MudText>
+                                    </div>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@activity.Time</MudText>
+                                </div>
+                            </ItemContent>
+                        </MudTimelineItem>
+                    }
+                </MudTimeline>
+            </MudPaper>
+        </MudItem>
+
+        @* Sidebar *@
+        <MudItem xs="12" md="4">
+            @* Contact Info *@
+            <MudPaper Elevation="0" Class="pa-6 mb-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h6" Class="mb-3">Contact Information</MudText>
+                
+                <MudStack Spacing="3">
+                    <div class="d-flex align-center gap-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Email" Color="Color.Primary" />
+                        <div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Email</MudText>
+                            <MudText Typo="Typo.body2">john.smith@example.com</MudText>
+                        </div>
+                    </div>
+                    <div class="d-flex align-center gap-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Phone" Color="Color.Primary" />
+                        <div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Phone</MudText>
+                            <MudText Typo="Typo.body2">+1 234 567 890</MudText>
+                        </div>
+                    </div>
+                    <div class="d-flex align-center gap-3">
+                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Color="Color.Primary" />
+                        <div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Joined</MudText>
+                            <MudText Typo="Typo.body2">January 15, 2022</MudText>
+                        </div>
+                    </div>
+                </MudStack>
+            </MudPaper>
+
+            @* Social Links *@
+            <MudPaper Elevation="0" Class="pa-6 mb-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h6" Class="mb-3">Social Profiles</MudText>
+                
+                <MudStack Spacing="2">
+                    @foreach (var social in _socials)
+                    {
+                        <MudButton Variant="Variant.Outlined" FullWidth="true" 
+                                   StartIcon="@social.Icon" Href="@social.Url" Target="_blank"
+                                   Class="justify-start">
+                            @social.Name
+                        </MudButton>
+                    }
+                </MudStack>
+            </MudPaper>
+
+            @* Team Members *@
+            <MudPaper Elevation="0" Class="pa-6 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <div class="d-flex justify-space-between align-center mb-3">
+                    <MudText Typo="Typo.h6">Team</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Primary">View All</MudText>
+                </div>
+
+                <MudStack Spacing="2">
+                    @foreach (var member in _teamMembers)
+                    {
+                        <div class="d-flex align-center gap-3 pa-2 rounded-lg" 
+                             style="border: 1px solid var(--mud-palette-lines-default);">
+                            <MudAvatar Size="Size.Small" Color="@member.Color">@member.Initials</MudAvatar>
+                            <div style="flex: 1; min-width: 0;">
+                                <MudText Typo="Typo.body2">@member.Name</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@member.Role</MudText>
+                            </div>
+                            <MudIconButton Icon="@Icons.Material.Filled.Message" Size="Size.Small" />
+                        </div>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    public static string Route => "examples/profile";
+
+    private readonly List<string> _skills =
+    [
+        "UI Design", "UX Research", "Figma", "Sketch", "Adobe XD", 
+        "Design Systems", "Prototyping", "User Testing", "HTML/CSS", "React"
+    ];
+
+    private readonly List<ProjectItem> _projects =
+    [
+        new("E-commerce Redesign", "Complete UI overhaul for online store", "Lead Designer", 
+            "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"),
+        new("Mobile Banking App", "iOS and Android banking application", "UI Designer", 
+            "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"),
+        new("SaaS Dashboard", "Analytics dashboard for B2B platform", "Design Lead", 
+            "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"),
+        new("Health & Fitness", "Workout tracking mobile app", "UX Designer", 
+            "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)")
+    ];
+
+    private readonly List<ActivityItem> _activities =
+    [
+        new("Completed project milestone", "E-commerce Platform v2.0 launched", "2 hours ago", Color.Success, Icons.Material.Filled.CheckCircle),
+        new("Uploaded design files", "Added 15 new components to design system", "Yesterday", Color.Primary, Icons.Material.Filled.Upload),
+        new("Received feedback", "Client approved the dashboard mockups", "2 days ago", Color.Info, Icons.Material.Filled.ThumbUp),
+        new("Started new project", "Joined Mobile Banking App team", "1 week ago", Color.Warning, Icons.Material.Filled.PlayArrow)
+    ];
+
+    private readonly List<SocialItem> _socials =
+    [
+        new("LinkedIn", Icons.Material.Filled.Work, "https://linkedin.com"),
+        new("Twitter", Icons.Material.Filled.Tag, "https://twitter.com"),
+        new("Dribbble", Icons.Material.Filled.Palette, "https://dribbble.com"),
+        new("GitHub", Icons.Material.Filled.Code, "https://github.com")
+    ];
+
+    private readonly List<TeamMember> _teamMembers =
+    [
+        new("Sarah Johnson", "Frontend Developer", "SJ", Color.Info),
+        new("Michael Brown", "Backend Developer", "MB", Color.Success),
+        new("Emily Davis", "Project Manager", "ED", Color.Warning),
+        new("Robert Wilson", "QA Engineer", "RW", Color.Secondary)
+    ];
+
+    private record ProjectItem(string Name, string Description, string Role, string GradientBg);
+    private record ActivityItem(string Title, string Description, string Time, Color Color, string Icon);
+    private record SocialItem(string Name, string Icon, string Url);
+    private record TeamMember(string Name, string Role, string Initials, Color Color);
+}

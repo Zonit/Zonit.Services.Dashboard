@@ -1,0 +1,188 @@
+@page "/examples/users"
+@rendermode InteractiveServer
+
+<PageTitle>Users Management</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    @* Page Header *@
+    <div class="d-flex justify-space-between align-center mb-4">
+        <div>
+            <MudText Typo="Typo.h4">Users</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Manage your team members and their account permissions.
+            </MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+            Add User
+        </MudButton>
+    </div>
+
+    @* Filters and Search *@
+    <MudPaper Elevation="0" Class="pa-4 mb-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="_searchQuery" Placeholder="Search users..."      Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"                  Variant="Variant.Outlined" Margin="Margin.Dense"
+                              Clearable="true" />
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudSelect T="string" @bind-Value="_roleFilter" Label="Role" Variant="Variant.Outlined"
+                           Margin="Margin.Dense">
+                    <MudSelectItem Value="@("all")">All Roles</MudSelectItem>
+                    <MudSelectItem Value="@("admin")">Admin</MudSelectItem>
+                    <MudSelectItem Value="@("editor")">Editor</MudSelectItem>
+                    <MudSelectItem Value="@("viewer")">Viewer</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudSelect T="string" @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined"
+                           Margin="Margin.Dense">
+                    <MudSelectItem Value="@("all")">All Status</MudSelectItem>
+                    <MudSelectItem Value="@("active")">Active</MudSelectItem>
+                    <MudSelectItem Value="@("inactive")">Inactive</MudSelectItem>
+                    <MudSelectItem Value="@("pending")">Pending</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4" Class="d-flex align-center justify-end gap-2">
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.FilterList">
+                    More Filters
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download">
+                    Export
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @* Users Table *@
+    <MudPaper Elevation="0" Class="rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+        <MudTable Items="@_users" Hover="true" Striped="false" Dense="false" Loading="@_loading"
+                  LoadingProgressColor="Color.Primary">
+            <HeaderContent>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<UserModel, object>(x => x.Name)">User</MudTableSortLabel>
+                </MudTh>
+                <MudTh>Email</MudTh>
+                <MudTh>Role</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Last Active</MudTh>
+                <MudTh Style="text-align: right">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="User">
+                    <div class="d-flex align-center gap-3">
+                        <MudAvatar Size="Size.Medium" Color="@GetAvatarColor(context.Name)">
+                            @context.Name.FirstOrDefault()
+                        </MudAvatar>
+                        <div>
+                            <MudText Typo="Typo.body2">@context.Name</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Title</MudText>
+                        </div>
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Email">@context.Email</MudTd>
+                <MudTd DataLabel="Role">
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text">@context.Role</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)"
+                             Variant="Variant.Filled">
+                        @context.Status
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Last Active">
+                    <MudText Typo="Typo.body2">@context.LastActive</MudText>
+                </MudTd>
+                <MudTd DataLabel="Actions" Style="text-align: right">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                   OnClick="@(() => EditUser(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                   OnClick="@(() => DeleteUser(context))" />
+                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" AnchorOrigin="Origin.BottomRight">
+                        <MudMenuItem Icon="@Icons.Material.Filled.Visibility">View Profile</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Email">Send Email</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Block">Suspend</MudMenuItem>
+                    </MudMenu>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new[] { 10, 25, 50, 100 }" />
+            </PagerContent>
+            <NoRecordsContent>
+                <div class="pa-8 d-flex flex-column align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Secondary" />
+                    <MudText Typo="Typo.h6" Class="mt-4">No users found</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Try adjusting your search or filter criteria.
+                    </MudText>
+                </div>
+            </NoRecordsContent>
+        </MudTable>
+    </MudPaper>
+
+    @* Bulk Actions (shown when items selected) *@
+    @if (_selectedUsers.Any())
+    {
+        <MudPaper Elevation="2" Class="pa-3 mt-4 rounded-lg d-flex align-center justify-space-between"
+                  Style="position: sticky; bottom: 16px; background: var(--mud-palette-surface);">
+            <MudText>@_selectedUsers.Count users selected</MudText>
+            <MudStack Row="true" Spacing="2">
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Email">
+                    Send Email
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.Delete">
+                    Delete Selected
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    public static string Route => "examples/users";
+
+    private string _searchQuery = "";
+    private string _roleFilter = "all";
+    private string _statusFilter = "all";
+    private bool _loading = false;
+    private HashSet<UserModel> _selectedUsers = [];
+
+    private readonly List<UserModel> _users =
+    [
+        new("John Smith", "john.smith@example.com", "Product Designer", "Admin", "Active", "2 min ago"),
+        new("Sarah Johnson", "sarah.j@example.com", "Frontend Developer", "Editor", "Active", "5 min ago"),
+        new("Michael Brown", "m.brown@example.com", "Backend Developer", "Editor", "Active", "1 hour ago"),
+        new("Emily Davis", "emily.d@example.com", "UX Researcher", "Viewer", "Inactive", "2 days ago"),
+        new("Robert Wilson", "r.wilson@example.com", "Project Manager", "Admin", "Active", "Just now"),
+        new("Jessica Martinez", "j.martinez@example.com", "DevOps Engineer", "Editor", "Pending", "3 hours ago"),
+        new("David Anderson", "d.anderson@example.com", "QA Engineer", "Viewer", "Active", "30 min ago"),
+        new("Lisa Taylor", "l.taylor@example.com", "Content Writer", "Editor", "Active", "15 min ago"),
+        new("Christopher Lee", "c.lee@example.com", "Data Analyst", "Viewer", "Inactive", "1 week ago"),
+        new("Amanda White", "a.white@example.com", "Marketing Lead", "Admin", "Active", "10 min ago")
+    ];
+
+    private Color GetAvatarColor(string name)
+    {
+        var index = name.Length % 5;
+        return index switch
+        {
+            0 => Color.Primary,
+            1 => Color.Success,
+            2 => Color.Info,
+            3 => Color.Warning,
+            _ => Color.Secondary
+        };
+    }
+
+    private Color GetStatusColor(string status) => status switch
+    {
+        "Active" => Color.Success,
+        "Inactive" => Color.Default,
+        "Pending" => Color.Warning,
+        _ => Color.Default
+    };
+
+    private void EditUser(UserModel user) { /* Navigate to edit */ }
+    private void DeleteUser(UserModel user) { /* Show confirmation dialog */ }
+
+    private record UserModel(string Name, string Email, string Title, string Role, string Status, string LastActive);
+}

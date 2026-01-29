@@ -29,9 +29,25 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
     ITaskManager TaskManager { get; set; } = default!;
 
     [Inject]
-    IWorkspaceProvider WorkspaceProvider { get; set; } = default;
+    IWorkspaceProvider WorkspaceProvider { get; set; } = default!;
 
+    [Inject]
+    IThemeManager ThemeManager { get; set; } = default!;
+
+    /// <summary>
+    /// Current MudBlazor theme generated from ThemeManager.
+    /// </summary>
+    private MudTheme _currentMudTheme = default!;
+
+    /// <summary>
+    /// Legacy area type for old navigation components.
+    /// </summary>
     AreaType AreaType { get; set; }
+
+    /// <summary>
+    /// New dashboard area for modern navigation components.
+    /// </summary>
+    DashboardArea DashboardAreaType { get; set; }
 
     Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
 
@@ -54,10 +70,16 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
 
     protected override void OnInitialized()
     {
+        // Initialize theme from ThemeManager
+        _currentMudTheme = ThemeManager.CurrentTheme.ToMudTheme();
+
+        // Subscribe to theme changes
+        ThemeManager.OnThemeChanged += OnThemeChanged;
+
         Culture.OnChange += () =>
         {
             if (_disposed) return;
-            
+
             if (Culture.GetCulture == "ar-sa")
                 RightToLeft = true;
             else
@@ -78,16 +100,29 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
         };
 
         if (Settings.Settings.Directory.ToLower() == "manager")
+        {
             AreaType = AreaType.Manager;
+            DashboardAreaType = DashboardArea.Manager;
+        }
         else if (Settings.Settings.Directory.ToLower() == "management")
+        {
             AreaType = AreaType.Management;
+            DashboardAreaType = DashboardArea.Management;
+        }
         else if (Settings.Settings.Directory.ToLower() == "diagnostic")
+        {
             AreaType = AreaType.Diagnostic;
+            DashboardAreaType = DashboardArea.Diagnostic;
+        }
+        else
+        {
+            DashboardAreaType = DashboardArea.Public;
+        }
 
-        BreadcrumbsProvider.OnChange += () => 
+        BreadcrumbsProvider.OnChange += () =>
         {
             if (_disposed) return;
-            
+
             var g = BreadcrumbsProvider.Get();
             if (g is not null)
             {
@@ -101,7 +136,7 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
             {
                 _breadcrumbItems = null;
             }
-            
+
             try
             {
                 StateHasChanged();
@@ -125,10 +160,10 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
             _taskSubscription = TaskManager.OnChange(WorkspaceProvider.Organization.Id, task =>
             {
                 if (_disposed) return;
-                
+
                 var activeTasks = TaskManager.GetActiveTasks(WorkspaceProvider.Organization.Id);
                 ProgressTask = activeTasks.Count > 0;
-                
+
                 try
                 {
                     InvokeAsync(StateHasChanged);
@@ -148,10 +183,10 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
             _taskSubscription = TaskManager.OnChange(task =>
             {
                 if (_disposed) return;
-                
+
                 var activeTasks = TaskManager.GetActiveTasks();
                 ProgressTask = activeTasks.Count > 0;
-                
+
                 try
                 {
                     InvokeAsync(StateHasChanged);
@@ -179,20 +214,45 @@ public partial class MainLayout : LayoutComponentBase, IAsyncDisposable, IBrowse
     public async ValueTask DisposeAsync()
     {
         _disposed = true;
-        
+
         Culture.OnChange -= StateHasChanged;
         BreadcrumbsProvider.OnChange -= StateHasChanged;
-        
+        ThemeManager.OnThemeChanged -= OnThemeChanged;
+
         _taskSubscription?.Dispose();
         _taskSubscription = null;
 
-        await BrowserViewportService.UnsubscribeAsync(this); 
+        await BrowserViewportService.UnsubscribeAsync(this);
+    }
+
+    /// <summary>
+    /// Handles theme changes from ThemeManager.
+    /// </summary>
+    private void OnThemeChanged()
+    {
+        if (_disposed) return;
+
+        _currentMudTheme = ThemeManager.CurrentTheme.ToMudTheme();
+        _isDarkMode = ThemeManager.IsDarkMode;
+
+        try
+        {
+            InvokeAsync(StateHasChanged);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Component has been disposed, ignore
+        }
+        catch (InvalidOperationException)
+        {
+            // Component is no longer in the render tree, ignore
+        }
     }
 
     async Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs browserViewportEventArgs)
     {
         if (_disposed) return;
-        
+
         _width = browserViewportEventArgs.BrowserWindowSize.Width;
         _height = browserViewportEventArgs.BrowserWindowSize.Height;
 

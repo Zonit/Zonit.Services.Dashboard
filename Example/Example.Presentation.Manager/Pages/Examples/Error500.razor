@@ -1,0 +1,48 @@
+@page "/examples/error/500"
+@rendermode InteractiveServer
+
+<PageTitle>Server Error</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex flex-column align-center justify-center" Style="min-height: calc(100vh - 200px);">
+    <MudPaper Elevation="0" Class="pa-8 text-center rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Style="font-size: 6rem;" />
+        <MudText Typo="Typo.h1" Color="Color.Error" Style="font-size: 4rem; font-weight: 700;" Class="mt-2">500</MudText>
+        <MudText Typo="Typo.h4" Class="mt-4">Something Went Wrong</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2 mb-6">
+            We're experiencing some technical difficulties. Our team has been notified and is working on fixing the issue.
+        </MudText>
+        
+        <MudStack Row="true" Spacing="2" Justify="Justify.Center">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Reload" StartIcon="@Icons.Material.Filled.Refresh">
+                Try Again
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Href="/" StartIcon="@Icons.Material.Filled.Home">
+                Go Home
+            </MudButton>
+        </MudStack>
+
+        <MudExpansionPanels Class="mt-6" Elevation="0" Style="border: 1px solid var(--mud-palette-lines-default);">
+            <MudExpansionPanel Text="Technical Details" MaxHeight="200">
+                <MudText Typo="Typo.caption" Class="text-left" Style="font-family: monospace;">
+                    <div><strong>Error ID:</strong> ERR-2024-01-22-ABC123</div>
+                    <div><strong>Timestamp:</strong> 2024-01-22T15:30:45Z</div>
+                    <div><strong>Request ID:</strong> req_xyz789</div>
+                    <div class="mt-2"><strong>Message:</strong> Internal server error occurred while processing your request.</div>
+                </MudText>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-4">
+            If the problem persists, please <MudLink Href="/support">contact support</MudLink>.
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    public static string Route => "examples/error/500";
+
+    private void Reload()
+    {
+        // Reload the page
+    }
+}

@@ -1,0 +1,41 @@
+@page "/examples/error/404"
+@rendermode InteractiveServer
+
+<PageTitle>Page Not Found</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex flex-column align-center justify-center"
+              Style="min-height: calc(100vh - 200px);">
+    <MudPaper Elevation="0" Class="pa-8 text-center rounded-lg"
+              Style="border: 1px solid var(--mud-palette-lines-default);">
+        <MudText Typo="Typo.h1" Color="Color.Primary" Style="font-size: 8rem; font-weight: 700; line-height: 1;">404
+        </MudText>
+        <MudText Typo="Typo.h4" Class="mt-4">Page Not Found</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2 mb-6">
+            Oops! The page you're looking for doesn't exist or has been moved.
+        </MudText>
+
+        <MudStack Row="true" Spacing="2" Justify="Justify.Center">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/" StartIcon="@Icons.Material.Filled.Home">
+                Go Home
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="GoBack" StartIcon="@Icons.Material.Filled.ArrowBack">
+                Go Back
+            </MudButton>
+        </MudStack>
+
+        <MudDivider Class="my-6" />
+
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">Looking for something specific?</MudText>
+        <MudTextField T="string" Placeholder="Search..." Variant="Variant.Outlined" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"    Style="max-width: 300px;" Class="mx-auto" />
+    </MudPaper>
+</MudContainer>
+
+@code {
+    public static string Route => "examples/error/404";
+
+    private void GoBack()
+    {
+        // Navigate back in history
+    }
+}

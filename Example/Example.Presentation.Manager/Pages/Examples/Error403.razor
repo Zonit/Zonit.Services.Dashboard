@@ -1,0 +1,39 @@
+@page "/examples/error/403"
+@rendermode InteractiveServer
+
+<PageTitle>Access Denied</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex flex-column align-center justify-center"
+              Style="min-height: calc(100vh - 200px);">
+    <MudPaper Elevation="0" Class="pa-8 text-center rounded-lg"
+              Style="border: 1px solid var(--mud-palette-lines-default);">
+        <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Error" Style="font-size: 6rem;" />
+        <MudText Typo="Typo.h1" Color="Color.Error" Style="font-size: 4rem; font-weight: 700;" Class="mt-2">403
+        </MudText>
+        <MudText Typo="Typo.h4" Class="mt-4">Access Denied</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2 mb-6">
+            Sorry, you don't have permission to access this page. Please contact your administrator if you believe this
+            is a mistake.
+        </MudText>
+
+        <MudStack Row="true" Spacing="2" Justify="Justify.Center">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/" StartIcon="@Icons.Material.Filled.Home">
+                Go Home
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.SupportAgent">
+                Contact Support
+            </MudButton>
+        </MudStack>
+
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-6 text-left">
+            <MudText Typo="Typo.body2">
+                <strong>Need access?</strong> Request permission from your organization administrator or check if you're
+                logged into the correct account.
+            </MudText>
+        </MudAlert>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    public static string Route => "examples/error/403";
+}

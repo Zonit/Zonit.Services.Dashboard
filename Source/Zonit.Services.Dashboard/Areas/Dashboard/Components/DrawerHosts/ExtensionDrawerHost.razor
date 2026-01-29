@@ -1,0 +1,91 @@
+@using Zonit.Services.Dashboard.Abstractions
+
+@inject IExtensionRegistry ExtensionRegistry
+
+@* 
+    ExtensionDrawerHost - Renders all enabled drawer extensions.
+    AOT-safe: Uses RenderFragment instead of Type reflection.
+*@
+
+@foreach (var extension in _extensions)
+{
+    <MudDrawer @bind-Open="@GetDrawerState(extension.Id).IsOpen"               Anchor="@GetMudAnchor(extension.Anchor)"
+               Width="@($"{extension.Width}px")"               Elevation="2">
+        @extension.CreateDrawerContent()
+    </MudDrawer>
+}
+
+@code {
+    private IReadOnlyList<IDrawerExtension> _extensions = [];
+    private readonly Dictionary<string, DrawerState> _drawerStates = new();
+
+    protected override void OnInitialized()
+    {
+        _extensions = ExtensionRegistry.GetDrawerExtensions();
+
+        foreach (var ext in _extensions)
+        {
+            _drawerStates[ext.Id] = new DrawerState();
+        }
+    }
+
+    private DrawerState GetDrawerState(string extensionId)
+    {
+        if (!_drawerStates.TryGetValue(extensionId, out var state))
+        {
+            state = new DrawerState();
+            _drawerStates[extensionId] = state;
+        }
+        return state;
+    }
+
+    private static Anchor GetMudAnchor(DrawerAnchor anchor) => anchor switch
+    {
+        DrawerAnchor.Start => Anchor.Start,
+        DrawerAnchor.End => Anchor.End,
+        DrawerAnchor.Top => Anchor.Top,
+        DrawerAnchor.Bottom => Anchor.Bottom,
+        _ => Anchor.End
+    };
+
+    /// <summary>
+    /// Opens a drawer by extension ID.
+    /// </summary>
+    public void Open(string extensionId)
+    {
+        if (_drawerStates.TryGetValue(extensionId, out var state))
+        {
+            state.IsOpen = true;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Closes a drawer by extension ID.
+    /// </summary>
+    public void Close(string extensionId)
+    {
+        if (_drawerStates.TryGetValue(extensionId, out var state))
+        {
+            state.IsOpen = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Toggles a drawer by extension ID.
+    /// </summary>
+    public void Toggle(string extensionId)
+    {
+        if (_drawerStates.TryGetValue(extensionId, out var state))
+        {
+            state.IsOpen = !state.IsOpen;
+            StateHasChanged();
+        }
+    }
+
+    private class DrawerState
+    {
+        public bool IsOpen { get; set; }
+    }
+}

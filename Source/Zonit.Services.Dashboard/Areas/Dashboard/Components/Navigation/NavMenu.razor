@@ -1,0 +1,163 @@
+@using Zonit.Extensions.Cultures
+@using Zonit.Extensions.Website
+@using Zonit.Extensions.Website.Abstractions.Navigations.Types
+@using Zonit.Services.Dashboard.Abstractions
+
+@implements IDisposable
+
+@inject ICultureProvider Culture
+@inject INavigationManager NavigationManager
+@inject INavigationProvider LegacyNavigationProvider
+
+@* 
+    NavMenu - Main navigation menu component with multi-level support.
+    Supports both new INavigationManager and legacy INavigationProvider.
+*@
+
+@if (_items is { Count: > 0 })
+{
+    @foreach (var item in _items.OrderBy(x => x.Order))
+    {
+        <AuthorizeView Policy="@item.Permission" Context="navContext">
+            <NavMenuItem Item="item" />
+        </AuthorizeView>
+    }
+}
+
+@code {
+    /// <summary>
+    /// The dashboard area to get navigation items for.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public DashboardArea Area { get; set; }
+
+    /// <summary>
+    /// The position of the navigation (left or right drawer).
+    /// </summary>
+    [Parameter]
+    public NavigationPosition Position { get; set; } = NavigationPosition.Left;
+
+    /// <summary>
+    /// Optional organization context for filtering navigation.
+    /// </summary>
+    [Parameter]
+    public Guid? OrganizationId { get; set; }
+
+    /// <summary>
+    /// Optional project context for filtering navigation.
+    /// </summary>
+    [Parameter]
+    public Guid? ProjectId { get; set; }
+
+    private IReadOnlyList<NavigationItem>? _items;
+
+    protected override void OnInitialized()
+    {
+        LoadNavigation();
+        Culture.OnChange += OnCultureChanged;
+        NavigationManager.OnNavigationChanged += OnNavigationChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        LoadNavigation();
+    }
+
+    private void LoadNavigation()
+    {
+        // First try new navigation manager
+        var context = new Abstractions.DashboardNavigationContext
+        {
+            Area = Area,
+            Position = Position,
+            OrganizationId = OrganizationId,
+            ProjectId = ProjectId
+        };
+
+        var newItems = NavigationManager.GetNavigation(context);
+
+        if (newItems.Count > 0)
+        {
+            _items = newItems;
+            return;
+        }
+
+        // Fallback to legacy navigation provider
+        var areaType = ConvertToAreaType(Area);
+        var positionString = Position == NavigationPosition.Right ? "right" : null;
+        var legacyItems = LegacyNavigationProvider.Get(areaType, positionString);
+
+        if (legacyItems is { Count: > 0 })
+        {
+            _items = ConvertFromLegacy(legacyItems);
+        }
+        else
+        {
+            _items = [];
+        }
+    }
+
+    private static AreaType ConvertToAreaType(DashboardArea area) => area switch
+    {
+        DashboardArea.Manager => AreaType.Manager,
+        DashboardArea.Management => AreaType.Management,
+        DashboardArea.Diagnostic => AreaType.Diagnostic,
+        DashboardArea.Public => AreaType.Web,
+        _ => AreaType.Manager
+    };
+
+    private static IReadOnlyList<NavigationItem> ConvertFromLegacy(
+        IReadOnlyCollection<Zonit.Extensions.Website.Abstractions.Navigations.Models.NavGroupModel> legacyItems)
+    {
+        var result = new List<NavigationItem>(legacyItems.Count);
+
+        foreach (var group in legacyItems.OrderBy(x => x.Order))
+        {
+            var children = group.Children?
+                .OrderBy(x => x.Order)
+                .Select(link => new NavigationItem
+                {
+                    Title = link.Title,
+                    Url = link.Url,
+                    Icon = link.Icon,
+                    Permission = link.Permission,
+                    Target = link.Target,
+                    Order = link.Order,
+                    ExactMatch = link.Match
+                })
+                .ToList();
+
+            var item = new NavigationItem
+            {
+                Title = group.Title,
+                Url = group.Link?.Url,
+                Icon = group.Icon,
+                Permission = group.Permission,
+                Order = group.Order,
+                Children = children
+            };
+
+            result.Add(item);
+        }
+
+        return result;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnNavigationChanged()
+    {
+        LoadNavigation();
+        InvokeAsync(StateHasChanged);
+    }
+
+    void IDisposable.Dispose()
+    {
+        Culture.OnChange -= OnCultureChanged;
+        NavigationManager.OnNavigationChanged -= OnNavigationChanged;
+        _items = null;
+    }
+}

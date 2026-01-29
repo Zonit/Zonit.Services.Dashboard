@@ -13,10 +13,9 @@
 @inject ITaskManager TaskManager
 @implements IAsyncDisposable
 
-<MudDrawer   
-    Open="@ExtensionManager.Drawer(Extensions.Task).IsOpen"
-    OpenChanged="@(value => ExtensionManager.Drawer(Extensions.Task).Set(value))" 
-    Width="420px" Height="100%" Anchor="Anchor.End" Elevation="1" Variant="@DrawerVariant.Temporary">
+<MudDrawer Open="@ExtensionManager.Drawer(Extensions.Task).IsOpen"
+           OpenChanged="@(value => ExtensionManager.Drawer(Extensions.Task).Set(value))" Width="420px" Height="100%"
+           Anchor="Anchor.End" Elevation="1" Variant="@DrawerVariant.Temporary">
 
     <MudDrawerHeader>
         <div class="d-flex align-center justify-space-between flex-grow-1 py-2">
@@ -25,10 +24,8 @@
                 <MudText Typo="Typo.h5" Style="font-weight: 600;">@Culture.Translate("Task Manager")</MudText>
             </div>
             <MudIconButton OnClick="@(() => ExtensionManager.Drawer(Extensions.Task).Close())"
-                       Icon=@Icons.Material.Filled.Close
-                       Size="Size.Small"
-                       Color="Color.Default"
-                       aria-label="@Culture.Translate("Close panel")" />
+                           Icon=@Icons.Material.Filled.Close Size="Size.Small"                      Color="Color.Default"
+                           aria-label="@Culture.Translate("Close panel")" />
         </div>
     </MudDrawerHeader>
 
@@ -39,7 +36,7 @@
         @if (!ActiveTasks.Any())
         {
             <div class="d-flex flex-column align-center justify-center" style="min-height: 300px; padding: 40px 20px;">
-                <MudIcon Icon="@Icons.Material.Outlined.CheckCircleOutline" Size="Size.Large" 
+                <MudIcon Icon="@Icons.Material.Outlined.CheckCircleOutline" Size="Size.Large"
                          Style="font-size: 64px; color: #90caf9; margin-bottom: 16px;" />
                 <MudText Typo="Typo.h6" Align="Align.Center" Style="font-weight: 500; margin-bottom: 8px; color: #424242;">
                     @Culture.Translate("All Tasks Completed")
@@ -52,35 +49,37 @@
         else
         {
             <div class="pa-3">
-                <MudText Typo="Typo.caption" Style="font-weight: 700; letter-spacing: 0.8px; color: #424242; padding: 8px 4px; font-size: 11px;">
+                <MudText Typo="Typo.caption"
+                         Style="font-weight: 700; letter-spacing: 0.8px; color: #424242; padding: 8px 4px; font-size: 11px;">
                     @Culture.Translate("ACTIVE TASKS") · @ActiveTasks.Count()
                 </MudText>
 
                 <MudStack Spacing="2" Class="mt-2">
                     @foreach (var task in ActiveTasks.OrderBy(t => t.CreatedAt))
                     {
-                        <MudPaper Elevation="0" Style="border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: white;">
+                        <MudPaper Elevation="0"
+                                  Style="border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: white;">
                             <div style="padding: 14px;">
                                 <!-- Header Row: Icon + Title + Status -->
                                 <div class="d-flex align-center justify-space-between" style="margin-bottom: 10px;">
                                     <div class="d-flex align-center flex-grow-1" style="min-width: 0; gap: 10px;">
-                                        <MudIcon Icon="@GetTaskIcon(task.Status)" 
-                                                 Size="Size.Small" 
+                                        <MudIcon Icon="@GetTaskIcon(task.Status)"                             Size="Size.Small"
                                                  Style="@($"color: {GetTaskIconColor(task.Status)}; flex-shrink: 0; font-size: 20px;")" />
                                         <div style="flex-grow: 1; min-width: 0;">
-                                            <MudText Typo="Typo.body1" Style="font-weight: 700; color: #1a1a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 1.4;">
+                                            <MudText Typo="Typo.body1"
+                                                     Style="font-weight: 700; color: #1a1a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 1.4;">
                                                 @GetTaskTitle(task)
                                             </MudText>
                                             @if (!string.IsNullOrEmpty(task.Description))
                                             {
-                                                <MudText Typo="Typo.caption" Style="color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 3px; font-size: 12px;">
+                                                <MudText Typo="Typo.caption"
+                                                         Style="color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 3px; font-size: 12px;">
                                                     @task.Description
                                                 </MudText>
                                             }
                                         </div>
                                     </div>
-                                    <MudChip T="string" Size="Size.Small" 
-                                             Color="@GetTaskStatusColor(task.Status)" 
+                                    <MudChip T="string" Size="Size.Small"                        Color="@GetTaskStatusColor(task.Status)"
                                              Variant="Variant.Filled"
                                              Style="font-weight: 700; font-size: 10px; height: 22px; margin-left: 10px; flex-shrink: 0; padding: 0 8px;">
                                         @GetTaskStatusText(task.Status)
@@ -88,9 +87,9 @@
                                 </div>
 
                                 <!-- Message (if available and different from title/description) -->
-                                @if (!string.IsNullOrEmpty(task.Message) && 
-                                     task.Message != GetTaskTitle(task) && 
-                                     task.Message != task.Description)
+                                @if (!string.IsNullOrEmpty(task.Message) &&
+                                                                     task.Message != GetTaskTitle(task) &&
+                                                                     task.Message != task.Description)
                                 {
                                     <div style="margin-bottom: 10px; padding: 6px 10px; background: #f5f5f5; border-radius: 4px;">
                                         <MudText Typo="Typo.caption" Style="color: #424242; font-size: 11px; font-style: italic;">
@@ -108,9 +107,10 @@
                                             @if (task.StartedAt.HasValue)
                                             {
                                                 <div class="d-flex align-center">
-                                                    <MudIcon Icon="@Icons.Material.Outlined.Schedule" Size="Size.Small" 
+                                                    <MudIcon Icon="@Icons.Material.Outlined.Schedule" Size="Size.Small"
                                                              Style="font-size: 12px; color: #757575; margin-right: 4px;" />
-                                                    <MudText Typo="Typo.caption" Style="color: #666; font-size: 10px; font-weight: 500;">
+                                                    <MudText Typo="Typo.caption"
+                                                             Style="color: #666; font-size: 10px; font-weight: 500;">
                                                         @GetTaskDuration(task)
                                                     </MudText>
                                                 </div>
@@ -123,11 +123,9 @@
                                                 @task.Progress.Value.ToString("0")%
                                             </MudText>
                                         </div>
-                                        
+
                                         <!-- Progress bar -->
-                                        <MudProgressLinear Color="Color.Primary" 
-                                                           Value="@task.Progress.Value" 
-                                                           Size="Size.Medium"
+                                        <MudProgressLinear Color="Color.Primary"                                          Value="@task.Progress.Value"                                                  Size="Size.Medium"
                                                            Style="height: 6px; border-radius: 3px;" />
                                     </div>
                                 }
@@ -135,7 +133,7 @@
                                 {
                                     <!-- For pending tasks, show waiting message -->
                                     <div class="d-flex align-center" style="margin-bottom: 10px;">
-                                        <MudIcon Icon="@Icons.Material.Outlined.Schedule" Size="Size.Small" 
+                                        <MudIcon Icon="@Icons.Material.Outlined.Schedule" Size="Size.Small"
                                                  Style="font-size: 14px; color: #757575; margin-right: 6px;" />
                                         <MudText Typo="Typo.caption" Style="color: #666; font-size: 11px; font-weight: 500;">
                                             @Culture.Translate("Waiting to start...")
@@ -146,29 +144,30 @@
                                 {
                                     <!-- For completed tasks, show completion time -->
                                     <div class="d-flex align-center" style="margin-bottom: 10px;">
-                                        <MudIcon Icon="@Icons.Material.Outlined.Schedule" Size="Size.Small" 
+                                        <MudIcon Icon="@Icons.Material.Outlined.Schedule" Size="Size.Small"
                                                  Style="font-size: 14px; color: #757575; margin-right: 6px;" />
                                         <MudText Typo="Typo.caption" Style="color: #666; font-size: 11px; font-weight: 500;">
-                                            <span>@Culture.Translate("Completed in") @GetElapsedTime(task.StartedAt.Value.DateTime, task.CompletedAt.Value.DateTime)</span>
-                                        </MudText>
-                                    </div>
-                                }
-                            </div>
-                        </MudPaper>
-                    }
-                </MudStack>
-            </div>
-        }
-    </div>
-</MudDrawer>
+                                            <span>@Culture.Translate("Completed in") @GetElapsedTime(task.StartedAt.Value.DateTime,
+                                                                                    task.CompletedAt.Value.DateTime)</span>
+                                            </MudText>
+                                        </div>
+                                    }
+                                </div>
+                            </MudPaper>
+                        }
+                    </MudStack>
+                </div>
+            }
+        </div>
+    </MudDrawer>
 
-@code{
-private IEnumerable<TaskState> ActiveTasks { get; set; } = Enumerable.Empty<TaskState>();
-private Timer? _timer;
-private DateTime _currentTime = DateTime.UtcNow;
-private volatile bool _disposed = false;
-private IDisposable? _taskSubscription;
-private readonly object _lock = new();
+@code {
+    private IEnumerable<TaskState> ActiveTasks { get; set; } = Enumerable.Empty<TaskState>();
+    private Timer? _timer;
+    private DateTime _currentTime = DateTime.UtcNow;
+    private volatile bool _disposed = false;
+    private IDisposable? _taskSubscription;
+    private readonly object _lock = new();
 
     protected override void OnInitialized()
     {
@@ -184,14 +183,14 @@ private readonly object _lock = new();
         _timer.Start();
 
         ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization?.Id);
-        
+
         // Subscribe to task changes
         if (Workspace.Organization?.Id != null)
         {
             _taskSubscription = TaskManager.OnChange(Workspace.Organization.Id, task =>
             {
                 if (_disposed) return;
-                
+
                 ActiveTasks = TaskManager.GetActiveTasks(Workspace.Organization.Id);
                 InvokeStateHasChangedSafe();
             });
@@ -201,7 +200,7 @@ private readonly object _lock = new();
             _taskSubscription = TaskManager.OnChange(task =>
             {
                 if (_disposed) return;
-                
+
                 ActiveTasks = TaskManager.GetActiveTasks();
                 InvokeStateHasChangedSafe();
             });
@@ -217,7 +216,7 @@ private readonly object _lock = new();
     private void InvokeStateHasChangedSafe()
     {
         if (_disposed) return;
-        
+
         try
         {
             _ = InvokeAsync(() =>
@@ -235,13 +234,13 @@ private readonly object _lock = new();
     private void OnTimerElapsed(object? sender, ElapsedEventArgs e)
     {
         if (_disposed) return;
-        
+
         lock (_lock)
         {
             if (_disposed) return;
             _currentTime = DateTime.UtcNow;
         }
-        
+
         InvokeStateHasChangedSafe();
     }
 
@@ -264,7 +263,7 @@ private readonly object _lock = new();
             }
             return typeName;
         }
-        
+
         // Final fallback
         return Culture.Translate("Background Task");
     }
@@ -344,7 +343,7 @@ private readonly object _lock = new();
     private string GetElapsedTime(DateTime start, DateTime end)
     {
         var duration = end - start;
-        
+
         if (duration.TotalDays >= 1)
             return $"{Math.Floor(duration.TotalDays)}d {duration.Hours}h {duration.Minutes}m";
         else if (duration.TotalHours >= 1)
@@ -361,7 +360,7 @@ private readonly object _lock = new();
         {
             _disposed = true;
         }
-        
+
         // First stop the timer to prevent new callbacks
         if (_timer != null)
         {
@@ -370,13 +369,13 @@ private readonly object _lock = new();
             _timer.Dispose();
             _timer = null;
         }
-        
+
         // Unsubscribe from events
         Culture.OnChange -= OnStateChanged;
         Workspace.OnChange -= OnStateChanged;
         ExtensionManager.Drawer(Extensions.Task)
             .OnChange -= OnStateChanged;
-            
+
         _taskSubscription?.Dispose();
         _taskSubscription = null;
 

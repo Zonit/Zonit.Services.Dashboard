@@ -1,49 +1,62 @@
 ﻿namespace Zonit.Services.Dashboard;
 
+/// <summary>
+/// Manages dashboard extension drawers.
+/// </summary>
+/// <remarks>
+/// This interface is maintained for backward compatibility.
+/// New code should use <see cref="Abstractions.IExtensionDrawerManager"/> instead.
+/// </remarks>
+[Obsolete("Use IExtensionDrawerManager from Zonit.Services.Dashboard.Abstractions namespace instead.")]
 public interface IExtensionManager
 {
     /// <summary>
-    /// Uzyskuje obiekt zarządzania szufladą dla konkretnego rozszerzenia.
+    /// Gets the drawer manager for a specific extension.
     /// </summary>
-    /// <param name="extension">Nazwa rozszerzenia</param>
-    /// <returns>Interfejs do zarządzania szufladą</returns>
+    /// <param name="extension">Extension name.</param>
+    /// <returns>Drawer interface.</returns>
     IDrawer Drawer(string extension);
 }
 
 /// <summary>
-/// Interfejs do zarządzania pojedynczą szufladą.
+/// Manages a single extension drawer.
 /// </summary>
+/// <remarks>
+/// This interface is maintained for backward compatibility.
+/// New code should use <see cref="Abstractions.IExtensionDrawer"/> instead.
+/// </remarks>
+[Obsolete("Use IExtensionDrawer from Zonit.Services.Dashboard.Abstractions namespace instead.")]
 public interface IDrawer
 {
     /// <summary>
-    /// Sprawdza, czy szuflada jest otwarta.
+    /// Gets whether the drawer is open.
     /// </summary>
     bool IsOpen { get; }
 
     /// <summary>
-    /// Otwiera szufladę. Jeśli szuflada jest już otwarta, to nie robi nic.
+    /// Opens the drawer.
     /// </summary>
     void Open();
 
     /// <summary>
-    /// Zamyka szufladę. Jeśli szuflada jest już zamknięta, to nie robi nic.
+    /// Closes the drawer.
     /// </summary>
     void Close();
 
     /// <summary>
-    /// Zmienia stan szuflady na przeciwny.
+    /// Toggles the drawer state.
     /// </summary>
-    /// <returns>Nowy stan szuflady (true - otwarta, false - zamknięta)</returns>
+    /// <returns>New state (true = open).</returns>
     bool Toggle();
 
     /// <summary>
-    /// Ustawia stan szuflady na otwarty lub zamknięty.
+    /// Sets the drawer state.
     /// </summary>
-    /// <param name="open">Stan szuflady (true - otwarta, false - zamknięta)</param>
+    /// <param name="open">Whether to open.</param>
     void Set(bool open);
 
     /// <summary>
-    /// Zdarzenie wywoływane po każdej zmianie stanu szuflady.
+    /// Event raised when state changes.
     /// </summary>
     event Action? OnChange;
 }

@@ -1,0 +1,267 @@
+@page "/examples/dashboard"
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard Overview</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    @* Header Section *@
+    <MudText Typo="Typo.h4" Class="mb-2">Dashboard</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+        Welcome back! Here's what's happening with your projects today.
+    </MudText>
+
+    @* Stats Cards Row *@
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg mud-border-primary" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Total Users</MudText>
+                        <MudText Typo="Typo.h4" Class="mt-1">2,543</MudText>
+                        <div class="d-flex align-center mt-2">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Success" Size="Size.Small" />
+                            <MudText Typo="Typo.caption" Color="Color.Success" Class="ml-1">+12.5%</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-1">vs last month</MudText>
+                        </div>
+                    </div>
+                    <MudAvatar Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Large">
+                        <MudIcon Icon="@Icons.Material.Filled.People" />
+                    </MudAvatar>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Revenue</MudText>
+                        <MudText Typo="Typo.h4" Class="mt-1">$45,231</MudText>
+                        <div class="d-flex align-center mt-2">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Success" Size="Size.Small" />
+                            <MudText Typo="Typo.caption" Color="Color.Success" Class="ml-1">+20.1%</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-1">vs last month</MudText>
+                        </div>
+                    </div>
+                    <MudAvatar Color="Color.Success" Variant="Variant.Outlined" Size="Size.Large">
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" />
+                    </MudAvatar>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Active Projects</MudText>
+                        <MudText Typo="Typo.h4" Class="mt-1">12</MudText>
+                        <div class="d-flex align-center mt-2">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Color="Color.Error" Size="Size.Small" />
+                            <MudText Typo="Typo.caption" Color="Color.Error" Class="ml-1">-2</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-1">from last week</MudText>
+                        </div>
+                    </div>
+                    <MudAvatar Color="Color.Info" Variant="Variant.Outlined" Size="Size.Large">
+                        <MudIcon Icon="@Icons.Material.Filled.Folder" />
+                    </MudAvatar>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Pending Tasks</MudText>
+                        <MudText Typo="Typo.h4" Class="mt-1">28</MudText>
+                        <div class="d-flex align-center mt-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Schedule" Color="Color.Warning" Size="Size.Small" />
+                            <MudText Typo="Typo.caption" Color="Color.Warning" Class="ml-1">7 due today</MudText>
+                        </div>
+                    </div>
+                    <MudAvatar Color="Color.Warning" Variant="Variant.Outlined" Size="Size.Large">
+                        <MudIcon Icon="@Icons.Material.Filled.Task" />
+                    </MudAvatar>
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    @* Main Content Row *@
+    <MudGrid Class="mt-4">
+        @* Chart Section *@
+        <MudItem xs="12" md="8">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <div>
+                        <MudText Typo="Typo.h6">Overview</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Monthly performance metrics</MudText>
+                    </div>
+                    <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                        <MudButton>Week</MudButton>
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled">Month</MudButton>
+                        <MudButton>Year</MudButton>
+                    </MudButtonGroup>
+                </div>
+                
+                @* Placeholder for chart *@
+                <div style="height: 300px; display: flex; align-items: center; justify-content: center; background: var(--mud-palette-background-gray); border-radius: 8px;">
+                    <MudText Color="Color.Secondary">Chart Placeholder - Use MudBlazor Charts or ApexCharts</MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        @* Recent Activity *@
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default); height: 100%;">
+                <MudText Typo="Typo.h6" Class="mb-4">Recent Activity</MudText>
+                
+                <MudTimeline TimelinePosition="TimelinePosition.Start">
+                    <MudTimelineItem Color="Color.Success" Size="Size.Small">
+                        <ItemContent>
+                            <MudText Typo="Typo.body2">New user registered</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">2 min ago</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Info" Size="Size.Small">
+                        <ItemContent>
+                            <MudText Typo="Typo.body2">Order #1234 completed</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">15 min ago</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Warning" Size="Size.Small">
+                        <ItemContent>
+                            <MudText Typo="Typo.body2">Server CPU at 85%</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">1 hour ago</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Primary" Size="Size.Small">
+                        <ItemContent>
+                            <MudText Typo="Typo.body2">Deployment successful</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">3 hours ago</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                </MudTimeline>
+                
+                <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true" Class="mt-2">
+                    View All Activity
+                </MudButton>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    @* Quick Actions Row *@
+    <MudGrid Class="mt-4">
+        <MudItem xs="12">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h6" Class="mb-4">Quick Actions</MudText>
+                <MudStack Row="true" Spacing="3" Wrap="Wrap.Wrap">
+                    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" Color="Color.Primary">
+                        New Project
+                    </MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.PersonAdd" Variant="Variant.Outlined" Color="Color.Primary">
+                        Invite Member
+                    </MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.Upload" Variant="Variant.Outlined" Color="Color.Primary">
+                        Import Data
+                    </MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Outlined" Color="Color.Primary">
+                        Export Report
+                    </MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.Settings" Variant="Variant.Outlined" Color="Color.Primary">
+                        Settings
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    @* Recent Projects Table *@
+    <MudGrid Class="mt-4 mb-6">
+        <MudItem xs="12">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <MudText Typo="Typo.h6">Recent Projects</MudText>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ArrowForward">
+                        View All
+                    </MudButton>
+                </div>
+                
+                <MudSimpleTable Hover="true" Dense="true">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th>Status</th>
+                            <th>Team</th>
+                            <th>Progress</th>
+                            <th style="text-align: right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var project in _projects)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-center gap-2">
+                                        <MudAvatar Size="Size.Small" Color="@project.AvatarColor" Variant="Variant.Outlined">
+                                            <MudIcon Icon="@project.Icon" Size="Size.Small" />
+                                        </MudAvatar>
+                                        <div>
+                                            <MudText Typo="Typo.body2">@project.Name</MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@project.Description</MudText>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <MudChip T="string" Size="Size.Small" Color="@project.StatusColor" Variant="Variant.Outlined">
+                                        @project.Status
+                                    </MudChip>
+                                </td>
+                                <td>
+                                    <MudAvatarGroup Max="3" MaxSize="Size.Small" Spacing="3">
+                                        @for (int i = 0; i < project.TeamSize; i++)
+                                        {
+                                            <MudAvatar Size="Size.Small" Color="Color.Primary">@((char)('A' + i))</MudAvatar>
+                                        }
+                                    </MudAvatarGroup>
+                                </td>
+                                <td style="min-width: 150px;">
+                                    <MudProgressLinear Value="@project.Progress" Color="@project.ProgressColor" Rounded="true" Size="Size.Small" />
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@project.Progress%</MudText>
+                                </td>
+                                <td style="text-align: right">
+                                    <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    public static string Route => "examples/dashboard";
+    
+    private readonly List<ProjectInfo> _projects =
+    [
+        new("E-commerce Platform", "Online store redesign", Icons.Material.Filled.ShoppingCart, Color.Primary, "Active", Color.Success, 75, 4, Color.Success),
+        new("Mobile App", "iOS & Android app", Icons.Material.Filled.PhoneAndroid, Color.Info, "In Review", Color.Warning, 90, 3, Color.Info),
+        new("API Integration", "Third-party services", Icons.Material.Filled.Api, Color.Success, "Active", Color.Success, 45, 2, Color.Primary),
+        new("Dashboard UI", "Admin panel update", Icons.Material.Filled.Dashboard, Color.Warning, "On Hold", Color.Error, 30, 5, Color.Warning),
+        new("Data Migration", "Legacy system migration", Icons.Material.Filled.Storage, Color.Secondary, "Completed", Color.Info, 100, 3, Color.Success)
+    ];
+
+    private record ProjectInfo(
+        string Name, 
+        string Description, 
+        string Icon, 
+        Color AvatarColor, 
+        string Status, 
+        Color StatusColor, 
+        int Progress, 
+        int TeamSize, 
+        Color ProgressColor);
+}

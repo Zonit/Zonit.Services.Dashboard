@@ -1,0 +1,121 @@
+@page "/examples"
+@rendermode InteractiveServer
+
+<PageTitle>Example Pages</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-2">Example Pages</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+        A collection of pre-built page templates to showcase dashboard layouts and patterns.
+    </MudText>
+
+    <MudGrid>
+        @foreach (var category in _categories)
+        {
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" Class="mb-3">@category.Title</MudText>
+            </MudItem>
+
+            @foreach (var pageItem in category.Pages)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudCard Elevation="0" Class="h-100" Style="border: 1px solid var(--mud-palette-lines-default);">
+                        <div style="height: 120px; background: @pageItem.GradientBg; position: relative;">
+                            <MudIcon Icon="@pageItem.Icon"
+                                     Style="position: absolute; bottom: 12px; left: 12px; font-size: 2rem; color: white; opacity: 0.8;" />
+                        </div>
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1">@pageItem.Title</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">@pageItem.Description</MudText>
+                        </MudCardContent>
+                        <MudCardActions Class="justify-end">
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" Href="@pageItem.Url"
+                                       EndIcon="@Icons.Material.Filled.ArrowForward">
+                                View
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        }
+    </MudGrid>
+
+    @* Design Patterns Section *@
+    <MudText Typo="Typo.h5" Class="mt-8 mb-4">Design Patterns Used</MudText>
+
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudIcon Icon="@Icons.Material.Filled.GridView" Color="Color.Primary" Size="Size.Large" />
+                <MudText Typo="Typo.subtitle1" Class="mt-2">Responsive Grid</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    12-column grid system that adapts to all screen sizes using MudBlazor's MudGrid.
+                </MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudIcon Icon="@Icons.Material.Filled.Palette" Color="Color.Primary" Size="Size.Large" />
+                <MudText Typo="Typo.subtitle1" Class="mt-2">Theme Aware</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    All components use CSS variables for colors, adapting to light and dark themes automatically.
+                </MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg" Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudIcon Icon="@Icons.Material.Filled.ViewModule" Color="Color.Primary" Size="Size.Large" />
+                <MudText Typo="Typo.subtitle1" Class="mt-2">Consistent Cards</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Using MudPaper with Elevation="0" and subtle borders for a modern, flat design.
+                </MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    public static string Route => "/examples";
+
+    private readonly List<PageCategory> _categories =
+    [
+        new("Dashboard & Analytics", [
+            new("Dashboard", "Main overview with stats, charts, and activity feed",
+                Icons.Material.Filled.Dashboard, "/examples/dashboard",
+                "linear-gradient(135deg, #667eea 0%, #764ba2 100%)")
+        ]),
+        new("Data Management", [
+            new("Users List", "Data table with search, filters, and pagination",
+                Icons.Material.Filled.People, "/examples/users",
+                "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"),
+            new("User Form", "Create/Edit form with validation",
+                Icons.Material.Filled.PersonAdd, "/examples/users/create",
+                "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"),
+            new("User Details", "Profile page with activity and stats",
+                Icons.Material.Filled.Person, $"/examples/users/{Guid.NewGuid()}",
+                "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)")
+        ]),
+        new("Account & Settings", [
+            new("Profile", "User profile with cover, stats, and activity",
+                Icons.Material.Filled.AccountCircle, "/examples/profile",
+                "linear-gradient(135deg, #fa709a 0%, #fee140 100%)"),
+            new("Settings", "Application settings with sections",
+                Icons.Material.Filled.Settings, "/examples/settings",
+                "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)")
+        ]),
+        new("Error Pages", [
+            new("404 Not Found", "Page not found error",
+                Icons.Material.Filled.SearchOff, "/examples/error/404",
+                "linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)"),
+            new("403 Forbidden", "Access denied error",
+                Icons.Material.Filled.Lock, "/examples/error/403",
+                "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)"),
+            new("500 Server Error", "Internal server error",
+                Icons.Material.Filled.Error, "/examples/error/500",
+                "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)")
+        ])
+    ];
+
+    private record PageCategory(string Title, List<PageInfo> Pages);
+    private record PageInfo(string Title, string Description, string Icon, string Url, string GradientBg);
+}

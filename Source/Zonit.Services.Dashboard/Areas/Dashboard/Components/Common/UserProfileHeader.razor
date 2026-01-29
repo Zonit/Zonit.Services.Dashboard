@@ -1,0 +1,46 @@
+@*
+    UserProfileHeader - Displays user avatar and menu in the right drawer.
+    Provides quick access to user settings and logout.
+*@
+
+@using Zonit.Extensions.Identity
+
+@inject ICultureProvider Culture
+
+<MudText Align="Align.Center" Class="my-5">
+    <MudAvatar Color="Color.Primary" Size="Size.Large">@User.Name[0]</MudAvatar>
+</MudText>
+
+<MudText Align="Align.Center" Class="my-5">
+    <MudMenu AnchorOrigin="Origin.BottomCenter">
+        <ActivatorContent>
+            <MudButton Class="mud-typography mud-typography-body2 px-4 mud-text-secondary"
+                       EndIcon="@Icons.Material.Filled.KeyboardArrowDown">
+                @Culture.Translate("Hello {0}", User.Name)
+            </MudButton>
+        </ActivatorContent>
+        <ChildContent>
+            <MudMenuItem Href="identity/profile">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-2" />
+                @Culture.Translate("Profile")
+            </MudMenuItem>
+            <MudMenuItem Href="identity/settings">
+                <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" Class="mr-2" />
+                @Culture.Translate("Settings")
+            </MudMenuItem>
+            <MudDivider Class="my-1" />
+            <MudMenuItem Href="identity/auth/logout">
+                <MudIcon Icon="@Icons.Material.Filled.Logout" Size="Size.Small" Class="mr-2" />
+                @Culture.Translate("Logout")
+            </MudMenuItem>
+        </ChildContent>
+    </MudMenu>
+</MudText>
+
+@code {
+    /// <summary>
+    /// The authenticated user to display.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public UserModel User { get; set; } = default!;
+}

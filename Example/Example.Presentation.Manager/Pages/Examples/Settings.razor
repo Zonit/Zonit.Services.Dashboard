@@ -1,0 +1,339 @@
+@page "/examples/settings"
+@rendermode InteractiveServer
+
+<PageTitle>Settings</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-2">Settings</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+        Manage your application settings and preferences
+    </MudText>
+
+    <MudGrid>
+        @* Navigation Sidebar *@
+        <MudItem xs="12" md="3">
+            <MudPaper Elevation="0" Class="pa-2 rounded-lg sticky"
+                      Style="border: 1px solid var(--mud-palette-lines-default); top: 80px;">
+                <MudNavMenu Rounded="true" Color="Color.Primary">
+                    <MudNavLink Href="#general" Icon="@Icons.Material.Filled.Settings" Match="NavLinkMatch.All">General
+                    </MudNavLink>
+                    <MudNavLink Href="#appearance" Icon="@Icons.Material.Filled.Palette">Appearance</MudNavLink>
+                    <MudNavLink Href="#notifications" Icon="@Icons.Material.Filled.Notifications">Notifications
+                    </MudNavLink>
+                    <MudNavLink Href="#security" Icon="@Icons.Material.Filled.Security">Security</MudNavLink>
+                    <MudNavLink Href="#integrations" Icon="@Icons.Material.Filled.Extension">Integrations</MudNavLink>
+                    <MudNavLink Href="#billing" Icon="@Icons.Material.Filled.Payment">Billing</MudNavLink>
+                    <MudNavLink Href="#advanced" Icon="@Icons.Material.Filled.Code">Advanced</MudNavLink>
+                </MudNavMenu>
+            </MudPaper>
+        </MudItem>
+
+        @* Settings Content *@
+        <MudItem xs="12" md="9">
+            @* General Section *@
+            <MudPaper id="general" Elevation="0" Class="pa-6 mb-4 rounded-lg"
+                      Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h6" Class="mb-1">General</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">Basic application settings</MudText>
+
+                <MudStack Spacing="4">
+                    <MudTextField @bind-Value="_settings.OrganizationName" Label="Organization Name"
+                                  Variant="Variant.Outlined" HelperText="This will be displayed in the header" />
+
+                    <MudTextField @bind-Value="_settings.WebsiteUrl" Label="Website URL" Variant="Variant.Outlined"
+                                  InputType="InputType.Url" />
+
+                    <MudSelect T="string" @bind-Value="_settings.Timezone" Label="Timezone" Variant="Variant.Outlined">
+                        <MudSelectItem Value="@("UTC")">UTC</MudSelectItem>
+                        <MudSelectItem Value="@("Europe/Warsaw")">Europe/Warsaw (GMT+1)</MudSelectItem>
+                        <MudSelectItem Value="@("America/New_York")">America/New_York (GMT-5)</MudSelectItem>
+                        <MudSelectItem Value="@("Asia/Tokyo")">Asia/Tokyo (GMT+9)</MudSelectItem>
+                    </MudSelect>
+
+                    <MudSelect T="string" @bind-Value="_settings.Language" Label="Language" Variant="Variant.Outlined">
+                        <MudSelectItem Value="@("en")">English</MudSelectItem>
+                        <MudSelectItem Value="@("pl")">Polski</MudSelectItem>
+                        <MudSelectItem Value="@("de")">Deutsch</MudSelectItem>
+                        <MudSelectItem Value="@("fr")">Français</MudSelectItem>
+                    </MudSelect>
+
+                    <MudSelect T="string" @bind-Value="_settings.DateFormat" Label="Date Format"
+                               Variant="Variant.Outlined">
+                        <MudSelectItem Value="@("MM/DD/YYYY")">MM/DD/YYYY</MudSelectItem>
+                        <MudSelectItem Value="@("DD/MM/YYYY")">DD/MM/YYYY</MudSelectItem>
+                        <MudSelectItem Value="@("YYYY-MM-DD")">YYYY-MM-DD</MudSelectItem>
+                    </MudSelect>
+                </MudStack>
+            </MudPaper>
+
+            @* Appearance Section *@
+            <MudPaper id="appearance" Elevation="0" Class="pa-6 mb-4 rounded-lg"
+                      Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h6" Class="mb-1">Appearance</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">Customize how the application looks
+                </MudText>
+
+                <MudStack Spacing="4">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Theme</MudText>
+                        <MudRadioGroup @bind-Value="_settings.Theme">
+                            <MudStack Row="true" Spacing="3">
+                                <MudPaper Class="@GetThemeCardClass("light")"
+                                          Style="border: 2px solid var(--mud-palette-lines-default); min-width: 120px;"
+                                          @onclick="@(() => _settings.Theme = "light")">
+                                    <div class="d-flex flex-column align-center gap-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.LightMode" Size="Size.Large" />
+                                        <MudRadio Value="@("light")" Dense="true">Light</MudRadio>
+                                    </div>
+                                </MudPaper>
+                                <MudPaper Class="@GetThemeCardClass("dark")"
+                                          Style="border: 2px solid var(--mud-palette-lines-default); min-width: 120px;"
+                                          @onclick="@(() => _settings.Theme = "dark")">
+                                    <div class="d-flex flex-column align-center gap-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.DarkMode" Size="Size.Large" />
+                                        <MudRadio Value="@("dark")" Dense="true">Dark</MudRadio>
+                                    </div>
+                                </MudPaper>
+                                <MudPaper Class="@GetThemeCardClass("system")"
+                                          Style="border: 2px solid var(--mud-palette-lines-default); min-width: 120px;"
+                                          @onclick="@(() => _settings.Theme = "system")">
+                                    <div class="d-flex flex-column align-center gap-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.SettingsBrightness" Size="Size.Large" />
+                                        <MudRadio Value="@("system")" Dense="true">System</MudRadio>
+                                    </div>
+                                </MudPaper>
+                            </MudStack>
+                        </MudRadioGroup>
+                    </div>
+
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.body1">Compact Mode</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Reduce spacing and padding</MudText>
+                        </div>
+                        <MudSwitch @bind-Value="_settings.CompactMode" Color="Color.Primary" />
+                    </div>
+
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.body1">Animations</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Enable UI animations and transitions
+                            </MudText>
+                        </div>
+                        <MudSwitch @bind-Value="_settings.Animations" Color="Color.Primary" />
+                    </div>
+                </MudStack>
+            </MudPaper>
+
+            @* Notifications Section *@
+            <MudPaper id="notifications" Elevation="0" Class="pa-6 mb-4 rounded-lg"
+                      Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h6" Class="mb-1">Notifications</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">Configure how you receive notifications
+                </MudText>
+
+                <MudStack Spacing="3">
+                    <div class="d-flex justify-space-between align-center py-2">
+                        <div>
+                            <MudText Typo="Typo.body1">Email Notifications</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Receive notifications via email
+                            </MudText>
+                        </div>
+                        <MudSwitch @bind-Value="_settings.EmailNotifications" Color="Color.Primary" />
+                    </div>
+                    <MudDivider />
+                    <div class="d-flex justify-space-between align-center py-2">
+                        <div>
+                            <MudText Typo="Typo.body1">Push Notifications</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Receive browser push notifications
+                            </MudText>
+                        </div>
+                        <MudSwitch @bind-Value="_settings.PushNotifications" Color="Color.Primary" />
+                    </div>
+                    <MudDivider />
+                    <div class="d-flex justify-space-between align-center py-2">
+                        <div>
+                            <MudText Typo="Typo.body1">Weekly Summary</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Receive weekly digest of activities
+                            </MudText>
+                        </div>
+                        <MudSwitch @bind-Value="_settings.WeeklySummary" Color="Color.Primary" />
+                    </div>
+                    <MudDivider />
+                    <div class="d-flex justify-space-between align-center py-2">
+                        <div>
+                            <MudText Typo="Typo.body1">Security Alerts</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Get notified about security events
+                            </MudText>
+                        </div>
+                        <MudSwitch @bind-Value="_settings.SecurityAlerts" Color="Color.Primary" />
+                    </div>
+                </MudStack>
+            </MudPaper>
+
+            @* Security Section *@
+            <MudPaper id="security" Elevation="0" Class="pa-6 mb-4 rounded-lg"
+                      Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h6" Class="mb-1">Security</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">Manage your account security</MudText>
+
+                <MudStack Spacing="4">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">
+                        Two-factor authentication is currently <strong>disabled</strong>. Enable it for better security.
+                    </MudAlert>
+
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.body1">Two-Factor Authentication</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Add an extra layer of security
+                            </MudText>
+                        </div>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary">Enable</MudButton>
+                    </div>
+
+                    <MudDivider />
+
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.body1">Change Password</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Last changed 30 days ago</MudText>
+                        </div>
+                        <MudButton Variant="Variant.Outlined">Change</MudButton>
+                    </div>
+
+                    <MudDivider />
+
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.body1">Active Sessions</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Manage devices logged into your account
+                            </MudText>
+                        </div>
+                        <MudButton Variant="Variant.Outlined">Manage</MudButton>
+                    </div>
+                </MudStack>
+            </MudPaper>
+
+            @* Integrations Section *@
+            <MudPaper id="integrations" Elevation="0" Class="pa-6 mb-4 rounded-lg"
+                      Style="border: 1px solid var(--mud-palette-lines-default);">
+                <MudText Typo="Typo.h6" Class="mb-1">Integrations</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">Connect with third-party services
+                </MudText>
+
+                <MudStack Spacing="3">
+                    @foreach (var integration in _integrations)
+                    {
+                        <div class="d-flex justify-space-between align-center pa-3 rounded-lg"
+                             style="border: 1px solid var(--mud-palette-lines-default);">
+                            <div class="d-flex align-center gap-3">
+                                <MudAvatar Size="Size.Medium" Variant="Variant.Outlined" Color="@integration.Color">
+                                    <MudIcon Icon="@integration.Icon" />
+                                </MudAvatar>
+                                <div>
+                                    <MudText Typo="Typo.body1">@integration.Name</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@integration.Description</MudText>
+                                </div>
+                            </div>
+                            @if (integration.Connected)
+                            {
+                                <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small">Disconnect
+                                </MudButton>
+                            }
+                            else
+                            {
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">Connect
+                                </MudButton>
+                            }
+                        </div>
+                    }
+                </MudStack>
+            </MudPaper>
+
+            @* Danger Zone *@
+            <MudPaper id="advanced" Elevation="0" Class="pa-6 mb-4 rounded-lg"
+                      Style="border: 1px solid var(--mud-palette-error);">
+                <MudText Typo="Typo.h6" Color="Color.Error" Class="mb-1">Danger Zone</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">Irreversible and destructive actions
+                </MudText>
+
+                <MudStack Spacing="3">
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.body1">Export All Data</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Download all your data in JSON format
+                            </MudText>
+                        </div>
+                        <MudButton Variant="Variant.Outlined">Export</MudButton>
+                    </div>
+                    <MudDivider />
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.body1">Delete Account</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Permanently delete your account and all
+                                data</MudText>
+                            </div>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error">Delete Account</MudButton>
+                        </div>
+                    </MudStack>
+                </MudPaper>
+
+                @* Save Button *@
+                <div class="d-flex justify-end gap-2 mb-6">
+                    <MudButton Variant="Variant.Outlined">Cancel</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save">
+                        Save Changes
+                    </MudButton>
+                </div>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+
+@code {
+    public static string Route => "examples/settings";
+
+    private SettingsModel _settings = new()
+    {
+        OrganizationName = "Acme Corporation",
+        WebsiteUrl = "https://example.com",
+        Timezone = "Europe/Warsaw",
+        Language = "en",
+        DateFormat = "YYYY-MM-DD",
+        Theme = "system",
+        CompactMode = false,
+        Animations = true,
+        EmailNotifications = true,
+        PushNotifications = false,
+        WeeklySummary = true,
+        SecurityAlerts = true
+    };
+
+    private readonly List<IntegrationItem> _integrations =
+    [
+        new("Slack", "Send notifications to Slack channels", Icons.Material.Filled.Chat, Color.Info, true),
+        new("GitHub", "Sync with GitHub repositories", Icons.Material.Filled.Code, Color.Default, true),
+        new("Jira", "Track issues and projects", Icons.Material.Filled.BugReport, Color.Primary, false),
+        new("Google Calendar", "Sync events and deadlines", Icons.Material.Filled.CalendarMonth, Color.Success, false)
+    ];
+
+    private class SettingsModel
+    {
+        public string OrganizationName { get; set; } = "";
+        public string WebsiteUrl { get; set; } = "";
+        public string Timezone { get; set; } = "UTC";
+        public string Language { get; set; } = "en";
+        public string DateFormat { get; set; } = "YYYY-MM-DD";
+        public string Theme { get; set; } = "system";
+        public bool CompactMode { get; set; }
+        public bool Animations { get; set; } = true;
+        public bool EmailNotifications { get; set; } = true;
+        public bool PushNotifications { get; set; }
+        public bool WeeklySummary { get; set; }
+        public bool SecurityAlerts { get; set; } = true;
+    }
+
+    private record IntegrationItem(string Name, string Description, string Icon, Color Color, bool Connected);
+
+    private string GetThemeCardClass(string theme) =>
+        $"pa-4 rounded-lg cursor-pointer{(_settings.Theme == theme ? " mud-border-primary" : "")}";
+}

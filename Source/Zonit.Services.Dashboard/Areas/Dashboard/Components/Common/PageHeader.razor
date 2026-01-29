@@ -1,0 +1,46 @@
+@*
+    PageHeader - Standard page header component for dashboard pages.
+    Provides consistent styling for page titles with optional subtitle and actions.
+*@
+
+@inject ICultureProvider Culture
+
+<div class="page-header d-flex align-center justify-space-between mb-6">
+    <div>
+        <MudText Typo="Typo.h4" Class="mb-1" Style="font-weight: 600;">
+            @Culture.Translate(Title)
+        </MudText>
+        @if (!string.IsNullOrEmpty(Subtitle))
+        {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                @Culture.Translate(Subtitle)
+            </MudText>
+        }
+    </div>
+    @if (Actions is not null)
+    {
+        <div class="d-flex gap-2">
+            @Actions
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// The main title of the page.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = default!;
+
+    /// <summary>
+    /// Optional subtitle or description.
+    /// </summary>
+    [Parameter]
+    public string? Subtitle { get; set; }
+
+    /// <summary>
+    /// Optional action buttons or controls.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? Actions { get; set; }
+}
