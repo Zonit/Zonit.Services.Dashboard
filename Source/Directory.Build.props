@@ -1,4 +1,14 @@
 <Project>
+  <!-- Continue the Directory.Build.props chain upwards. Without this, MSBuild
+       stops walking parents at the first Directory.Build.props it finds, so
+       Sdk-root's <IsZonitSdkWorkspace>true</IsZonitSdkWorkspace> never reaches
+       Zonit.Dashboard.csproj — which then falls back to <PackageReference
+       Include="Zonit.Extensions.Website"> instead of the source-side
+       ProjectReference, leading to type-version conflicts in the Documents host
+       (CS0234 / CS0433 on IBreadcrumbsProvider, ITenantProvider, IWebsiteArea, …). -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))"
+          Condition="'$([MSBuild]::GetPathOfFileAbove(`Directory.Build.props`, `$(MSBuildThisFileDirectory)../`))' != ''" />
+
   <!-- Common NuGet Package Metadata for all Zonit.Services.Dashboard packages -->
   <PropertyGroup>
     <Authors>Zonit</Authors>
