@@ -1,0 +1,180 @@
+@*
+    Persistent right-side rail. Restores the legacy Zonit.Services.Dashboard UX
+    where the user-settings column lived as a permanently visible drawer with
+    inline labelled switchers (avatar + "Theme · AUTO", "Org · ACME", ...). The
+    rail itself doesn't host the picker UI — clicking a row toggles the matching
+    drawer extension (zonit.dashboard.theme / .workspace / .project / .culture
+    / .user-profile). Reusing the existing drawer panels keeps a single source
+    of truth for the actual switching logic.
+
+    Hard-coded for now per request — future "blocks" iteration will expose this
+    as a plug-in slot in Zonit.Extensions.Website so non-dashboard hosts can
+    drop in their own rail items.
+*@
+@namespace Zonit.Dashboard.Components.Layouts
+@using Microsoft.AspNetCore.Components.Authorization
+@using Zonit.Dashboard.Extensions
+@using Zonit.Dashboard.Themes
+@using Zonit.Extensions
+@using Zonit.Extensions.Auth
+@using Zonit.Extensions.Cultures
+@using Zonit.Extensions.Organizations
+@using Zonit.Extensions.Projects
+@implements IDisposable
+
+@inject ICultureProvider Culture
+@inject IAuthenticatedProvider Authenticated
+@inject IWorkspaceProvider Workspace
+@inject ICatalogProvider Catalog
+@inject IThemeManager ThemeManager
+@inject IExtensionDrawerStates DrawerStates
+@inject NavigationManager Nav
+
+<MudStack Spacing="0" Class="py-2">
+
+    @* ─── User profile ─── *@
+    @if (Authenticated.Current.HasValue)
+    {
+        var user = Authenticated.Current;
+        var initial = !string.IsNullOrWhiteSpace(user.Name.ToString())
+            ? user.Name.ToString()![..1].ToUpperInvariant()
+            : "?";
+
+        <RailButton TooltipText="@T("Profile")"
+                    OnClick="@(() => Toggle(UserProfileId))">
+            <LeadingTemplate>
+                <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Small">@initial</MudAvatar>
+            </LeadingTemplate>
+            <Label>@T("Account")</Label>
+            <Value>@user.Name.ToString()</Value>
+        </RailButton>
+    }
+    else
+    {
+        <RailButton TooltipText="@T("Sign in")"
+                    OnClick="@(() => Nav.NavigateTo("login"))">
+            <LeadingTemplate>
+                <MudIcon Icon="@Icons.Material.Filled.Login" Color="MudBlazor.Color.Default" Size="Size.Small" />
+            </LeadingTemplate>
+            <Label>@T("Account")</Label>
+            <Value>@T("Sign in")</Value>
+        </RailButton>
+    }
+
+    <MudDivider Class="my-1" />
+
+    @* ─── Theme ─── *@
+    <RailButton TooltipText="@T("Change theme")"
+                OnClick="@(() => Toggle(ThemeId))">
+        <LeadingTemplate>
+            <MudIcon Icon="@ThemeIcon" Color="MudBlazor.Color.Default" Size="Size.Small" />
+        </LeadingTemplate>
+        <Label>@T("Theme")</Label>
+        <Value>@ThemeLabel</Value>
+    </RailButton>
+
+    <MudDivider Class="my-1" />
+
+    @* ─── Organization ─── *@
+    @if (Workspace.Organization.HasValue)
+    {
+        var orgName = Workspace.Organization.Name.HasValue
+            ? Workspace.Organization.Name.Value
+            : Workspace.Organization.Id.ToString();
+        var orgInitial = orgName.Length > 0 ? orgName[..1].ToUpperInvariant() : "?";
+
+        <RailButton TooltipText="@T("Change organization")"
+                    OnClick="@(() => Toggle(WorkspaceId))">
+            <LeadingTemplate>
+                <MudAvatar Color="MudBlazor.Color.Warning" Size="Size.Small">@orgInitial</MudAvatar>
+            </LeadingTemplate>
+            <Label>@T("Organization")</Label>
+            <Value>@orgName</Value>
+        </RailButton>
+
+        <MudDivider Class="my-1" />
+    }
+
+    @* ─── Project ─── *@
+    @if (Catalog.Project.HasValue)
+    {
+        var projectName = Catalog.Project.Name.HasValue
+            ? Catalog.Project.Name.Value
+            : Catalog.Project.Id.ToString();
+
+        <RailButton TooltipText="@T("Change project")"
+                    OnClick="@(() => Toggle(ProjectId))">
+            <LeadingTemplate>
+                <MudIcon Icon="@Icons.Material.Filled.Folder" Color="MudBlazor.Color.Info" Size="Size.Small" />
+            </LeadingTemplate>
+            <Label>@T("Project")</Label>
+            <Value>@projectName</Value>
+        </RailButton>
+
+        <MudDivider Class="my-1" />
+    }
+
+    @* ─── Culture ─── *@
+    <RailButton TooltipText="@T("Change language")"
+                OnClick="@(() => Toggle(CultureId))">
+        <LeadingTemplate>
+            <MudIcon Icon="@Icons.Material.Filled.Language" Color="MudBlazor.Color.Default" Size="Size.Small" />
+        </LeadingTemplate>
+        <Label>@T("Language")</Label>
+        <Value>@(Culture.Current.HasValue ? Culture.Current.ValueOrDefault.ToUpperInvariant() : "AUTO")</Value>
+    </RailButton>
+
+</MudStack>
+
+@code {
+    // Stable extension IDs — must match the Id properties on each builtin
+    // *DrawerExtension. Hard-coded constants here are intentional: any rename
+    // breaks the rail's contract with the drawer system in exactly one place
+    // (this file), so it surfaces immediately during code review.
+    private const string UserProfileId = "zonit.dashboard.user-profile";
+    private const string ThemeId       = "zonit.dashboard.theme";
+    private const string WorkspaceId   = "zonit.dashboard.workspace";
+    private const string ProjectId     = "zonit.dashboard.project";
+    private const string CultureId     = "zonit.dashboard.culture";
+
+    private string ThemeIcon => ThemeManager.Mode switch
+    {
+        ThemeMode.Dark  => Icons.Material.Filled.DarkMode,
+        ThemeMode.Light => Icons.Material.Filled.LightMode,
+        _               => Icons.Material.Filled.BrightnessAuto,
+    };
+
+    private string ThemeLabel => ThemeManager.Mode switch
+    {
+        ThemeMode.Dark  => T("Dark"),
+        ThemeMode.Light => T("Light"),
+        _               => T("Auto"),
+    };
+
+    protected override void OnInitialized()
+    {
+        Culture.OnChange      += OnChange;
+        Authenticated.OnChange += OnChange;
+        Workspace.OnChange    += OnChange;
+        Catalog.OnChange      += OnChange;
+        ThemeManager.OnChange += OnChange;
+        DrawerStates.OnChange += OnChange;
+    }
+
+    private void OnChange() => InvokeAsync(StateHasChanged);
+
+    private void Toggle(string extensionId)
+        => DrawerStates.GetState(extensionId)?.Toggle();
+
+    private string T(string key) => Culture.Translate(key).ToString() ?? key;
+
+    public void Dispose()
+    {
+        Culture.OnChange      -= OnChange;
+        Authenticated.OnChange -= OnChange;
+        Workspace.OnChange    -= OnChange;
+        Catalog.OnChange      -= OnChange;
+        ThemeManager.OnChange -= OnChange;
+        DrawerStates.OnChange -= OnChange;
+    }
+}

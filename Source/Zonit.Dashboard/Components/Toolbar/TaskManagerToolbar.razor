@@ -1,0 +1,57 @@
+@*
+    Compact toolbar button showing the count of active background tasks.
+    Clicking it toggles the TaskManager drawer extension. Updates live via
+    ITaskManager.OnChange subscription; the badge hides automatically when no
+    tasks are running.
+*@
+@namespace Zonit.Dashboard.Components.Toolbar
+@using Zonit.Dashboard.Extensions
+@using Zonit.Extensions.Cultures
+@using Zonit.Messaging.Tasks
+@implements IDisposable
+
+@inject ITaskManager TaskManager
+@inject IExtensionDrawerStates DrawerStates
+@inject ICultureProvider Culture
+
+<MudTooltip Text="@Culture.Translate("Background tasks").ToString()">
+    <MudBadge Content="@_activeCount"
+              Visible="@(_activeCount > 0)"
+              Color="MudBlazor.Color.Primary"
+              Overlap="true"
+              Bordered="true">
+        <MudIconButton Icon="@Icons.Material.Filled.Task"
+                       Color="MudBlazor.Color.Inherit"
+                       aria-label="@Culture.Translate("Background tasks").ToString()"
+                       OnClick="@Toggle" />
+    </MudBadge>
+</MudTooltip>
+
+@code {
+    private IDisposable? _subscription;
+    private int _activeCount;
+
+    protected override void OnInitialized()
+    {
+        _activeCount = TaskManager.GetActiveTasks().Count;
+        _subscription = TaskManager.OnChange(_ => OnTaskChanged());
+        Culture.OnChange += OnExternalChange;
+    }
+
+    private void OnTaskChanged()
+    {
+        _activeCount = TaskManager.GetActiveTasks().Count;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnExternalChange() => InvokeAsync(StateHasChanged);
+
+    private void Toggle()
+        => DrawerStates.GetState("zonit.dashboard.tasks")?.Toggle();
+
+    public void Dispose()
+    {
+        _subscription?.Dispose();
+        Culture.OnChange -= OnExternalChange;
+    }
+}

@@ -1,0 +1,127 @@
+@*
+    Right-side drawer body for the workspace (organization) switcher. Renders
+    the current organization at the top and lets the user pick a different one
+    from IWorkspaceManager.Organizations. Picking an org calls
+    IWorkspaceManager.SwitchOrganizationAsync(...) which propagates through
+    ICatalogManager (re-hydrating projects) — the drawer closes itself once the
+    switch completes.
+
+    Anonymous / no-workspace users see an empty state. Render is suppressed
+    entirely (the toolbar button still shows but the drawer is empty) so hosts
+    without org membership don't see broken UI.
+*@
+@namespace Zonit.Dashboard.Components.Drawers
+@using Zonit.Dashboard.Extensions
+@using Zonit.Extensions
+@using Zonit.Extensions.Cultures
+@using Zonit.Extensions.Organizations
+@using Zonit.Extensions.Website.MudBlazor
+@implements IDisposable
+
+@inject ICultureProvider Culture
+@inject IWorkspaceProvider Workspace
+@inject IWorkspaceManager WorkspaceManager
+@inject IExtensionDrawerStates DrawerStates
+@inject NavigationManager Nav
+
+<MudDrawerHeader>
+    <div class="d-flex align-center justify-space-between flex-grow-1 py-2">
+        <div class="d-flex align-center">
+            <MudIcon Icon="@Icons.Material.Filled.Business" Class="mr-3" Size="Size.Medium" Color="MudBlazor.Color.Inherit" />
+            <MudText Typo="Typo.h6" Style="font-weight: 600;">@Culture.Translate("Organizations")</MudText>
+        </div>
+        <MudIconButton OnClick="@Close"
+                       Icon="@Icons.Material.Filled.Close"
+                       Size="Size.Small"
+                       aria-label="@Culture.Translate("Close").ToString()" />
+    </div>
+</MudDrawerHeader>
+
+<div class="px-4 py-2">
+    @if (Workspace.Organization.HasValue)
+    {
+        var currentName = Workspace.Organization.Name.HasValue
+            ? Workspace.Organization.Name.Value
+            : Workspace.Organization.Id.ToString();
+
+        <div class="d-flex flex-column align-center py-3">
+            <MudAvatar Color="MudBlazor.Color.Warning" Rounded="true" Style="height: 80px; width: 80px; font-size: 1.75rem;">
+                @(currentName.Length > 0 ? currentName[..1].ToUpperInvariant() : "?")
+            </MudAvatar>
+            <MudText Typo="Typo.body1" Class="mt-3" Style="font-weight: 500;">@currentName</MudText>
+        </div>
+
+        <MudDivider Class="my-3" />
+
+        @if (WorkspaceManager.Organizations is { Count: > 0 } orgs)
+        {
+            <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">@Culture.Translate("Your organizations")</MudText>
+            <MudList T="Guid" SelectedValue="@Workspace.Organization.Id" SelectedValueChanged="@SwitchAsync">
+                @foreach (var org in orgs)
+                {
+                    <MudListItem Value="@org.Id" Text="@org.Name" />
+                }
+            </MudList>
+            <MudDivider Class="my-3" />
+        }
+
+        <MudList T="string">
+            <MudListItem OnClick="@(() => Go("organizations"))" Icon="@Icons.Material.Filled.SwapHoriz">
+                @Culture.Translate("Manage organizations")
+            </MudListItem>
+            <MudListItem OnClick="@(() => Go("organizations/team"))" Icon="@Icons.Material.Filled.Group">
+                @Culture.Translate("Manage the team")
+            </MudListItem>
+            <MudListItem OnClick="@(() => Go("organizations/settings"))" Icon="@Icons.Material.Filled.Settings">
+                @Culture.Translate("Settings")
+            </MudListItem>
+        </MudList>
+
+        <MudDivider Class="my-3" />
+
+        <MudButton OnClick="@(() => Go("organizations/switch"))"
+                   Variant="Variant.Filled" Color="MudBlazor.Color.Primary" FullWidth="true"
+                   StartIcon="@Icons.Material.Filled.Add" Class="mt-2">
+            @Culture.Translate("Join")
+        </MudButton>
+    }
+    else
+    {
+        <EmptyState Icon="@Icons.Material.Filled.Business"
+                    Title="@Culture.Translate("No organization selected").ToString()"
+                    Description="@Culture.Translate("You are not a member of any workspace yet.").ToString()"
+                    MinHeight="240px" />
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Culture.OnChange += OnExternalChange;
+        Workspace.OnChange += OnExternalChange;
+    }
+
+    private void OnExternalChange() => InvokeAsync(StateHasChanged);
+
+    private async Task SwitchAsync(Guid organizationId)
+    {
+        if (organizationId == Workspace.Organization.Id) return;
+        await WorkspaceManager.SwitchOrganizationAsync(organizationId);
+        Close();
+    }
+
+    private void Go(string relativeUrl)
+    {
+        Close();
+        Nav.NavigateTo(relativeUrl);
+    }
+
+    private void Close()
+        => DrawerStates.GetState("zonit.dashboard.workspace")?.Close();
+
+    public void Dispose()
+    {
+        Culture.OnChange -= OnExternalChange;
+        Workspace.OnChange -= OnExternalChange;
+    }
+}

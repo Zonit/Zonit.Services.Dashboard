@@ -1,0 +1,61 @@
+@*
+    UI body for the built-in "Theme" drawer extension. Lists every registered
+    IDashboardTheme as a radio choice plus the three ThemeMode options. All
+    mutations go through IThemeManager.SetThemeAsync / SetModeAsync, which
+    persist to cookies and raise OnChange — the surrounding DashboardMainLayout
+    subscribes to that event and re-renders the MudThemeProvider.
+*@
+@implements IDisposable
+@namespace Zonit.Dashboard.Components.Drawers
+@using Zonit.Dashboard.Themes
+
+@inject IThemeManager ThemeManager
+
+<MudPaper Class="pa-4" Elevation="0">
+    <MudText Typo="Typo.h6" Class="mb-3">Theme</MudText>
+
+    <MudRadioGroup T="string"
+                   Value="@ThemeManager.Current.Id"
+                   ValueChanged="@OnThemeChanged"
+                   Class="mb-4">
+        @foreach (var theme in ThemeManager.Available)
+        {
+            <MudRadio T="string" Value="@theme.Id" Color="MudBlazor.Color.Primary" Dense="true">
+                <MudText Typo="Typo.body2"><b>@theme.Name</b></MudText>
+                <MudText Typo="Typo.caption" Color="MudBlazor.Color.Tertiary">@theme.Description</MudText>
+            </MudRadio>
+        }
+    </MudRadioGroup>
+
+    <MudDivider Class="my-3" />
+
+    <MudText Typo="Typo.subtitle2" Class="mb-2">Mode</MudText>
+    <MudRadioGroup T="ThemeMode"
+                   Value="@ThemeManager.Mode"
+                   ValueChanged="@OnModeChanged">
+        <MudRadio T="ThemeMode" Value="ThemeMode.Auto"  Color="MudBlazor.Color.Primary" Dense="true">Auto (follow system)</MudRadio>
+        <MudRadio T="ThemeMode" Value="ThemeMode.Light" Color="MudBlazor.Color.Primary" Dense="true">Light</MudRadio>
+        <MudRadio T="ThemeMode" Value="ThemeMode.Dark"  Color="MudBlazor.Color.Primary" Dense="true">Dark</MudRadio>
+    </MudRadioGroup>
+</MudPaper>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Re-render when the theme changes externally (cookie hydration on first
+        // render, theme-switch from another tab, etc.). InvokeAsync because the
+        // event may fire off the synchronisation context.
+        ThemeManager.OnChange += OnThemeManagerChanged;
+    }
+
+    private void OnThemeManagerChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private async Task OnThemeChanged(string themeId)
+        => await ThemeManager.SetThemeAsync(themeId);
+
+    private async Task OnModeChanged(ThemeMode mode)
+        => await ThemeManager.SetModeAsync(mode);
+
+    public void Dispose()
+        => ThemeManager.OnChange -= OnThemeManagerChanged;
+}

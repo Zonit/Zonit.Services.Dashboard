@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <!-- net10-only — Zonit.Extensions.Website (10.x) drops <= net9 to align with .NET LTS / preview cadence. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Version>10.0.0-preview.10</Version>
+    <AssemblyVersion>10.0.0</AssemblyVersion>
+    <FileVersion>10.0.0</FileVersion>
+
+    <Description>Zonit dashboard — single-project admin UI built on Zonit.Extensions.Website. Provides drawer/toolbar extension slots, dynamic theme switching, and a MudBlazor-based main layout registered into the website layout registry as "Dashboard.Main".</Description>
+    <Summary>Zonit dashboard UI for AddWebsite-hosted applications.</Summary>
+    <PackageTags>Zonit;Dashboard;Blazor;MudBlazor;AspNetCore;Admin</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MudBlazor" />
+    <PackageReference Include="MudBlazor.Translations" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
+  </ItemGroup>
+
+  <!-- Local Development Mode (Zonit.Sdk workspace): ProjectReference -->
+  <ItemGroup Condition="'$(IsZonitSdkWorkspace)' == 'true'">
+    <!-- Zonit.Extensions.Website transitively pulls in Auth, Cultures, Organizations, Projects, Tenants. -->
+    <ProjectReference Include="..\..\..\..\Extensions\Zonit.Extensions\Source\Zonit.Extensions.Website\Zonit.Extensions.Website.csproj" />
+    <ProjectReference Include="..\..\..\..\Extensions\Zonit.Extensions\Source\Zonit.Extensions.Website.MudBlazor\Zonit.Extensions.Website.MudBlazor.csproj" />
+    <ProjectReference Include="..\..\..\Zonit.Services.EventMessage\Source\Zonit.Messaging.Tasks.Abstractions\Zonit.Messaging.Tasks.Abstractions.csproj" />
+  </ItemGroup>
+
+  <!-- Production Mode: PackageReference -->
+  <ItemGroup Condition="'$(IsZonitSdkWorkspace)' != 'true'">
+    <PackageReference Include="Zonit.Extensions.Website" />
+    <PackageReference Include="Zonit.Extensions.Website.MudBlazor" />
+    <PackageReference Include="Zonit.Messaging.Tasks.Abstractions" />
+  </ItemGroup>
+
+</Project>

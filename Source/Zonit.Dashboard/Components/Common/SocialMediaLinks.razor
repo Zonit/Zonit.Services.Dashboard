@@ -1,0 +1,49 @@
+@*
+    Compact row of social-media icon links, intended for the bottom of the
+    navigation drawer. Pass a list of links via the Links parameter; rendering
+    each as a small SVG icon with a hover-fill effect.
+
+    Default Links is empty — host apps add their socials in code-behind so the
+    drawer stays out of the way for hosts that don't have any.
+*@
+@namespace Zonit.Dashboard.Components.Common
+
+@if (Links is { Count: > 0 })
+{
+    <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Row="true" Spacing="8" Class="pa-2 pb-4">
+        @foreach (var link in Links)
+        {
+            <a href="@link.Url" target="@(link.External ? "_blank" : "_self")" rel="@(link.External ? "noopener noreferrer" : null)" class="social-link" aria-label="@link.Label">
+                @if (!string.IsNullOrEmpty(link.SvgMarkup))
+                {
+                    @((MarkupString)link.SvgMarkup)
+                }
+                else if (!string.IsNullOrEmpty(link.Icon))
+                {
+                    <MudIcon Icon="@link.Icon" Size="Size.Small" />
+                }
+            </a>
+        }
+    </MudStack>
+
+    <style>
+        .social-link {
+            fill: var(--mud-palette-text-secondary);
+            transition: fill 0.2s ease-in-out;
+        }
+        .social-link:hover {
+            fill: var(--mud-palette-primary);
+        }
+        .social-link svg {
+            fill: inherit;
+        }
+    </style>
+}
+
+@code {
+    /// <summary>Social-media links to render. Empty list = nothing rendered.</summary>
+    [Parameter] public IReadOnlyList<SocialLink> Links { get; set; } = Array.Empty<SocialLink>();
+
+    /// <summary>Single social-media destination.</summary>
+    public sealed record SocialLink(string Url, string Label, string? Icon = null, string? SvgMarkup = null, bool External = true);
+}

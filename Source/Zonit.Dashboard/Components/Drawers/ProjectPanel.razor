@@ -1,0 +1,117 @@
+@*
+    Right-side drawer body for the project (catalog) switcher. Twin of
+    WorkspacePanel — same UX, different backing service (ICatalogProvider /
+    ICatalogManager from Zonit.Extensions.Projects).
+*@
+@namespace Zonit.Dashboard.Components.Drawers
+@using Zonit.Dashboard.Extensions
+@using Zonit.Extensions
+@using Zonit.Extensions.Cultures
+@using Zonit.Extensions.Projects
+@using Zonit.Extensions.Website.MudBlazor
+@implements IDisposable
+
+@inject ICultureProvider Culture
+@inject ICatalogProvider Catalog
+@inject ICatalogManager CatalogManager
+@inject IExtensionDrawerStates DrawerStates
+@inject NavigationManager Nav
+
+<MudDrawerHeader>
+    <div class="d-flex align-center justify-space-between flex-grow-1 py-2">
+        <div class="d-flex align-center">
+            <MudIcon Icon="@Icons.Material.Filled.Folder" Class="mr-3" Size="Size.Medium" Color="MudBlazor.Color.Inherit" />
+            <MudText Typo="Typo.h6" Style="font-weight: 600;">@Culture.Translate("Projects")</MudText>
+        </div>
+        <MudIconButton OnClick="@Close"
+                       Icon="@Icons.Material.Filled.Close"
+                       Size="Size.Small"
+                       aria-label="@Culture.Translate("Close").ToString()" />
+    </div>
+</MudDrawerHeader>
+
+<div class="px-4 py-2">
+    @if (Catalog.Project.HasValue)
+    {
+        var currentName = Catalog.Project.Name.HasValue
+            ? Catalog.Project.Name.Value
+            : Catalog.Project.Id.ToString();
+
+        <div class="d-flex flex-column align-center py-3">
+            <MudAvatar Color="MudBlazor.Color.Tertiary" Rounded="true" Style="height: 80px; width: 80px; font-size: 1.75rem;">
+                @(currentName.Length > 0 ? currentName[..1].ToUpperInvariant() : "?")
+            </MudAvatar>
+            <MudText Typo="Typo.body1" Class="mt-3" Style="font-weight: 500;">@currentName</MudText>
+        </div>
+
+        <MudDivider Class="my-3" />
+
+        @if (CatalogManager.Projects is { Count: > 0 } projects)
+        {
+            <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">@Culture.Translate("Your projects")</MudText>
+            <MudList T="Guid" SelectedValue="@Catalog.Project.Id" SelectedValueChanged="@SwitchAsync">
+                @foreach (var p in projects)
+                {
+                    <MudListItem Value="@p.Id" Text="@p.Name" />
+                }
+            </MudList>
+            <MudDivider Class="my-3" />
+        }
+
+        <MudList T="string">
+            <MudListItem OnClick="@(() => Go("projects"))" Icon="@Icons.Material.Filled.SwapHoriz">
+                @Culture.Translate("Manage projects")
+            </MudListItem>
+            <MudListItem OnClick="@(() => Go("projects/settings"))" Icon="@Icons.Material.Filled.Settings">
+                @Culture.Translate("Settings")
+            </MudListItem>
+        </MudList>
+
+        <MudDivider Class="my-3" />
+
+        <MudButton OnClick="@(() => Go("projects/new"))"
+                   Variant="Variant.Filled" Color="MudBlazor.Color.Primary" FullWidth="true"
+                   StartIcon="@Icons.Material.Filled.Add" Class="mt-2">
+            @Culture.Translate("New project")
+        </MudButton>
+    }
+    else
+    {
+        <EmptyState Icon="@Icons.Material.Filled.Folder"
+                    Title="@Culture.Translate("No project selected").ToString()"
+                    Description="@Culture.Translate("Create or join a project to get started.").ToString()"
+                    MinHeight="240px" />
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Culture.OnChange += OnExternalChange;
+        Catalog.OnChange += OnExternalChange;
+    }
+
+    private void OnExternalChange() => InvokeAsync(StateHasChanged);
+
+    private async Task SwitchAsync(Guid projectId)
+    {
+        if (projectId == Catalog.Project.Id) return;
+        await CatalogManager.SwitchProjectAsync(projectId);
+        Close();
+    }
+
+    private void Go(string relativeUrl)
+    {
+        Close();
+        Nav.NavigateTo(relativeUrl);
+    }
+
+    private void Close()
+        => DrawerStates.GetState("zonit.dashboard.project")?.Close();
+
+    public void Dispose()
+    {
+        Culture.OnChange -= OnExternalChange;
+        Catalog.OnChange -= OnExternalChange;
+    }
+}

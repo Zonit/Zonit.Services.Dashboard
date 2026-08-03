@@ -1,0 +1,71 @@
+@*
+    Compact avatar + dropdown rendered in the dashboard appbar. Reads the active
+    identity from IAuthenticatedProvider and falls back to a "Sign in" link when
+    the user is anonymous (Identity.Empty) so the slot always renders something
+    sensible no matter the auth state.
+
+    Translations come from ICultureProvider so menu labels track the active culture.
+*@
+@namespace Zonit.Dashboard.Components.Toolbar
+@using Zonit.Extensions
+@using Zonit.Extensions.Auth
+@using Zonit.Extensions.Cultures
+@implements IDisposable
+
+@inject IAuthenticatedProvider Authenticated
+@inject ICultureProvider Culture
+@inject NavigationManager Nav
+
+@if (Authenticated.Current.HasValue)
+{
+    string name = Authenticated.Current.Name.HasValue
+        ? Authenticated.Current.Name.Value
+        : Culture.Translate("Account").ToString();
+    var initial = string.IsNullOrEmpty(name) ? "?" : name[..1].ToUpperInvariant();
+
+    <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+        <ActivatorContent>
+            <MudTooltip Text="@name">
+                <MudIconButton aria-label="@name" Color="MudBlazor.Color.Inherit">
+                    <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Small" Style="font-size: 13px;">@initial</MudAvatar>
+                </MudIconButton>
+            </MudTooltip>
+        </ActivatorContent>
+        <ChildContent>
+            <div class="px-4 py-2">
+                <MudText Typo="Typo.subtitle2">@name</MudText>
+            </div>
+            <MudDivider />
+            <MudMenuItem Icon="@Icons.Material.Filled.Person" Href="identity/profile">@Culture.Translate("Profile")</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.Settings" Href="identity/settings">@Culture.Translate("Settings")</MudMenuItem>
+            <MudDivider />
+            <MudMenuItem Icon="@Icons.Material.Filled.Logout" Href="identity/auth/logout">@Culture.Translate("Logout")</MudMenuItem>
+        </ChildContent>
+    </MudMenu>
+}
+else
+{
+    var signIn = Culture.Translate("Sign in").ToString();
+    <MudTooltip Text="@signIn">
+        <MudIconButton Icon="@Icons.Material.Filled.Login"
+                       Color="MudBlazor.Color.Inherit"
+                       aria-label="@signIn"
+                       OnClick="@GoToLogin" />
+    </MudTooltip>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Culture.OnChange += OnExternalChange;
+    }
+
+    private void OnExternalChange() => InvokeAsync(StateHasChanged);
+
+    private void GoToLogin() => Nav.NavigateTo("identity/auth/login");
+
+    public void Dispose()
+    {
+        Culture.OnChange -= OnExternalChange;
+    }
+}

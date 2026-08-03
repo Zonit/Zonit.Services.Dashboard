@@ -1,0 +1,18 @@
+@*
+    Dashboard-branded minimal layout — used for error pages (401/403/404/500) and
+    anywhere a plug-in opts into "Zonit.Minimal" (which AddDashboard overrides to
+    point here instead of the framework default ZonitMinimalLayout).
+*@
+@inherits LayoutComponentBase
+@namespace Zonit.Dashboard.Components.Layouts
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<div class="zonit-dashboard-minimal" style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+    <div style="max-width: 560px; width: 100%; padding: 32px;">
+        @Body
+    </div>
+</div>

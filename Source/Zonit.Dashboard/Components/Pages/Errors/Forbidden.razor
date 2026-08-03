@@ -1,0 +1,32 @@
+@*
+    HTTP 403 — Forbidden. Reached via direct navigation OR the framework's
+    UseStatusCodePagesWithReExecute pipeline (default "/error" → "/error/403").
+*@
+@page "/403"
+@page "/error/403"
+@attribute [LayoutKey("Zonit.Minimal")]
+@attribute [AllowAnonymous]
+@inherits PageBase
+@namespace Zonit.Dashboard.Components.Pages.Errors
+@using Microsoft.AspNetCore.Authorization
+@using Zonit.Extensions.Website
+
+@inject NavigationManager Nav
+
+<PageTitle>Forbidden</PageTitle>
+
+<MudPaper Class="pa-8" Elevation="0">
+    <MudText Typo="Typo.h2" Color="MudBlazor.Color.Error" Align="MudBlazor.Align.Center">403</MudText>
+    <MudText Typo="Typo.h5" Align="MudBlazor.Align.Center" Class="mt-2">Forbidden</MudText>
+    <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="mt-4 mb-6">
+        You don't have permission to access this resource.
+    </MudText>
+    <div style="display: flex; justify-content: center;">
+        <MudButton Variant="Variant.Filled"
+                   Color="MudBlazor.Color.Primary"
+                   StartIcon="@MudBlazor.Icons.Material.Filled.Home"
+                   OnClick="@(() => Nav.NavigateTo(""))">
+            Back to dashboard
+        </MudButton>
+    </div>
+</MudPaper>

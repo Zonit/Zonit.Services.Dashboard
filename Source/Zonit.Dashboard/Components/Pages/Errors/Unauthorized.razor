@@ -1,0 +1,38 @@
+@*
+    HTTP 401 — Unauthorized. Reached via direct navigation OR the framework's
+    UseStatusCodePagesWithReExecute pipeline (configured in SiteOptions.ExceptionHandlerPath,
+    default "/error" → "/error/401").
+*@
+@page "/401"
+@page "/error/401"
+@attribute [LayoutKey("Zonit.Minimal")]
+@attribute [AllowAnonymous]
+@inherits PageBase
+@namespace Zonit.Dashboard.Components.Pages.Errors
+@using Microsoft.AspNetCore.Authorization
+@using Zonit.Extensions.Website
+
+@inject NavigationManager Nav
+
+<PageTitle>Unauthorized</PageTitle>
+
+<MudPaper Class="pa-8" Elevation="0">
+    <MudText Typo="Typo.h2" Color="MudBlazor.Color.Warning" Align="MudBlazor.Align.Center">401</MudText>
+    <MudText Typo="Typo.h5" Align="MudBlazor.Align.Center" Class="mt-2">Unauthorized</MudText>
+    <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="mt-4 mb-6">
+        You need to sign in to access this page.
+    </MudText>
+    <div style="display: flex; justify-content: center; gap: 8px;">
+        <MudButton Variant="Variant.Filled"
+                   Color="MudBlazor.Color.Primary"
+                   StartIcon="@MudBlazor.Icons.Material.Filled.Login"
+                   OnClick="@(() => Nav.NavigateTo("identity/auth/login"))">
+            Sign in
+        </MudButton>
+        <MudButton Variant="Variant.Outlined"
+                   StartIcon="@MudBlazor.Icons.Material.Filled.Home"
+                   OnClick="@(() => Nav.NavigateTo(""))">
+            Home
+        </MudButton>
+    </div>
+</MudPaper>

@@ -1,0 +1,131 @@
+@*
+    Recursive renderer for one NavGroup. A component IS the recursion point — Razor has no
+    recursive @code-block helper.
+
+    Plain HTML + CSS rather than MudNavGroup/MudNavLink, for two reasons that are not cosmetic:
+
+      * <details>/<summary> expands and collapses with NO JavaScript and NO Blazor circuit, so
+        navigation is fully usable during SSR and on a page that never goes interactive.
+        MudNavGroup keeps its open state in component state and therefore needs the circuit.
+      * <nav>/<ul>/<li>/<a> is what a screen reader expects. The previous tree emitted nested
+        divs with no list semantics and wrapped every link in a tooltip element even when there
+        was no tooltip to show.
+
+    Active styling comes from Blazor's own NavLink, which writes .active for us — no state here.
+*@
+@namespace Zonit.Dashboard.Components.Layouts
+@using Microsoft.AspNetCore.Components.Routing
+@using Zonit.Extensions.Website
+
+@if (HasChildren)
+{
+    <li>
+        <details class="znav-group" open="@Group.Expanded">
+            <summary aria-disabled="@(Group.Disabled ? "true" : null)" title="@Group.Tooltip">
+                @if (!string.IsNullOrEmpty(Group.Icon))
+                {
+                    <span class="znav-icon" aria-hidden="true">@((MarkupString)Group.Icon)</span>
+                }
+                <span class="znav-label">@Group.Title.Value</span>
+                @if (!string.IsNullOrEmpty(Group.Badge))
+                {
+                    <span class="znav-badge @BadgeClass(Group.BadgeColor)">@Group.Badge</span>
+                }
+                <svg class="znav-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </summary>
+
+            <ul class="znav-children">
+                @if (Group.Children is not null)
+                {
+                    @foreach (var item in Group.Children.OrderBy(c => c.Order))
+                    {
+                        <li>
+                            @* ToHref() strips the leading slash that UrlPath preserves on input
+                               ("/components") so the emitted href is relative ("components") and the
+                               browser resolves it against the active <base href> — "/admin/" +
+                               "components" → "/admin/components". An absolute "/components" would
+                               bypass the path base entirely and land on the root site.
+                               See Extensions/UrlPathRendering.cs. *@
+                            <NavLink class="znav-link"
+                                     href="@item.Url.ToHref()"
+                                     Match="@(item.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)"
+                                     target="@TargetAttr(item.Target)"
+                                     rel="@RelAttr(item.Target)"
+                                     aria-disabled="@(item.Disabled ? "true" : null)"
+                                     title="@item.Tooltip">
+                                @if (!string.IsNullOrEmpty(item.Icon))
+                                {
+                                    <span class="znav-icon" aria-hidden="true">@((MarkupString)item.Icon)</span>
+                                }
+                                <span class="znav-label">@item.Title.Value</span>
+                                @if (!string.IsNullOrEmpty(item.Badge))
+                                {
+                                    <span class="znav-badge @BadgeClass(item.BadgeColor)">@item.Badge</span>
+                                }
+                            </NavLink>
+                        </li>
+                    }
+                }
+
+                @if (Group.Groups is not null)
+                {
+                    @foreach (var sub in Group.Groups.OrderBy(g => g.Order))
+                    {
+                        <RenderNavGroup Group="@sub" />
+                    }
+                }
+            </ul>
+        </details>
+    </li>
+}
+else if (Group.Link is not null)
+{
+    @* Header-only group: one link, no disclosure. *@
+    <li>
+        <NavLink class="znav-link" href="@Group.Link.Url.ToHref()" Match="NavLinkMatch.Prefix"
+                 aria-disabled="@(Group.Disabled ? "true" : null)" title="@Group.Tooltip">
+            @if (!string.IsNullOrEmpty(Group.Icon))
+            {
+                <span class="znav-icon" aria-hidden="true">@((MarkupString)Group.Icon)</span>
+            }
+            <span class="znav-label">@Group.Title.Value</span>
+            @if (!string.IsNullOrEmpty(Group.Badge))
+            {
+                <span class="znav-badge @BadgeClass(Group.BadgeColor)">@Group.Badge</span>
+            }
+        </NavLink>
+    </li>
+}
+else
+{
+    @* Neither children nor a link: a section caption. *@
+    <li class="znav-section-label">@Group.Title.Value</li>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public NavGroup Group { get; set; } = default!;
+
+    private bool HasChildren =>
+        Group.Children is { Count: > 0 } || Group.Groups is { Count: > 0 };
+
+    private static string BadgeClass(NavBadgeColor c) => c switch
+    {
+        NavBadgeColor.Primary => "znav-badge-primary",
+        NavBadgeColor.Secondary => "znav-badge-secondary",
+        NavBadgeColor.Success => "znav-badge-success",
+        NavBadgeColor.Warning => "znav-badge-warning",
+        NavBadgeColor.Error => "znav-badge-error",
+        NavBadgeColor.Info => "znav-badge-info",
+        _ => string.Empty
+    };
+
+    private static string? TargetAttr(Target t) => t == Target.Blank ? "_blank" : null;
+
+    // Never emit target="_blank" without this: the opened page gets window.opener and can
+    // navigate ours (reverse tabnabbing).
+    private static string? RelAttr(Target t) => t == Target.Blank ? "noopener noreferrer" : null;
+}

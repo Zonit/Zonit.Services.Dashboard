@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
   <!-- Continue the Directory.Build.props chain upwards. Without this, MSBuild
        stops walking parents at the first Directory.Build.props it finds, so
        Sdk-root's <IsZonitSdkWorkspace>true</IsZonitSdkWorkspace> never reaches
@@ -35,9 +35,26 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     
-    <!-- AOT and Trimming support -->
+    <!--
+      Trimming: yes. Native AOT: no, and saying otherwise would be a lie.
+
+      Zonit.Dashboard's own code is trim-annotated and produces zero IL warnings, but the
+      package is a Blazor UI library and two things it cannot avoid are not AOT-clean:
+
+        * Blazor routing. The Router / LayoutView / RouteView the bundled Routes.razor uses
+          set properties carrying [DynamicallyAccessedMembers] through reflection - IL2111 and
+          IL2110, raised inside the Razor-generated Routes_razor.g.cs, not in code we own.
+        * MudBlazor 9.x, the entire point of this package, reports IL3050 (MakeGenericType in
+          the converter dispatcher) and IL2075 under ILC.
+
+      AddDashboard() therefore carries [RequiresUnreferencedCode]/[RequiresDynamicCode],
+      propagated from AddWebsite, so a consumer publishing AOT gets a build-time diagnostic
+      instead of a runtime surprise. Flip IsAotCompatible back on only when both of the above
+      are genuinely clean - not to silence the analyser.
+    -->
     <IsTrimmable>true</IsTrimmable>
-    <IsAotCompatible>true</IsAotCompatible>
+    <IsAotCompatible>false</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
   
   <!-- Language settings -->

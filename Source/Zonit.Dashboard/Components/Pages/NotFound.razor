@@ -1,0 +1,34 @@
+@*
+    Dedicated 404 page. Reached via direct navigation to /404 OR by the Router's
+    <NotFound> slot in Routes.razor (which redirects unmatched URLs here so a
+    bookmarked broken link doesn't render with the full dashboard chrome).
+
+    Uses the dashboard's minimal layout — error pages don't need the navigation
+    drawer and look better in the centered minimal box.
+*@
+@page "/404"
+@page "/error/404"
+@attribute [LayoutKey("Zonit.Minimal")]
+@inherits PageBase
+@namespace Zonit.Dashboard.Components.Pages
+@using Zonit.Extensions.Website
+
+@inject NavigationManager Nav
+
+<PageTitle>Page not found</PageTitle>
+
+<MudPaper Class="pa-8" Elevation="0">
+    <MudText Typo="Typo.h2" Color="MudBlazor.Color.Primary" Align="MudBlazor.Align.Center">404</MudText>
+    <MudText Typo="Typo.h5" Align="MudBlazor.Align.Center" Class="mt-2">Page not found</MudText>
+    <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="mt-4 mb-6">
+        The URL <code>@Nav.Uri</code> doesn't match any route on this dashboard mount.
+    </MudText>
+    <div style="display: flex; justify-content: center;">
+        <MudButton Variant="Variant.Filled"
+                   Color="MudBlazor.Color.Primary"
+                   StartIcon="@MudBlazor.Icons.Material.Filled.Home"
+                   OnClick="@(() => Nav.NavigateTo("/"))">
+            Back to dashboard
+        </MudButton>
+    </div>
+</MudPaper>

@@ -1,0 +1,43 @@
+@*
+    Single labelled row inside <RightRail>. Lays out as:
+
+        [icon|avatar]   LABEL (overline)
+                        Value (body2, ellipsis)
+
+    Click bubbles up via OnClick — callers wire it to a drawer toggle. Tooltip
+    text shows on hover for assistive tech and for narrow rails where the
+    Value text might be truncated.
+*@
+@namespace Zonit.Dashboard.Components.Layouts
+
+<MudTooltip Text="@TooltipText" Arrow="true" Placement="MudBlazor.Placement.Left" RootStyle="width: 100%;">
+    <MudButton Variant="MudBlazor.Variant.Text"
+               FullWidth="true"
+               OnClick="@OnClick"
+               Class="d-flex justify-start py-2 px-3 rail-row"
+               Style="text-transform: none;">
+        <div class="d-flex align-center" style="width: 100%; gap: 12px;">
+            <div style="flex: 0 0 32px; display: flex; align-items: center; justify-content: center;">
+                @LeadingTemplate
+            </div>
+            <div class="d-flex flex-column" style="min-width: 0; flex: 1;">
+                <MudText Typo="MudBlazor.Typo.overline"
+                         Style="font-size: 10px; line-height: 1.2; letter-spacing: 0.5px; color: var(--mud-palette-text-secondary);">
+                    @Label
+                </MudText>
+                <MudText Typo="MudBlazor.Typo.body2"
+                         Style="font-weight: 500; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    @Value
+                </MudText>
+            </div>
+        </div>
+    </MudButton>
+</MudTooltip>
+
+@code {
+    [Parameter] public string? TooltipText { get; set; }
+    [Parameter] public RenderFragment? LeadingTemplate { get; set; }
+    [Parameter] public RenderFragment? Label { get; set; }
+    [Parameter] public RenderFragment? Value { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+}

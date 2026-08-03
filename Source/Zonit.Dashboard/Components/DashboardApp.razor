@@ -1,0 +1,143 @@
+@*
+    Root Razor component for a UseDashboard() mount. Loaded by UseWebsite<DashboardApp>
+    inside the dashboard's MapWhen branch — emits the document shell (head + body),
+    delegates routing to <Routes>, and pipes any consumer-supplied custom snippet
+    (DashboardOptions.CustomSnippet) into <head>.
+
+    Per-tenant identity values (title, favicon, theme colours) come from
+    Tenant.Settings.Site / Tenant.Settings.Theme — never from a dashboard-local
+    settings tree. That's the whole point of the 10.x rewrite.
+*@
+@namespace Zonit.Dashboard.Components
+@using Zonit.Extensions.Cultures
+@using Zonit.Extensions.Tenants
+@using Zonit.Extensions.Tenants.Settings
+@using Zonit.Extensions.Website
+@using Zonit.Extensions.Website.Hydration
+
+@inject ICultureProvider Culture
+@inject ITenantProvider Tenant
+@inject ICurrentSite Site
+@inject IDashboardCurrentSite Dashboard
+@inject Zonit.Dashboard.Themes.IThemeManager ThemeManager
+
+<!DOCTYPE html>
+<html lang="@Culture.Current.ValueOrDefault">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @* <base href> must point at the dashboard's mount directory so every relative
+       URL (NavigationManager.BaseUri, MudBlazor links, asset paths) resolves under
+       this mount instead of the host root. UsePathBase does NOT rewrite HTML — it
+       only strips Request.Path on the server side — so the previous static "/"
+       was wrong for any non-root mount: Blazor's interactive circuit picked up
+       BaseUri="https://host/" from the DOM and DashboardMountRegistry.ForMount("/")
+       returned an empty assembly list, breaking client-side routing on the very
+       first navigation event (every cross-area @page rendered as "Not Found"). *@
+    <base href="@BaseHref" />
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    @* Relative paths intentionally — they resolve against <base href> into
+       /dashboard/_content/MudBlazor/... and /dashboard/_framework/... and are then
+       served by the per-branch MapStaticAssets() registered in BuildBranch. We can't
+       use absolute /_content/... here because blazor.web.js hard-codes its negotiate
+       URL as a *relative* path ("_blazor/negotiate") that always resolves against
+       <base href> — so the SignalR hub HAS to live under the mount prefix anyway,
+       and MapRazorComponents<>().AddInteractiveServerRenderMode() registers it there.
+       Keeping every asset under the same prefix avoids a mixed scheme.
+
+       MudBlazor 9.4+ ships with fingerprinted static assets in its RCL manifest, so
+       @Assets["_content/MudBlazor/MudBlazor.min.css"] expands to e.g.
+       "_content/MudBlazor/MudBlazor.min.6x2ajsl5c8.css" automatically — no manual
+       ?v={Version} dance needed. Older RCLs without fingerprinting can use the
+       Zonit.Extensions.Website "Assets.Versioned(...)" extension instead. *@
+    <link href="@Assets["_content/MudBlazor/MudBlazor.min.css"]" rel="stylesheet" />
+
+    @* Dashboard's own chrome (navigation). Loaded AFTER MudBlazor on purpose: its rules read
+       --mud-palette-* custom properties that MudThemeProvider writes, and the later sheet wins
+       on equal specificity, so a consumer can still override with their own stylesheet. *@
+    <link href="@Assets["_content/Zonit.Dashboard/zonit-dashboard.css"]" rel="stylesheet" />
+
+    <title>@(Tenant.Settings.Site.Title)</title>
+
+    <meta name="theme-color" content="@(Tenant.Settings.Theme.PrimaryColor)" />
+    <meta name="color-scheme" content="@(ThemeManager.IsDark ? "dark" : "light")" />
+
+    @* Zero-flicker dark-mode handshake. Runs BEFORE Blazor boots:
+       1. Detects prefers-color-scheme.
+       2. Stamps the result into a cookie so the next SSR can render the matching
+          palette without a round-trip to JS (no flash-of-light).
+       3. Paints a matching background on <html> immediately so the browser
+          doesn't show its default white between the first byte and MudBlazor CSS
+          loading. Once MudThemeProvider mounts it owns the palette; the inline
+          style is overridden cleanly. *@
+    <script>
+        (function () {
+            try {
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var current = (document.cookie.match(/(?:^|; )zonit\.dashboard\.system-dark=([^;]*)/) || [])[1];
+                var desired = prefersDark ? '1' : '0';
+                if (current !== desired) {
+                    document.cookie = 'zonit.dashboard.system-dark=' + desired + '; path=/; max-age=31536000; SameSite=Lax';
+                }
+                var mode = (document.cookie.match(/(?:^|; )zonit\.dashboard\.mode=([^;]*)/) || [])[1];
+                var isDark = mode === 'Dark' || (mode !== 'Light' && prefersDark);
+                document.documentElement.style.backgroundColor = isDark ? '#161723' : '#f8f9fc';
+                document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+            } catch (e) { /* failures here must never block render */ }
+        })();
+    </script>
+
+    @if (!string.IsNullOrWhiteSpace(Tenant.Settings.Site.FaviconUrl))
+    {
+        <link rel="icon" type="image/svg+xml" href="@(Tenant.Settings.Site.FaviconUrl)" />
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Dashboard.CustomSnippet))
+    {
+        @((MarkupString)Dashboard.CustomSnippet!)
+    }
+
+    <ImportMap />
+    <HeadOutlet @rendermode="@RenderMode.InteractiveServer" />
+</head>
+
+<body>
+    @* Prerender → interactive state bridge. Single tag that aggregates every
+       IPersistentStateProvider registered in DI (Identity / Workspace / Catalog
+       / Culture / Cookies + any consumer-added bridge). Without it the SignalR
+       circuit scope starts with empty scoped repositories and the user appears
+       anonymous, the org/project switcher empty, the culture reset, despite a
+       perfectly authenticated SSR pass — the middleware that hydrated all of
+       it only ran against the HTTP-request scope, which doesn't survive into
+       the circuit. Must render in BOTH SSR and interactive modes:
+         • SSR pass         → CapturePersisting() called by the framework, snapshot
+                              serialised into the response HTML.
+         • Interactive pass → TryRestore() called once on OnInitialized, scoped
+                              repositories re-seeded before any page body renders. *@
+    <WebsiteHydrator @rendermode="@RenderMode.InteractiveServer" />
+
+    <Routes @rendermode="@RenderMode.InteractiveServer" />
+
+    @* Branded reconnect modal — Blazor Server's framework JS toggles the
+       #components-reconnect-modal classes (show / failed / rejected / refused),
+       Connection.razor only supplies the DOM + CSS so the indicator matches
+       the dashboard chrome. *@
+    <Connection />
+
+    <script src="_framework/blazor.web.js"></script>
+    <script src="@Assets["_content/MudBlazor/MudBlazor.min.js"]"></script>
+</body>
+</html>
+
+@code {
+    // Resolved per render from ICurrentSite (set by UseWebsite's branch middleware).
+    // The trailing slash is mandatory — browsers treat a base href without one as a
+    // file path, so "/admin" would resolve "components/cookies" against "/" instead
+    // of "/admin/". Falls back to "/" for the unset/root case so the markup is still
+    // valid if DashboardApp is ever rendered outside an active dashboard branch.
+    string BaseHref =>
+        Site.IsSet && Site.Directory.HasValue
+            ? Site.Directory.Value.TrimEnd('/') + "/"
+            : "/";
+}

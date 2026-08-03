@@ -1,0 +1,57 @@
+@*
+    User profile widget rendered inside a drawer / popover. Shows the user's
+    avatar + a dropdown menu (Profile / Settings / Logout). Strings are
+    translated through ICultureProvider so the dashboard chrome stays
+    localisation-friendly without forcing callers to pre-translate.
+*@
+@namespace Zonit.Dashboard.Components.Common
+@using Zonit.Extensions
+@using Zonit.Extensions.Cultures
+
+@inject ICultureProvider Culture
+
+<MudText Align="Align.Center" Class="my-5">
+    <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Large">@Initial</MudAvatar>
+</MudText>
+
+<MudText Align="Align.Center" Class="my-5">
+    <MudMenu AnchorOrigin="Origin.BottomCenter">
+        <ActivatorContent>
+            <MudButton Class="mud-typography mud-typography-body2 px-4 mud-text-secondary"
+                       EndIcon="@Icons.Material.Filled.KeyboardArrowDown">
+                @Culture.Translate("Hello {0}", DisplayName)
+            </MudButton>
+        </ActivatorContent>
+        <ChildContent>
+            <MudMenuItem Href="@ProfileUrl">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-2" />
+                @Culture.Translate("Profile")
+            </MudMenuItem>
+            <MudMenuItem Href="@SettingsUrl">
+                <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" Class="mr-2" />
+                @Culture.Translate("Settings")
+            </MudMenuItem>
+            <MudDivider Class="my-1" />
+            <MudMenuItem Href="@LogoutUrl">
+                <MudIcon Icon="@Icons.Material.Filled.Logout" Size="Size.Small" Class="mr-2" />
+                @Culture.Translate("Logout")
+            </MudMenuItem>
+        </ChildContent>
+    </MudMenu>
+</MudText>
+
+@code {
+    /// <summary>User's display name (rendered in the menu activator).</summary>
+    [Parameter, EditorRequired] public string DisplayName { get; set; } = default!;
+
+    /// <summary>Route to the profile page.</summary>
+    [Parameter] public string ProfileUrl { get; set; } = "identity/profile";
+
+    /// <summary>Route to the settings page.</summary>
+    [Parameter] public string SettingsUrl { get; set; } = "identity/settings";
+
+    /// <summary>Route to the logout endpoint.</summary>
+    [Parameter] public string LogoutUrl { get; set; } = "identity/auth/logout";
+
+    private string Initial => string.IsNullOrEmpty(DisplayName) ? "?" : DisplayName[..1].ToUpperInvariant();
+}

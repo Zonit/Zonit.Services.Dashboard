@@ -1,0 +1,108 @@
+@*
+    Right-side drawer body for the culture (language) switcher. Lists all
+    supported cultures with their flag icon + English name, lets the user pick
+    one, and closes the drawer once the selection is committed.
+
+    Reads from ICultureProvider (current) + ICultureState (supported list) and
+    writes via ICultureManager.SetCulture(...) so the change propagates through
+    every scope subscribed to ICultureState.OnChange.
+*@
+@namespace Zonit.Dashboard.Components.Drawers
+@using Zonit.Dashboard.Extensions
+@using Zonit.Extensions
+@using Zonit.Extensions.Cultures
+@implements IDisposable
+
+@inject ICultureProvider Culture
+@inject ICultureState CultureState
+@inject ICultureManager CultureManager
+@inject IExtensionDrawerStates DrawerStates
+
+<MudDrawerHeader>
+    <div class="d-flex align-center justify-space-between flex-grow-1 py-2">
+        <div class="d-flex align-center">
+            <MudIcon Icon="@Icons.Material.Filled.Language" Class="mr-3" Size="Size.Medium" Color="MudBlazor.Color.Inherit" />
+            <MudText Typo="Typo.h6" Style="font-weight: 600;">@Culture.Translate("Select language")</MudText>
+        </div>
+        <MudIconButton OnClick="@Close"
+                       Icon="@Icons.Material.Filled.Close"
+                       Size="Size.Small"
+                       aria-label="@Culture.Translate("Close").ToString()" />
+    </div>
+</MudDrawerHeader>
+
+<div class="px-4 py-2">
+    <MudTextField @bind-Value="_search"
+                  Placeholder="@Culture.Translate("Search languages...").ToString()"
+                  Variant="Variant.Outlined"
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Margin="Margin.Dense"
+                  Class="mb-3"
+                  Clearable="true"
+                  Immediate="true" />
+
+    @if (FilteredLanguages.Count > 0)
+    {
+        <MudList T="string"
+                 SelectedValue="@Culture.Current.Value"
+                 SelectedValueChanged="@SwitchAsync">
+            @foreach (var lang in FilteredLanguages)
+            {
+                <MudListItem Icon="@lang.IconFlag" Value="@lang.Code">
+                    @Culture.Translate(lang.EnglishName)
+                </MudListItem>
+            }
+        </MudList>
+    }
+    else
+    {
+        <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="pa-4 mud-text-secondary">
+            @Culture.Translate("No languages found")
+        </MudText>
+    }
+</div>
+
+@code {
+    private string _search = string.Empty;
+
+    private IReadOnlyList<LanguageModel> FilteredLanguages
+    {
+        get
+        {
+            var all = CultureState.Supported;
+            if (string.IsNullOrWhiteSpace(_search)) return all;
+
+            var s = _search.Trim();
+            return all
+                .Where(l =>
+                    l.EnglishName.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                    l.NativeName.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                    Culture.Translate(l.EnglishName).ToString().Contains(s, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Culture.OnChange += OnExternalChange;
+    }
+
+    private void OnExternalChange() => InvokeAsync(StateHasChanged);
+
+    private async Task SwitchAsync(string code)
+    {
+        if (string.IsNullOrEmpty(code) || code == Culture.Current.Value) return;
+        CultureManager.SetCulture(global::Zonit.Extensions.Culture.TryCreate(code, out var c) ? c : global::Zonit.Extensions.Culture.Default);
+        Close();
+        await Task.CompletedTask;
+    }
+
+    private void Close()
+        => DrawerStates.GetState("zonit.dashboard.culture")?.Close();
+
+    public void Dispose()
+    {
+        Culture.OnChange -= OnExternalChange;
+    }
+}

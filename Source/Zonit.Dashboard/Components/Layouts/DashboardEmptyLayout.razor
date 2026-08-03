@@ -1,0 +1,17 @@
+@*
+    Empty layout — only the MudBlazor providers + @Body. No chrome, no centering,
+    no padding. Designed for full-screen widgets (viewers, splash screens,
+    crash-recovery pages, marketing landings) that own their own layout.
+
+    Registered in ILayoutRegistry as "Dashboard.Empty". Opt in with
+    @attribute [LayoutKey("Dashboard.Empty")].
+*@
+@inherits LayoutComponentBase
+@namespace Zonit.Dashboard.Components.Layouts
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@Body

@@ -1,0 +1,180 @@
+@*
+    Full dashboard chrome — registered as "Dashboard.Main" in ILayoutRegistry so
+    plug-in pages opt-in with @attribute [LayoutKey("Dashboard.Main")] without
+    referencing this assembly.
+
+    Composition (top → bottom):
+      <MudThemeProvider>          IThemeManager.Current.MudTheme + IsDark
+      <MudPopover/Dialog/Snackbar>
+      <MudLayout>
+        <MudAppBar>               toolbar Start / Center / End slots + drawer toggles
+        <MudDrawer Anchor=Start>  navigation aggregated from every mounted IWebsiteArea
+        <MudDrawer Anchor=End>    one per drawer extension (single-active-per-anchor policy)
+        <MudMainContent>          breadcrumbs + @Body
+
+    All state-change subscriptions live in DashboardMainLayout.razor.cs.
+*@
+@inherits LayoutComponentBase
+@namespace Zonit.Dashboard.Components.Layouts
+@using Microsoft.AspNetCore.Components.Authorization
+@using Zonit.Dashboard.Extensions
+@using Zonit.Dashboard.Themes
+@using Zonit.Extensions.Tenants
+@using Zonit.Extensions.Website
+
+<MudThemeProvider Theme="@ThemeManager.Current.MudTheme" IsDarkMode="@ThemeManager.IsDark" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudRTLProvider RightToLeft="@IsRtl">
+<MudSwipeArea OnSwipeEnd="@OnSwipe" Style="width: 100%; touch-action: pan-y" PreventDefault="false">
+<MudLayout>
+
+    @if (Site.Layout.ShowProgressBar && ProgressBarVisible)
+    {
+        <MudProgressLinear Color="MudBlazor.Color.Primary" Indeterminate="true" Size="Size.Small" Style="position: absolute; top: 0; left: 0; right: 0; z-index: 2;" />
+    }
+
+    <MudAppBar Elevation="@Site.Layout.AppbarElevation" Dense="true">
+        @* ─── Start slot: hamburger + brand + toolbar START extensions ─── *@
+        @if (Site.Layout.ShowLeftDrawer)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                           Color="MudBlazor.Color.Inherit"
+                           Edge="Edge.Start"
+                           OnClick="@ToggleLeftDrawer"
+                           aria-label="Toggle navigation" />
+        }
+
+        <MudText Typo="Typo.h6" Class="ml-3">@Tenant.Settings.Site.Title</MudText>
+
+        @foreach (var ext in ToolbarStartExtensions)
+        {
+            @ext.CreateToolbarContent()
+        }
+
+        @* Center / End spacing *@
+        <MudSpacer />
+
+        @foreach (var ext in ToolbarCenterExtensions)
+        {
+            @ext.CreateToolbarContent()
+        }
+
+        <MudSpacer />
+
+        @* ─── End slot: toolbar END extensions + drawer-extension toggles ─── *@
+        @foreach (var ext in ToolbarEndExtensions)
+        {
+            @ext.CreateToolbarContent()
+        }
+
+        @* When the persistent right rail is visible the same toggles live in the
+           rail's labelled rows — surfacing them again as bare appbar icons is
+           pure visual clutter. Mobile (rail hidden) keeps the icons so the
+           switchers are still reachable. *@
+        @if (!Site.Layout.ShowRightRail || _viewportWidth < 1024)
+        {
+            @foreach (var ext in RightAnchorDrawerExtensions)
+            {
+                <MudTooltip Text="@ext.Name">
+                    <MudIconButton Icon="@(ext.Icon ?? Icons.Material.Filled.MoreVert)"
+                                   Color="MudBlazor.Color.Inherit"
+                                   OnClick="@(() => ToggleDrawerExtension(ext.Id))"
+                                   aria-label="@ext.Name" />
+                </MudTooltip>
+            }
+        }
+    </MudAppBar>
+
+    @* ─── Left drawer: aggregated navigation from every mounted area ─── *@
+    @if (Site.Layout.ShowLeftDrawer)
+    {
+        <MudDrawer @bind-Open="_leftDrawerOpen"
+                   Anchor="Anchor.Start"
+                   Elevation="2"
+                   ClipMode="DrawerClipMode.Always"
+                   Variant="_leftDrawerVariant"
+                   OpenMiniOnHover="_leftDrawerOpenMini"
+                   Width="@($"{Site.Layout.LeftDrawerWidth}px")">
+            <MudDrawerHeader Class="d-flex align-center">
+                @* Empty Href => relative to <base href>. On a dashboard mounted at
+                   "/dashboard" this lands the user back at the mount root
+                   ("/dashboard/"), NOT the host root ("/"). An absolute Href="/"
+                   would unconditionally jump to the host root and dump the user
+                   onto the wrong site — exactly the path-base bypass that the
+                   nav/breadcrumb ToHref() helper is here to prevent. *@
+                <MudLink Href="" Underline="Underline.None" Color="MudBlazor.Color.Inherit">
+                    <MudText Typo="Typo.h6">@Tenant.Settings.Site.Title</MudText>
+                </MudLink>
+            </MudDrawerHeader>
+            @* Plain <nav>/<ul> instead of MudNavMenu: the tree below is built from
+               <details>/<summary>, so it expands without JavaScript and without a Blazor
+               circuit. See RenderNavGroup.razor and wwwroot/zonit-dashboard.css. *@
+            <nav class="znav" aria-label="@Culture.Translate("Main navigation").Value">
+                <ul>
+                    @foreach (var group in NavGroups)
+                    {
+                        <RenderNavGroup Group="@group" />
+                    }
+                </ul>
+            </nav>
+        </MudDrawer>
+    }
+
+    @* ─── Right drawer per extension (single-active-per-anchor) ─── *@
+    @foreach (var ext in RightAnchorDrawerExtensions)
+    {
+        var state = DrawerStates.GetState(ext.Id);
+        var isOpen = state?.IsOpen ?? false;
+        <MudDrawer Open="@isOpen"
+                   OpenChanged="@((bool v) => OnDrawerOpenChanged(ext.Id, v))"
+                   Anchor="Anchor.End"
+                   Elevation="2"
+                   Variant="DrawerVariant.Temporary"
+                   Width="@($"{ext.Width}px")">
+            @ext.CreateDrawerContent()
+        </MudDrawer>
+    }
+
+    @* ─── Right rail: persistent column of inline switchers (user / theme / org
+         / project / culture). Restores the legacy Zonit.Services.Dashboard right
+         drawer UX. Auto-collapses on phones because two persistent drawers eat
+         the whole viewport. ─── *@
+    @if (Site.Layout.ShowRightRail)
+    {
+        <MudDrawer Open="@_rightRailOpen"
+                   OpenChanged="@OnRightRailOpenChanged"
+                   Anchor="Anchor.End"
+                   Elevation="2"
+                   ClipMode="DrawerClipMode.Always"
+                   Variant="_rightRailVariant"
+                   Width="@($"{Site.Layout.RightRailWidth}px")">
+            <RightRail />
+        </MudDrawer>
+    }
+
+    @* ─── Main content ─── *@
+    <MudMainContent>
+        @if (Site.Layout.ShowBreadcrumbs && BreadcrumbItems.Count > 0)
+        {
+            <MudContainer MaxWidth="MaxWidth.False" Class="pt-3">
+                <MudBreadcrumbs Items="@BreadcrumbItems" />
+            </MudContainer>
+        }
+
+        <MudContainer MaxWidth="MaxWidth.False" Class="py-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+
+</MudLayout>
+</MudSwipeArea>
+</MudRTLProvider>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>

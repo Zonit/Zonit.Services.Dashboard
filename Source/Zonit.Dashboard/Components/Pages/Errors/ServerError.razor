@@ -1,0 +1,39 @@
+@*
+    HTTP 500 — Internal Server Error. Reached via the framework's
+    UseExceptionHandler pipeline (default ExceptionHandlerPath = "/error" →
+    re-executes "/error/500" via UseStatusCodePagesWithReExecute).
+*@
+@page "/500"
+@page "/error"
+@page "/error/500"
+@attribute [LayoutKey("Zonit.Minimal")]
+@attribute [AllowAnonymous]
+@inherits PageBase
+@namespace Zonit.Dashboard.Components.Pages.Errors
+@using Microsoft.AspNetCore.Authorization
+@using Zonit.Extensions.Website
+
+@inject NavigationManager Nav
+
+<PageTitle>Something went wrong</PageTitle>
+
+<MudPaper Class="pa-8" Elevation="0">
+    <MudText Typo="Typo.h2" Color="MudBlazor.Color.Error" Align="MudBlazor.Align.Center">500</MudText>
+    <MudText Typo="Typo.h5" Align="MudBlazor.Align.Center" Class="mt-2">Internal server error</MudText>
+    <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="mt-4 mb-6">
+        Something went wrong on our end. The error has been logged.
+    </MudText>
+    <div style="display: flex; justify-content: center; gap: 8px;">
+        <MudButton Variant="Variant.Filled"
+                   Color="MudBlazor.Color.Primary"
+                   StartIcon="@MudBlazor.Icons.Material.Filled.Refresh"
+                   OnClick="@(() => Nav.NavigateTo(Nav.Uri, forceLoad: true))">
+            Retry
+        </MudButton>
+        <MudButton Variant="Variant.Outlined"
+                   StartIcon="@MudBlazor.Icons.Material.Filled.Home"
+                   OnClick="@(() => Nav.NavigateTo(""))">
+            Home
+        </MudButton>
+    </div>
+</MudPaper>

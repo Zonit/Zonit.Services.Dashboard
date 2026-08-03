@@ -1,0 +1,200 @@
+# Zonit.Dashboard — mounting and extending an admin UI
+
+Zonit.Dashboard is an **overlay on `Zonit.Extensions.Website`**, not a second framework:
+
+```csharp
+// what UseDashboard actually is
+app.UseWebsite<DashboardApp, DashboardSiteOptions>(directory, configure);
+```
+
+Everything the web kernel provides still applies — areas, layouts, `PageBase`, navigation,
+breadcrumbs, toasts, `[RequirePermission]`, several mounts per app. Dashboard supplies the chrome
+(MudBlazor appbar, drawers, theming) and slots for contributing to it.
+
+## Read this first: three traps
+
+**1. Never hand-write `App.razor` or `Routes.razor` for a dashboard mount.** Both ship inside the
+package. `DashboardApp.razor` emits the document shell: a `<base href>` correct for the mount,
+MudBlazor CSS and fonts, `<title>` / theme-colour / colour-scheme from the tenant, the zero-flicker
+theme script, `<WebsiteHydrator/>` and `<Routes/>`. Writing your own is not "customising" — it is
+re-implementing invariants and you will get the base href wrong under a non-root mount, which breaks
+client-side routing on the first navigation.
+
+**2. `AddDashboard()` takes no arguments.**
+
+```csharp
+builder.Services.AddDashboard();                      // correct
+builder.Services.AddDashboard(o => o.Directory = …);  // does not compile
+```
+
+Per-mount configuration belongs to `UseDashboard`, because one registration can back several mounts.
+
+**3. Non-root mounts must be declared before the root mount.** The root mount ends in terminal
+endpoint middleware, so any branch registered after it is unreachable. The framework throws a
+developer-actionable exception rather than serving 404s.
+
+## Minimal host
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddWebsite(o => o.AddArea<AdminArea>());
+builder.Services.AddDashboard();
+
+var app = builder.Build();
+
+app.UseDashboard("/admin", o =>
+{
+    o.Permission = "admin";
+    o.AddArea<AdminArea>();
+});
+
+app.Run();
+```
+
+`AddDashboard()` calls `AddWebsite()` internally and is idempotent, so ordering against your own
+`AddWebsite(...)` does not matter. What it registers: MudBlazor services and translations,
+`IDashboardCurrentSite` (scoped, populated by the per-mount middleware), the four layout keys below,
+a `IToastProvider` adapter onto MudBlazor's snackbar, and the built-in toolbar/drawer extensions.
+
+## Dashboard alongside a public site
+
+The common shape — a marketing root and an admin area, in one app, sharing areas and auth:
+
+```csharp
+builder.Services.AddWebsite(o =>
+{
+    o.AddArea<PublicArea>();
+    o.AddArea<AdminArea>();
+});
+builder.Services.AddDashboard();
+
+var app = builder.Build();
+
+// non-root FIRST
+app.UseDashboard("/admin", o =>
+{
+    o.Permission = "admin";
+    o.AddArea<AdminArea>();
+    o.Theme.PrimaryColor = "#c62828";     // red chrome so nobody mistakes prod admin for the site
+    o.Layout.LeftDrawerWidth = 260;
+});
+
+// root LAST, plain Website - no dashboard chrome
+app.UseWebsite<App>("/", o =>
+{
+    o.Mode = WebsiteMode.Server;
+    o.AddArea<PublicArea>();
+});
+
+app.Run();
+```
+
+Only the root mount needs your own `App.razor`. The `/admin` mount uses the bundled one.
+
+## Pages
+
+Ordinary Website pages in an area you mounted — nothing dashboard-specific, and they never
+reference this assembly:
+
+```razor
+@page "/users"
+@inherits PageBase
+@attribute [RequirePermission("users.read")]
+
+<PageHeader Title="@T("Users")" />
+
+<MudTable Items="_users" Dense="true">
+    <HeaderContent><MudTh>@T("Name")</MudTh></HeaderContent>
+    <RowTemplate><MudTd>@context.Name.Value</MudTd></RowTemplate>
+</MudTable>
+```
+
+Note `@context.Name.Value` — `Name` is a `Title` value object, so string operations need `.Value`.
+
+## Layout keys
+
+| Key | Chrome |
+| --- | --- |
+| `Dashboard.Main` | full — appbar, nav drawer, extension drawers, breadcrumbs (default) |
+| `Dashboard.Minimal` | appbar + content, no nav drawer — login, onboarding |
+| `Dashboard.Empty` | providers + `@Body` only — full-screen views |
+| `Zonit.Minimal` | overwritten so framework error pages match the dashboard |
+
+```razor
+@attribute [LayoutKey("Dashboard.Empty")]
+```
+
+The key is a string, resolved through the Website layout registry, so a plug-in area can opt into
+dashboard chrome without a package reference to Zonit.Dashboard.
+
+## Per-mount options
+
+`DashboardSiteOptions` derives from `SiteOptions`, so the whole base surface is available
+(`Permission`, `Mode`, `Compression`, `HttpsRedirection`, `ExceptionHandlerPath`, `AddArea<T>()`, …)
+plus:
+
+| Member | Default | Purpose |
+| --- | --- | --- |
+| `Layout.ShowLeftDrawer` | `true` | navigation drawer |
+| `Layout.ShowRightDrawer` | `true` | extension drawers |
+| `Layout.ShowRightRail` | `true` | icon rail |
+| `Layout.LeftDrawerWidth` | `240` | px |
+| `Layout.RightDrawerWidth` | `280` | px |
+| `Layout.RightRailWidth` | `220` | px |
+| `Layout.ShowBreadcrumbs` | `true` | |
+| `Layout.ShowProgressBar` | `true` | appbar progress for long-running tasks |
+| `Layout.EnableSwipeGestures` | `true` | mobile drawer swipe |
+| `Layout.AppbarElevation` | `1` | MudBlazor elevation |
+| `Theme` | — | per-mount colour overrides layered over `Tenant.Settings.Theme` |
+| `ExtensionsWhitelist` | `null` (all) | restrict which extensions appear on this mount |
+| `CustomSnippet` | `null` | markup injected into `<head>` |
+
+## Toolbar and drawer extensions
+
+Contribute chrome from any assembly:
+
+```csharp
+public sealed class AlertsToolbar : ToolbarExtensionBase<AlertsButton>
+{
+    public override string Id   => "alerts";
+    public override string Name => "Alerts";
+    public override ToolbarPosition Position => ToolbarPosition.End;
+}
+
+builder.Services.AddToolbarExtension<AlertsToolbar>();
+```
+
+`DrawerExtensionBase<TComponent>` is the same shape for the right-hand drawer. Both render
+`TComponent` into their slot; override `ConfigureComponent(builder)` to pass parameters.
+
+Registered by `AddDashboard()` already: user profile, theme selector, culture switcher, workspace
+switcher, project switcher. Task-manager toolbar and drawer are opt-in:
+
+```csharp
+builder.Services.AddDashboardTaskManager();   // needs Zonit.Messaging.Tasks
+```
+
+Use `ExtensionsWhitelist` to show a subset on a given mount.
+
+## Theming
+
+Colours resolve in layers: `DashboardSiteOptions.Theme` (per mount) over `Tenant.Settings.Theme`
+(per tenant brand). Light / Dark / Auto is `IThemeManager`, persisted by cookie and read during SSR,
+so there is no flash of the wrong theme on first paint. `AddDashboardTheme<T>()` registers a custom
+`IDashboardTheme`.
+
+## Trimming and AOT
+
+`IsTrimmable` yes, Native AOT **no**. Dashboard's own code emits zero IL warnings, but Blazor's
+`Router` / `LayoutView` (IL2111 / IL2110, raised inside the Razor-generated `Routes_razor.g.cs`) and
+MudBlazor (IL3050 / IL2075) are not AOT-clean. `AddDashboard()` therefore carries
+`[RequiresUnreferencedCode]` / `[RequiresDynamicCode]`, so publishing AOT gives you a build-time
+diagnostic rather than a runtime failure.
+
+## See also
+
+- `.zonit/extensions/website/hosting.md` — `AddWebsite` / `UseWebsite`, `SiteOptions`, mount ordering
+- `.zonit/extensions/website/areas.md` — writing the areas you mount here
+- `.zonit/extensions/website/layouts.md` — how layout keys resolve
+- `.zonit/extensions/tenants/tenants.md` — where `Tenant.Settings.Theme` comes from

@@ -1,0 +1,35 @@
+<Project>
+
+  <!--
+    Per-package entry point. NuGet auto-imports buildTransitive/<PackageId>.targets, so this runs
+    for every consumer that installs Zonit.Dashboard directly or transitively.
+
+    Zonit.Dashboard is a single package, so unlike the Zonit.Extensions family there is only one
+    stub - but the shape is kept identical on purpose, so a second dashboard package could
+    contribute its own docs later without touching the installer.
+  -->
+
+  <ItemGroup>
+    <ZonitDashDocRoot Include="$(MSBuildThisFileDirectory)..\Instruction\dashboard">
+      <Area>dashboard</Area>
+    </ZonitDashDocRoot>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ZonitDashDoc Include="usage">
+      <Area>dashboard</Area>
+      <Summary>Mounting the dashboard, why you never write App.razor or Routes.razor, layout keys, per-mount options, and adding toolbar or drawer extensions.</Summary>
+      <Glob>**/Program.cs</Glob>
+      <SourceFile>$(MSBuildThisFileDirectory)..\Instruction\dashboard\usage.md</SourceFile>
+    </ZonitDashDoc>
+  </ItemGroup>
+
+  <!--
+    Guard the IMPORT, not the target - see the note in the installer. Guarding the target's
+    Condition instead would silently disable the whole thing as soon as a second package shipped
+    the same installer.
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)Zonit.Dashboard.Instructions.targets"
+          Condition="'$(_ZonitDashInstallerSeen)' != 'true'" />
+
+</Project>
