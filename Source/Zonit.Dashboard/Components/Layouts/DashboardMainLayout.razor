@@ -36,7 +36,10 @@
         <MudProgressLinear Color="MudBlazor.Color.Primary" Indeterminate="true" Size="Size.Small" Style="position: absolute; top: 0; left: 0; right: 0; z-index: 2;" />
     }
 
-    <MudAppBar Elevation="@Site.Layout.AppbarElevation" Dense="true">
+    @* Class="zbar" scopes the appbar rules in zonit-dashboard.css — chiefly "the brand
+       truncates instead of wrapping", which is what turned the phone header into two
+       stacked lines of title with the icons pushed off the row. *@
+    <MudAppBar Elevation="@Site.Layout.AppbarElevation" Dense="true" Class="zbar">
         @* ─── Start slot: hamburger + brand + toolbar START extensions ─── *@
         @if (Site.Layout.ShowLeftDrawer)
         {
@@ -44,10 +47,21 @@
                            Color="MudBlazor.Color.Inherit"
                            Edge="Edge.Start"
                            OnClick="@ToggleLeftDrawer"
-                           aria-label="Toggle navigation" />
+                           aria-label="@Culture.Translate("Toggle navigation").Value" />
         }
 
-        <MudText Typo="Typo.h6" Class="ml-3">@Tenant.Settings.Site.Title</MudText>
+        @* The brand renders HERE AND NOWHERE ELSE. It used to appear twice — once in this
+           bar and once in the drawer header directly beneath it — which on a narrow window
+           read as the site name printed twice, one under the other. The appbar is the copy
+           that survives because it is the only one visible at every width: the drawer is
+           closed on phones.
+
+           Empty Href => relative to <base href>, so on a dashboard mounted at "/docs" this
+           lands on "/docs/", NOT the host root. An absolute "/" would dump the visitor onto
+           the wrong site entirely — the same path-base bypass ToHref() exists to prevent. *@
+        <MudLink Href="" Underline="Underline.None" Color="MudBlazor.Color.Inherit" Class="zbar-brand ml-2">
+            <MudText Typo="Typo.h6" Class="zbar-brand-text">@Tenant.Settings.Site.Title</MudText>
+        </MudLink>
 
         @foreach (var ext in ToolbarStartExtensions)
         {
@@ -64,18 +78,32 @@
 
         <MudSpacer />
 
-        @* ─── End slot: toolbar END extensions + drawer-extension toggles ─── *@
+        @* ─── End slot: toolbar END extensions + right-hand affordance ─── *@
         @foreach (var ext in ToolbarEndExtensions)
         {
             @ext.CreateToolbarContent()
         }
 
-        @* When the persistent right rail is visible the same toggles live in the
-           rail's labelled rows — surfacing them again as bare appbar icons is
-           pure visual clutter. Mobile (rail hidden) keeps the icons so the
-           switchers are still reachable. *@
-        @if (!Site.Layout.ShowRightRail || _viewportWidth < 1024)
+        @if (Site.Layout.ShowRightRail)
         {
+            @* One button, not one per extension. Previously every right-anchored drawer
+               extension (theme, workspace, project, culture, profile) added its own bare
+               icon here as soon as the rail was hidden — five unlabelled glyphs competing
+               with the title for a phone's 400px of header. They all still exist, as
+               labelled rows, one tap deeper inside the rail. Desktop hides the button
+               entirely because the rail is already on screen. *@
+            @if (!_railIsPersistent)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Tune"
+                               Color="MudBlazor.Color.Inherit"
+                               Edge="Edge.End"
+                               OnClick="@ToggleRightRail"
+                               aria-label="@Culture.Translate("Open settings").Value" />
+            }
+        }
+        else
+        {
+            @* No rail configured, so the extensions have nowhere else to live. *@
             @foreach (var ext in RightAnchorDrawerExtensions)
             {
                 <MudTooltip Text="@ext.Name">
@@ -91,24 +119,32 @@
     @* ─── Left drawer: aggregated navigation from every mounted area ─── *@
     @if (Site.Layout.ShowLeftDrawer)
     {
-        <MudDrawer @bind-Open="_leftDrawerOpen"
+        @* DrawerVariant.Mini is deliberately NOT used any more. Mini collapses the drawer to
+           a 56px icon rail, and MudBlazor's mini stylesheet knows how to fold MudNavMenu's
+           markup into that width — it has no idea what to do with ours. The result on every
+           phone wider than 425px (an iPhone Pro Max is 430) was a 56px column containing
+           full-width text rows clipped to 40px: "Documenta…", "Cultur…", one under the
+           other, with no icon to fall back on because most nav items declare none.
+
+           So: persistent when there is room, a real temporary overlay when there is not.
+           Both variants MudBlazor styles correctly on its own. *@
+        @* @key on the variant is load-bearing, not tidiness. MudLayout stamps its content
+           offset (mud-drawer-open-persistent-left → margin-left) from the variant a drawer
+           had when it REGISTERED with the container, and changing Variant on a live instance
+           does not restamp it. Cross the breakpoint and the drawer becomes docked while the
+           layout still believes it is an overlay, so the page body keeps margin-left:0 and
+           renders UNDERNEATH the navigation — the columns visibly sitting on top of each
+           other. Rekeying disposes the drawer and registers a fresh one, which is the only
+           point at which that class is recomputed. *@
+        @* Keys must be unique among SIBLINGS, and the rail below is one — keying both on the
+           bare DrawerVariant makes them collide the moment both are Persistent. *@
+        <MudDrawer @key="@($"nav-{_leftDrawerVariant}")"
+                   @bind-Open="_leftDrawerOpen"
                    Anchor="Anchor.Start"
                    Elevation="2"
                    ClipMode="DrawerClipMode.Always"
                    Variant="_leftDrawerVariant"
-                   OpenMiniOnHover="_leftDrawerOpenMini"
                    Width="@($"{Site.Layout.LeftDrawerWidth}px")">
-            <MudDrawerHeader Class="d-flex align-center">
-                @* Empty Href => relative to <base href>. On a dashboard mounted at
-                   "/dashboard" this lands the user back at the mount root
-                   ("/dashboard/"), NOT the host root ("/"). An absolute Href="/"
-                   would unconditionally jump to the host root and dump the user
-                   onto the wrong site — exactly the path-base bypass that the
-                   nav/breadcrumb ToHref() helper is here to prevent. *@
-                <MudLink Href="" Underline="Underline.None" Color="MudBlazor.Color.Inherit">
-                    <MudText Typo="Typo.h6">@Tenant.Settings.Site.Title</MudText>
-                </MudLink>
-            </MudDrawerHeader>
             @* Plain <nav>/<ul> instead of MudNavMenu: the tree below is built from
                <details>/<summary>, so it expands without JavaScript and without a Blazor
                circuit. See RenderNavGroup.razor and wwwroot/zonit-dashboard.css. *@
@@ -144,7 +180,9 @@
          the whole viewport. ─── *@
     @if (Site.Layout.ShowRightRail)
     {
-        <MudDrawer Open="@_rightRailOpen"
+        @* Same reason as the left drawer — see the @key comment there. *@
+        <MudDrawer @key="@($"rail-{_rightRailVariant}")"
+                   Open="@_rightRailOpen"
                    OpenChanged="@OnRightRailOpenChanged"
                    Anchor="Anchor.End"
                    Elevation="2"

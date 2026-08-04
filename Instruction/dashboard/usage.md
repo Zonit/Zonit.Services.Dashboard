@@ -128,6 +128,81 @@ Note `@context.Name.Value` — `Name` is a `Title` value object, so string opera
 The key is a string, resolved through the Website layout registry, so a plug-in area can opt into
 dashboard chrome without a package reference to Zonit.Dashboard.
 
+## Navigation
+
+An area returns `IReadOnlyList<NavGroup>`. Groups nest through `Groups`, links nest through
+`NavItem.Children`, and both are rendered to arbitrary depth:
+
+```csharp
+public IReadOnlyList<NavGroup> Navigation { get; } =
+[
+    new NavGroup
+    {
+        Title = "Auth",
+        Order = 20,
+        Children =
+        [
+            new NavItem
+            {
+                Title = "Identity",
+                Url = "/auth",
+                Children =
+                [
+                    new NavItem { Title = "AuthorizeView", Url = "/auth/authorize-view" },
+                    new NavItem
+                    {
+                        Title = "Permissions",
+                        Url = "/auth/permissions",
+                        Children =
+                        [
+                            new NavItem { Title = "Sandbox", Url = "/auth/sandbox" },
+                        ],
+                    },
+                ],
+            },
+        ],
+    },
+];
+```
+
+What the renderer does with that:
+
+- **A branch containing the current page renders expanded**, all the way up. You never land on a
+  page whose ancestry is collapsed, so the sidebar always shows where you are. `Expanded = true`
+  forces a group open on top of that.
+- **A `NavItem` with children is both a link and a disclosure.** Activating it navigates *and*
+  expands; there is no separate chevron button, because a second hit target would need JavaScript
+  and this tree is built to work during prerender with no circuit.
+- **Indentation tapers with depth** rather than adding a fixed step per level, and stops
+  increasing past level four. Fixed steps overflow a 240px drawer at about the third level and
+  turn every label into an ellipsis.
+- **Prefix matching is segment-aware.** `Match = false` lights up `/vo` for `/vo/strings` but not
+  for `/voice`.
+
+Hrefs go through `UrlPath.ToHref()`, which strips the leading slash so the browser resolves them
+against `<base href>`. Declare `Url = "/auth"` and a dashboard mounted at `/admin` links to
+`/admin/auth`, not to the root site's `/auth`.
+
+### Responsive behaviour
+
+Three bands, driven by window width:
+
+| Width | Navigation | Right rail |
+| --- | --- | --- |
+| `< 960` | temporary overlay, closed; hamburger or swipe opens it | temporary overlay, one appbar button opens it |
+| `960 – 1279` | docked, open | temporary overlay |
+| `≥ 1280` | docked, open | docked, open |
+
+Notes worth knowing before you change these:
+
+- There is no icon-rail (mini) band. It requires every nav item to carry an icon, and MudBlazor's
+  mini stylesheet only knows how to fold `MudNavMenu`'s own markup into 56px — this tree is plain
+  HTML, so a mini band renders full-width text rows clipped to 40px.
+- Only one overlay is ever open at a time; opening either closes the other, and navigating closes
+  whichever is covering the page.
+- Forced open/closed states are applied when the band *changes*, not on every resize frame, so a
+  drawer you closed by hand stays closed while you drag the window edge.
+
 ## Per-mount options
 
 `DashboardSiteOptions` derives from `SiteOptions`, so the whole base surface is available

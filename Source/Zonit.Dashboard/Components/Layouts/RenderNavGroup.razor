@@ -11,7 +11,12 @@
         divs with no list semantics and wrapped every link in a tooltip element even when there
         was no tooltip to show.
 
-    Active styling comes from Blazor's own NavLink, which writes .active for us — no state here.
+    Leaf rows delegate to RenderNavItem, which recurses through NavItem.Children — the level
+    this renderer used to drop on the floor.
+
+    Active styling comes from Blazor's own NavLink, which writes .active for us. Ancestor
+    expansion does NOT: NavLink only knows about itself, so NavTree answers "is the active page
+    somewhere below me" for every branch.
 *@
 @namespace Zonit.Dashboard.Components.Layouts
 @using Microsoft.AspNetCore.Components.Routing
@@ -20,7 +25,10 @@
 @if (HasChildren)
 {
     <li>
-        <details class="znav-group" open="@Group.Expanded">
+        @* open = author's default OR "the visitor is standing inside this section". The second
+           term is what keeps a deep tree navigable: without it, following a link three levels
+           down renders its whole ancestry collapsed and the sidebar stops showing where you are. *@
+        <details class="znav-group" open="@IsOpen">
             <summary aria-disabled="@(Group.Disabled ? "true" : null)" title="@Group.Tooltip">
                 @if (!string.IsNullOrEmpty(Group.Icon))
                 {
@@ -29,7 +37,7 @@
                 <span class="znav-label">@Group.Title.Value</span>
                 @if (!string.IsNullOrEmpty(Group.Badge))
                 {
-                    <span class="znav-badge @BadgeClass(Group.BadgeColor)">@Group.Badge</span>
+                    <span class="znav-badge @NavRender.BadgeClass(Group.BadgeColor)">@Group.Badge</span>
                 }
                 <svg class="znav-chevron" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2"
@@ -37,36 +45,12 @@
                 </svg>
             </summary>
 
-            <ul class="znav-children">
+            <ul class="znav-children" data-depth="@DepthAttr">
                 @if (Group.Children is not null)
                 {
                     @foreach (var item in Group.Children.OrderBy(c => c.Order))
                     {
-                        <li>
-                            @* ToHref() strips the leading slash that UrlPath preserves on input
-                               ("/components") so the emitted href is relative ("components") and the
-                               browser resolves it against the active <base href> — "/admin/" +
-                               "components" → "/admin/components". An absolute "/components" would
-                               bypass the path base entirely and land on the root site.
-                               See Extensions/UrlPathRendering.cs. *@
-                            <NavLink class="znav-link"
-                                     href="@item.Url.ToHref()"
-                                     Match="@(item.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)"
-                                     target="@TargetAttr(item.Target)"
-                                     rel="@RelAttr(item.Target)"
-                                     aria-disabled="@(item.Disabled ? "true" : null)"
-                                     title="@item.Tooltip">
-                                @if (!string.IsNullOrEmpty(item.Icon))
-                                {
-                                    <span class="znav-icon" aria-hidden="true">@((MarkupString)item.Icon)</span>
-                                }
-                                <span class="znav-label">@item.Title.Value</span>
-                                @if (!string.IsNullOrEmpty(item.Badge))
-                                {
-                                    <span class="znav-badge @BadgeClass(item.BadgeColor)">@item.Badge</span>
-                                }
-                            </NavLink>
-                        </li>
+                        <RenderNavItem Item="@item" Depth="@(Depth + 1)" CurrentPath="@Current" />
                     }
                 }
 
@@ -74,7 +58,7 @@
                 {
                     @foreach (var sub in Group.Groups.OrderBy(g => g.Order))
                     {
-                        <RenderNavGroup Group="@sub" />
+                        <RenderNavGroup Group="@sub" Depth="@(Depth + 1)" />
                     }
                 }
             </ul>
@@ -94,7 +78,7 @@ else if (Group.Link is not null)
             <span class="znav-label">@Group.Title.Value</span>
             @if (!string.IsNullOrEmpty(Group.Badge))
             {
-                <span class="znav-badge @BadgeClass(Group.BadgeColor)">@Group.Badge</span>
+                <span class="znav-badge @NavRender.BadgeClass(Group.BadgeColor)">@Group.Badge</span>
             }
         </NavLink>
     </li>
@@ -109,23 +93,19 @@ else
     [Parameter, EditorRequired]
     public NavGroup Group { get; set; } = default!;
 
+    /// <summary>Nesting level; 0 is a top-level group.</summary>
+    [Parameter]
+    public int Depth { get; set; }
+
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private string Current => NavTree.CurrentPath(Navigation);
+
     private bool HasChildren =>
         Group.Children is { Count: > 0 } || Group.Groups is { Count: > 0 };
 
-    private static string BadgeClass(NavBadgeColor c) => c switch
-    {
-        NavBadgeColor.Primary => "znav-badge-primary",
-        NavBadgeColor.Secondary => "znav-badge-secondary",
-        NavBadgeColor.Success => "znav-badge-success",
-        NavBadgeColor.Warning => "znav-badge-warning",
-        NavBadgeColor.Error => "znav-badge-error",
-        NavBadgeColor.Info => "znav-badge-info",
-        _ => string.Empty
-    };
+    private bool IsOpen => Group.Expanded || NavTree.ContainsActive(Group, Current);
 
-    private static string? TargetAttr(Target t) => t == Target.Blank ? "_blank" : null;
-
-    // Never emit target="_blank" without this: the opened page gets window.opener and can
-    // navigate ours (reverse tabnabbing).
-    private static string? RelAttr(Target t) => t == Target.Blank ? "noopener noreferrer" : null;
+    // Capped so the stylesheet has a finite set of indentation steps; see RenderNavItem.
+    private string DepthAttr => Math.Min(Depth + 1, 4).ToString();
 }

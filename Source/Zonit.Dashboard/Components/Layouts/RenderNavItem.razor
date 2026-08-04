@@ -1,0 +1,118 @@
+@*
+    Recursive renderer for one NavItem — the leaf half of the sidebar tree.
+
+    NavItem.Children has existed on the model since 10.0 but nothing rendered it: the previous
+    tree walked NavGroup.Children as a flat list of links and stopped there, so any area that
+    declared parent → child → child silently lost every level below the first. This component is
+    the missing recursion, and it is deliberately separate from RenderNavGroup because groups and
+    items are different things: a group is a section caption that happens to be collapsible, an
+    item is a destination that may also have destinations under it.
+
+    Depth is passed down rather than derived from the DOM so the stylesheet can taper indentation
+    instead of multiplying it — four levels of a fixed indent step overflow a 240px drawer, which
+    is exactly how a deep tree turns into a horizontally-scrolling mess.
+*@
+@namespace Zonit.Dashboard.Components.Layouts
+@using Microsoft.AspNetCore.Components.Routing
+@using Zonit.Extensions.Website
+
+@if (Item.Children is { Count: > 0 })
+{
+    <li>
+        @*
+            The link lives INSIDE <summary>, so activating it both navigates and expands.
+            That is a real trade-off and it is chosen, not overlooked: the alternative — a
+            separate chevron button next to the link — needs either JavaScript or a
+            `display: contents` grid trick whose disclosure behaviour is not reliable across
+            browsers, and this tree has to work during prerender with no circuit at all.
+
+            The collapse-on-second-click that follows from it is neutralised by IsOpen below:
+            a branch containing the active route renders open regardless of what the browser's
+            own toggle did.
+        *@
+        <details class="znav-group znav-branch" open="@IsOpen">
+            <summary title="@Item.Tooltip">
+                <NavLink class="znav-link znav-branch-link"
+                         href="@Item.Url.ToHref()"
+                         Match="@(Item.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)"
+                         target="@TargetAttr(Item.Target)"
+                         rel="@RelAttr(Item.Target)"
+                         aria-disabled="@(Item.Disabled ? "true" : null)">
+                    @if (!string.IsNullOrEmpty(Item.Icon))
+                    {
+                        <span class="znav-icon" aria-hidden="true">@((MarkupString)Item.Icon)</span>
+                    }
+                    <span class="znav-label">@Item.Title.Value</span>
+                    @if (!string.IsNullOrEmpty(Item.Badge))
+                    {
+                        <span class="znav-badge @NavRender.BadgeClass(Item.BadgeColor)">@Item.Badge</span>
+                    }
+                </NavLink>
+                <svg class="znav-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </summary>
+
+            <ul class="znav-children" data-depth="@DepthAttr">
+                @foreach (var child in Item.Children.OrderBy(c => c.Order))
+                {
+                    <RenderNavItem Item="@child" Depth="@(Depth + 1)" CurrentPath="@CurrentPath" />
+                }
+            </ul>
+        </details>
+    </li>
+}
+else
+{
+    <li>
+        @* ToHref() strips the leading slash that UrlPath preserves on input ("/components") so
+           the emitted href is relative and the browser resolves it against the active
+           <base href> — "/docs/" + "components" → "/docs/components". An absolute "/components"
+           would bypass the path base and land on the root site. See UrlPathRendering.cs. *@
+        <NavLink class="znav-link"
+                 href="@Item.Url.ToHref()"
+                 Match="@(Item.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)"
+                 target="@TargetAttr(Item.Target)"
+                 rel="@RelAttr(Item.Target)"
+                 aria-disabled="@(Item.Disabled ? "true" : null)"
+                 title="@Item.Tooltip">
+            @if (!string.IsNullOrEmpty(Item.Icon))
+            {
+                <span class="znav-icon" aria-hidden="true">@((MarkupString)Item.Icon)</span>
+            }
+            <span class="znav-label">@Item.Title.Value</span>
+            @if (!string.IsNullOrEmpty(Item.Badge))
+            {
+                <span class="znav-badge @NavRender.BadgeClass(Item.BadgeColor)">@Item.Badge</span>
+            }
+        </NavLink>
+    </li>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public NavItem Item { get; set; } = default!;
+
+    /// <summary>Nesting level; 1 is a direct child of a top-level group.</summary>
+    [Parameter]
+    public int Depth { get; set; } = 1;
+
+    /// <summary>Base-relative current path, computed once per render by the root nav.</summary>
+    [Parameter]
+    public string CurrentPath { get; set; } = string.Empty;
+
+    // A branch stays open when the active page is somewhere inside it. Without this the
+    // sidebar collapses the visitor's own position out of view on every navigation.
+    private bool IsOpen => NavTree.ContainsActive(Item, CurrentPath);
+
+    // Capped so the stylesheet has a finite set of steps to taper; deeper levels reuse the
+    // last one rather than marching off the right edge of a 240px drawer.
+    private string DepthAttr => Math.Min(Depth, 4).ToString();
+
+    private static string? TargetAttr(Target t) => t == Target.Blank ? "_blank" : null;
+
+    // Never emit target="_blank" without this: the opened page gets window.opener and can
+    // navigate ours (reverse tabnabbing).
+    private static string? RelAttr(Target t) => t == Target.Blank ? "noopener noreferrer" : null;
+}

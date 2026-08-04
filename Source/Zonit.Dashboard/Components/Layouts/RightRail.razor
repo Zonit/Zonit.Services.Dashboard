@@ -75,18 +75,29 @@
 
     <MudDivider Class="my-1" />
 
-    @* ─── Organization ─── *@
-    @if (Workspace.Organization.HasValue)
+    @*
+        ─── Organization ───
+        The row is gated on the SWITCHER being registered, not on an organization being
+        selected. Gating on the value is what made the dashboard look like it had lost the
+        org and project pickers entirely: a visitor who has not joined an organization yet —
+        or is not signed in — saw no row at all, so there was no way to discover that
+        switching is even possible. An empty row states the situation and still opens the
+        picker; a missing row states nothing.
+    *@
+    @if (HasExtension(WorkspaceId))
     {
-        var orgName = Workspace.Organization.Name.HasValue
-            ? Workspace.Organization.Name.Value
-            : Workspace.Organization.Id.ToString();
-        var orgInitial = orgName.Length > 0 ? orgName[..1].ToUpperInvariant() : "?";
+        var hasOrg = Workspace.Organization.HasValue;
+        var orgName = !hasOrg
+            ? T("Not selected")
+            : Workspace.Organization.Name.HasValue
+                ? Workspace.Organization.Name.Value
+                : Workspace.Organization.Id.ToString();
+        var orgInitial = hasOrg && orgName.Length > 0 ? orgName[..1].ToUpperInvariant() : "—";
 
         <RailButton TooltipText="@T("Change organization")"
                     OnClick="@(() => Toggle(WorkspaceId))">
             <LeadingTemplate>
-                <MudAvatar Color="MudBlazor.Color.Warning" Size="Size.Small">@orgInitial</MudAvatar>
+                <MudAvatar Color="@(hasOrg ? MudBlazor.Color.Warning : MudBlazor.Color.Default)" Size="Size.Small">@orgInitial</MudAvatar>
             </LeadingTemplate>
             <Label>@T("Organization")</Label>
             <Value>@orgName</Value>
@@ -96,16 +107,20 @@
     }
 
     @* ─── Project ─── *@
-    @if (Catalog.Project.HasValue)
+    @if (HasExtension(ProjectId))
     {
-        var projectName = Catalog.Project.Name.HasValue
-            ? Catalog.Project.Name.Value
-            : Catalog.Project.Id.ToString();
+        var hasProject = Catalog.Project.HasValue;
+        var projectName = !hasProject
+            ? T("Not selected")
+            : Catalog.Project.Name.HasValue
+                ? Catalog.Project.Name.Value
+                : Catalog.Project.Id.ToString();
 
         <RailButton TooltipText="@T("Change project")"
                     OnClick="@(() => Toggle(ProjectId))">
             <LeadingTemplate>
-                <MudIcon Icon="@Icons.Material.Filled.Folder" Color="MudBlazor.Color.Info" Size="Size.Small" />
+                <MudIcon Icon="@Icons.Material.Filled.Folder"
+                         Color="@(hasProject ? MudBlazor.Color.Info : MudBlazor.Color.Default)" Size="Size.Small" />
             </LeadingTemplate>
             <Label>@T("Project")</Label>
             <Value>@projectName</Value>
@@ -165,6 +180,13 @@
 
     private void Toggle(string extensionId)
         => DrawerStates.GetState(extensionId)?.Toggle();
+
+    // A null state means the host never registered that drawer extension, so there is
+    // genuinely nothing to switch — a dashboard with no Projects area should not grow a
+    // dead "Project" row. This is the honest version of the check the value-gating was
+    // standing in for.
+    private bool HasExtension(string extensionId)
+        => DrawerStates.GetState(extensionId) is not null;
 
     private string T(string key) => Culture.Translate(key).ToString() ?? key;
 

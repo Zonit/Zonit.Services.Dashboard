@@ -206,10 +206,70 @@
     border-left: 1px solid var(--znav-rail);
 }
 
+/*
+    Depth taper. A fixed indent per level is what makes deep trees unusable: four levels of
+    12px + 8px eats 80px of a 240px drawer before the first character, and the labels — which
+    ellipsis rather than wrap — turn into "Cust…", "Sett…". Each level therefore indents LESS
+    than the one above it. The rail keeps the hierarchy legible where the indent stops carrying
+    it, so nothing is lost by tapering.
+
+    data-depth is capped at 4 by the renderers, so a tree ten levels deep degrades to a
+    constant indent instead of scrolling sideways forever.
+*/
+.znav ul.znav-children[data-depth="2"] { margin-left: .5rem;   padding-left: .4375rem; }
+.znav ul.znav-children[data-depth="3"] { margin-left: .375rem; padding-left: .375rem; }
+.znav ul.znav-children[data-depth="4"] { margin-left: .25rem;  padding-left: .375rem; }
+
 /* Nested groups inside children de-emphasise one more step. */
 .znav-children .znav-group > summary {
     font-size: .625rem;
     letter-spacing: .06em;
+}
+
+/*
+    ...but a BRANCH is not a nested group, even though it shares the .znav-group class for the
+    disclosure behaviour. The rule above was shrinking parent rows below their own children —
+    "Identity" rendering smaller and fainter than the "AuthorizeView" underneath it, which
+    inverts the hierarchy the indentation is trying to establish. Two selectors deep to beat
+    it; see the branch block below for the rest of the row styling.
+*/
+.znav-children .znav-branch > summary {
+    font-size: inherit;
+    letter-spacing: normal;
+}
+
+/* ── branch rows (a NavItem that is both a link and a parent) ─────────────────
+   The <summary> is the flex row; the NavLink inside it carries the label and the
+   active styling, so the summary itself contributes nothing but the chevron. */
+.znav-branch > summary {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 .5rem 0 0;
+    margin-top: 0;
+    /* A branch row is a destination, not a section caption — it reads like its
+       sibling leaves rather than like the uppercase group headers above it. */
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: normal;
+    text-transform: none;
+    color: inherit;
+}
+
+.znav-branch > summary:hover { color: inherit; }
+
+/* The link fills the row so its hover/active background spans the whole width
+   rather than hugging the text. */
+.znav-branch-link {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* The chevron belongs to the disclosure, not to the link, so it keeps the muted
+   caption colour even when the branch itself is the active page. */
+.znav-branch > summary > .znav-chevron {
+    margin-left: .25rem;
+    color: var(--znav-fg-muted);
 }
 
 .znav-section-label {
@@ -227,4 +287,51 @@
     .znav-group > summary {
         transition: none;
     }
+}
+
+/*
+    ── App bar ──────────────────────────────────────────────────────────────────
+    MudBlazor's toolbar is a flex row and MudText has no width constraint, so a long
+    site title on a narrow window wraps to a second line, doubles the bar's height and
+    shoves the trailing icons out of the row. Constrain the brand and let it ellipsis:
+    a truncated title costs nothing, a broken header costs the whole screen.
+*/
+.zbar .zbar-brand {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.zbar .zbar-brand-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Flex children default to min-width:auto, which refuses to shrink below content size —
+   the reason the ellipsis above would otherwise never trigger. */
+.zbar .mud-toolbar {
+    min-width: 0;
+    gap: .25rem;
+}
+
+@media (max-width: 599px) {
+    /* On a phone the bar has room for the hamburger, the name, and one action. Anything
+       an extension adds beyond that is dropped here rather than allowed to wrap: the
+       same actions are reachable as labelled rows inside the right rail. */
+    .zbar .zbar-brand-text {
+        font-size: 1rem;
+    }
+}
+
+/*
+    ── Drawer ───────────────────────────────────────────────────────────────────
+    The nav scrolls inside the drawer instead of the drawer scrolling as a whole, so a
+    long tree never pushes anything out of the fixed column, and momentum scrolling on
+    touch stays inside the list.
+*/
+.mud-drawer .znav {
+    max-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
 }

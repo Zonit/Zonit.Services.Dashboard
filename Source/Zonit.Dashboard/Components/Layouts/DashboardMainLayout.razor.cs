@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using MudBlazor;
 using MudBlazor.Services;
 using Zonit.Dashboard.Extensions;
@@ -42,6 +43,12 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     [Inject] private ICultureProvider Culture { get; set; } = default!;
     [Inject] private IBrowserViewportService BrowserViewport { get; set; } = default!;
 
+    // Distinct from NavProvider above (that one supplies the tree; this one reports where the
+    // browser currently is). The sidebar needs the second: RenderNavGroup decides whether a
+    // branch renders expanded from the active path, and Blazor's NavLink only re-renders
+    // itself on navigation — the surrounding <details open> would keep its stale value.
+    [Inject] private NavigationManager BrowserNavigation { get; set; } = default!;
+
     // Single piece of layout-local state — every other "open" flag belongs to a
     // service (drawer states in IExtensionDrawerStates, theme mode in IThemeManager).
     // The left drawer has no dedicated service because there's exactly one — it's
@@ -51,16 +58,33 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
 
     // Persistent right rail (user/theme/org/project/culture inline switchers).
     // Default open on desktop; the viewport observer flips it to closed on
-    // phones where there's no room for two persistent drawers side by side.
+    // narrow windows where there's no room for two persistent drawers side by side.
     private bool _rightRailOpen = true;
     private DrawerVariant _rightRailVariant = DrawerVariant.Persistent;
 
-    // Responsive drawer state. Mirrors the legacy MainLayout.razor.cs breakpoint
-    // logic: full-responsive drawer on desktop, mini-on-hover on mid-size, fully
-    // collapsed on phones. Width is reported by IBrowserViewportObserver below.
-    private DrawerVariant _leftDrawerVariant = DrawerVariant.Responsive;
-    private bool _leftDrawerOpenMini;
+    // Responsive drawer state, driven by IBrowserViewportObserver below.
+    private DrawerVariant _leftDrawerVariant = DrawerVariant.Persistent;
     private int _viewportWidth = 1920;
+
+    // Below this the left drawer becomes a temporary overlay instead of stealing a
+    // permanent column. 960 is MudBlazor's "md" edge and also roughly where a 240px
+    // drawer stops leaving a usable content area.
+    private const int NavBreakpoint = 960;
+
+    // The rail needs its own, higher, threshold: nav + content + rail is three columns,
+    // and below ~1280 the middle one gets squeezed to the point of being unreadable.
+    private const int RailBreakpoint = 1280;
+
+    // Whether the rail is currently a permanent column rather than an overlay. Drives
+    // the single appbar button — no point offering to open something already on screen.
+    private bool _railIsPersistent = true;
+
+    // Which responsive band the last viewport report landed in. The observer fires on
+    // every resize frame, not only on breakpoint crossings, so the forced open/closed
+    // states below are applied ONLY when the band actually changes. Re-applying them on
+    // each frame is what made a drawer the visitor had just closed spring back open the
+    // moment they nudged the window edge.
+    private int _band = -1;
 
     // RTL flag pulled from the active culture. Arabic / Hebrew / Persian flip the
     // entire MudBlazor layout via <MudRTLProvider>; everything else renders LTR.
@@ -156,6 +180,7 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
         NavProvider.OnChanged += OnNavigationChanged;
         Tenant.OnChange += OnReactiveSourceChanged;
         Culture.OnChange += OnReactiveSourceChanged;
+        BrowserNavigation.LocationChanged += OnLocationChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -182,9 +207,35 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     private void OnNavigationChanged(string? areaKey)
         => _ = InvokeAsync(StateHasChanged);
 
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        // A tap on a nav link should not leave the overlay covering the page it just
+        // opened. Docked drawers stay put — there is nothing to get out of the way of.
+        if (_leftDrawerVariant == DrawerVariant.Temporary) _leftDrawerOpen = false;
+        if (_rightRailVariant == DrawerVariant.Temporary) _rightRailOpen = false;
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
     // ─── Event handlers ────────────────────────────────────────────────────────
 
-    private void ToggleLeftDrawer() => _leftDrawerOpen = !_leftDrawerOpen;
+    private void ToggleLeftDrawer()
+    {
+        _leftDrawerOpen = !_leftDrawerOpen;
+
+        // Two overlays stacked on a phone is a dead end — the one underneath is
+        // unreachable and its scrim swallows the taps meant for it.
+        if (_leftDrawerOpen && _leftDrawerVariant == DrawerVariant.Temporary)
+            _rightRailOpen = false;
+    }
+
+    private void ToggleRightRail()
+    {
+        _rightRailOpen = !_rightRailOpen;
+
+        if (_rightRailOpen && _rightRailVariant == DrawerVariant.Temporary)
+            _leftDrawerOpen = false;
+    }
 
     private void OnRightRailOpenChanged(bool open) => _rightRailOpen = open;
 
@@ -210,6 +261,7 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
         NavProvider.OnChanged -= OnNavigationChanged;
         Tenant.OnChange -= OnReactiveSourceChanged;
         Culture.OnChange -= OnReactiveSourceChanged;
+        BrowserNavigation.LocationChanged -= OnLocationChanged;
 
         try
         {
@@ -228,32 +280,41 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     {
         _viewportWidth = args.BrowserWindowSize.Width;
 
-        // Same breakpoints as the legacy dashboard — they map cleanly to MudBlazor's
-        // "sm / md / lg" thresholds without forcing us to inject IBreakpointService.
-        switch (_viewportWidth)
+        // Three bands: phone-ish (nav overlays), laptop (nav docked, rail overlays),
+        // wide (both docked). No mini band — see the comment on the left MudDrawer.
+        var band = _viewportWidth switch
         {
-            case < 425:
+            < NavBreakpoint => 0,
+            < RailBreakpoint => 1,
+            _ => 2,
+        };
+
+        _railIsPersistent = band == 2;
+
+        if (band == _band)
+            return;
+
+        _band = band;
+
+        switch (band)
+        {
+            case 0:
+                _leftDrawerVariant = DrawerVariant.Temporary;
                 _leftDrawerOpen = false;
-                _leftDrawerOpenMini = false;
-                _leftDrawerVariant = DrawerVariant.Responsive;
-                // Phone: rail goes Temporary (overlay) so it doesn't permanently
-                // steal half the screen. User opens it via the appbar icons that
-                // get re-shown by the rail-vs-icons guard in the .razor.
-                _rightRailOpen = false;
                 _rightRailVariant = DrawerVariant.Temporary;
+                _rightRailOpen = false;
                 break;
-            case < 1024:
-                _leftDrawerOpenMini = true;
-                _leftDrawerVariant = DrawerVariant.Mini;
-                _rightRailOpen = false;
+            case 1:
+                _leftDrawerVariant = DrawerVariant.Persistent;
+                _leftDrawerOpen = true;
                 _rightRailVariant = DrawerVariant.Temporary;
+                _rightRailOpen = false;
                 break;
             default:
+                _leftDrawerVariant = DrawerVariant.Persistent;
                 _leftDrawerOpen = true;
-                _leftDrawerOpenMini = false;
-                _leftDrawerVariant = DrawerVariant.Responsive;
-                _rightRailOpen = true;
                 _rightRailVariant = DrawerVariant.Persistent;
+                _rightRailOpen = true;
                 break;
         }
 
@@ -264,17 +325,22 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     private void OnSwipe(SwipeEventArgs args)
     {
         if (!Site.Layout.EnableSwipeGestures) return;
-        // Only handle swipe on mobile-ish widths; on desktop swipe usually means
-        // "select text" or "two-finger scroll" and stealing those gestures is rude.
-        if (_viewportWidth >= 1024) return;
+        // Only handle swipe where a drawer is actually an overlay; on a docked layout
+        // swipe usually means "select text" or "two-finger scroll" and stealing those
+        // gestures is rude.
+        if (_viewportWidth >= NavBreakpoint) return;
 
         switch (args.SwipeDirection)
         {
             case SwipeDirection.LeftToRight:
-                _leftDrawerOpen = true;
+                // Right-hand overlay wins the gesture when it is the one on screen,
+                // otherwise a swipe meant to dismiss the rail would open the nav behind it.
+                if (_rightRailOpen) _rightRailOpen = false;
+                else _leftDrawerOpen = true;
                 break;
             case SwipeDirection.RightToLeft:
-                _leftDrawerOpen = false;
+                if (_leftDrawerOpen) _leftDrawerOpen = false;
+                else if (Site.Layout.ShowRightRail) _rightRailOpen = true;
                 break;
         }
     }

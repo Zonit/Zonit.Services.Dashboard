@@ -3,9 +3,10 @@
   <PropertyGroup>
     <!-- net10-only — Zonit.Extensions.Website (10.x) drops <= net9 to align with .NET LTS / preview cadence. -->
     <TargetFramework>net10.0</TargetFramework>
-    <Version>10.0.0-preview.10</Version>
-    <AssemblyVersion>10.0.0</AssemblyVersion>
-    <FileVersion>10.0.0</FileVersion>
+    <!-- Version / AssemblyVersion / FileVersion come from ../Directory.Packages.props.
+         They used to be set here as well, which silently won — so the props file sat at a
+         stale 0.1.63 that nothing corrected, waiting for the next project added under
+         Source/ to pick it up. One source of truth. -->
 
     <Description>Zonit dashboard — single-project admin UI built on Zonit.Extensions.Website. Provides drawer/toolbar extension slots, dynamic theme switching, and a MudBlazor-based main layout registered into the website layout registry as "Dashboard.Main".</Description>
     <Summary>Zonit dashboard UI for AddWebsite-hosted applications.</Summary>
