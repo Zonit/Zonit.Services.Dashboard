@@ -183,6 +183,32 @@ Hrefs go through `UrlPath.ToHref()`, which strips the leading slash so the brows
 against `<base href>`. Declare `Url = "/auth"` and a dashboard mounted at `/admin` links to
 `/admin/auth`, not to the root site's `/auth`.
 
+### Icons
+
+`NavGroup.Icon` and `NavItem.Icon` take **SVG markup**, not an icon name.
+
+```csharp
+Icon = Icons.Material.Filled.Newspaper   // ✔ MudBlazor constant — inner SVG fragment
+Icon = "<svg viewBox=\"0 0 24 24\">…</svg>"  // ✔ complete document, hand-written
+Icon = "Newspaper"                        // ✘ a NAME — dropped, no icon rendered
+```
+
+Both markup shapes work: a complete `<svg>` passes through, and a bare fragment (`<g>`, `<path>`,
+`<rect>` — which is what every `Icons.Material.Filled.*` constant actually is) gets wrapped in a
+`24x24` viewBox. A value that is not markup cannot be resolved to a glyph without reflecting over
+the ~2000 constants in `Icons.Material.Filled`, which would forfeit the trimming guarantees this
+package makes, so it is dropped instead.
+
+Passing a name used to be worse than useless: the string landed in the DOM as literal text inside
+an 18px box and painted over the label beside it, so `Icon = "Newspaper"` on one group visibly
+corrupted its neighbours. That value is now discarded before it reaches the DOM, and the icon box
+clips as a second line of defence — but the icon is still missing, so pass the constant.
+
+Icons are optional, and partly-iconned lists still line up: when at least one entry in a list has
+an icon, the others get an empty slot of the same width, so every label in that list shares one
+left edge. A list where nobody declares an icon keeps its labels flush left instead of carrying a
+column of nothing.
+
 ### Responsive behaviour
 
 Three bands, driven by window width:

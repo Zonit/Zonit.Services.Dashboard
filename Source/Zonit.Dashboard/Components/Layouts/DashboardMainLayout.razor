@@ -149,10 +149,11 @@
                <details>/<summary>, so it expands without JavaScript and without a Blazor
                circuit. See RenderNavGroup.razor and wwwroot/zonit-dashboard.css. *@
             <nav class="znav" aria-label="@Culture.Translate("Main navigation").Value">
+                @{ var topLevelHasIcons = NavRender.AnyIcon(NavGroups); }
                 <ul>
                     @foreach (var group in NavGroups)
                     {
-                        <RenderNavGroup Group="@group" />
+                        <RenderNavGroup Group="@group" ReserveIcon="@topLevelHasIcons" />
                     }
                 </ul>
             </nav>

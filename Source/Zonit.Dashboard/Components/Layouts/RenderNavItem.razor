@@ -38,10 +38,7 @@
                          target="@TargetAttr(Item.Target)"
                          rel="@RelAttr(Item.Target)"
                          aria-disabled="@(Item.Disabled ? "true" : null)">
-                    @if (!string.IsNullOrEmpty(Item.Icon))
-                    {
-                        <span class="znav-icon" aria-hidden="true">@((MarkupString)Item.Icon)</span>
-                    }
+                    <NavIcon Icon="@Item.Icon" Reserve="@ReserveIcon" />
                     <span class="znav-label">@Item.Title.Value</span>
                     @if (!string.IsNullOrEmpty(Item.Badge))
                     {
@@ -55,9 +52,11 @@
             </summary>
 
             <ul class="znav-children" data-depth="@DepthAttr">
+                @{ var childrenHaveIcons = NavRender.AnyIcon(Item.Children); }
                 @foreach (var child in Item.Children.OrderBy(c => c.Order))
                 {
-                    <RenderNavItem Item="@child" Depth="@(Depth + 1)" CurrentPath="@CurrentPath" />
+                    <RenderNavItem Item="@child" Depth="@(Depth + 1)" CurrentPath="@CurrentPath"
+                                   ReserveIcon="@childrenHaveIcons" />
                 }
             </ul>
         </details>
@@ -77,10 +76,7 @@ else
                  rel="@RelAttr(Item.Target)"
                  aria-disabled="@(Item.Disabled ? "true" : null)"
                  title="@Item.Tooltip">
-            @if (!string.IsNullOrEmpty(Item.Icon))
-            {
-                <span class="znav-icon" aria-hidden="true">@((MarkupString)Item.Icon)</span>
-            }
+            <NavIcon Icon="@Item.Icon" Reserve="@ReserveIcon" />
             <span class="znav-label">@Item.Title.Value</span>
             @if (!string.IsNullOrEmpty(Item.Badge))
             {
@@ -101,6 +97,10 @@ else
     /// <summary>Base-relative current path, computed once per render by the root nav.</summary>
     [Parameter]
     public string CurrentPath { get; set; } = string.Empty;
+
+    /// <summary>Set by the parent list when at least one sibling declares an icon.</summary>
+    [Parameter]
+    public bool ReserveIcon { get; set; }
 
     // A branch stays open when the active page is somewhere inside it. Without this the
     // sidebar collapses the visitor's own position out of view on every navigation.

@@ -1,0 +1,73 @@
+@*
+    Renders NavGroup.Icon / NavItem.Icon.
+
+    The model types that property as "icon identifier OR inline SVG markup", and in practice three
+    different shapes arrive here. Injecting all of them as raw markup — which is what this used to
+    do — only works for one:
+
+      1. A full <svg …>…</svg> element. Hand-written icons look like this. Passes through.
+
+      2. An inner SVG FRAGMENT: <g>, <path>, <rect>. This is what every MudBlazor constant is —
+         Icons.Material.Filled.Handshake is 748 characters starting "<g><rect fill=…". MudIcon
+         wraps it in its own <svg> before rendering; we did not, and an SVG element outside an
+         <svg> root draws nothing. Every icon in the sidebar was silently invisible. Wrapped here
+         in the 24x24 viewBox those constants are authored against.
+
+      3. A bare NAME — Icon = "Newspaper". Not markup at all, so it landed in the DOM as literal
+         TEXT inside an 18x18 flex:0 0 auto box with overflow visible. "Newspaper" needs 45px,
+         gets 18, and the other 27 paint straight over the label next to it. That is what turned
+         two nav groups into "EWSPAPERCONTENT" stacked on their own children. There is no way to
+         resolve a name to its glyph without reflecting over the ~2000 constants in
+         Icons.Material.Filled, which would take the trimmer's guarantees with it — so a name is
+         dropped rather than rendered. Pass Icons.Material.Filled.Newspaper, not "Newspaper".
+
+    .znav-icon also clips now, so a fourth shape nobody predicted degrades to an empty box instead
+    of corrupting its neighbours.
+*@
+@namespace Zonit.Dashboard.Components.Layouts
+
+@if (_kind is Kind.Document)
+{
+    <span class="znav-icon" aria-hidden="true">@((MarkupString)Icon!)</span>
+}
+else if (_kind is Kind.Fragment)
+{
+    <span class="znav-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">@((MarkupString)Icon!)</svg>
+    </span>
+}
+else if (Reserve)
+{
+    @* Empty slot, same width. A list where only some entries declare an icon otherwise renders
+       with its labels at two different left edges, and the eye reads that as broken alignment
+       rather than as "this one has no icon". The parent decides: the slot is reserved only when
+       at least one sibling in the same list actually has one, so a wholly icon-less nav keeps
+       its labels flush left instead of carrying a column of nothing. *@
+    <span class="znav-icon znav-icon-empty" aria-hidden="true"></span>
+}
+
+@code {
+    [Parameter]
+    public string? Icon { get; set; }
+
+    /// <summary>Render an empty slot when there is no icon, to keep a mixed list aligned.</summary>
+    [Parameter]
+    public bool Reserve { get; set; }
+
+    private enum Kind { None, Document, Fragment }
+
+    private Kind _kind;
+
+    protected override void OnParametersSet()
+    {
+        var value = Icon?.TrimStart();
+
+        _kind = value switch
+        {
+            null or "" => Kind.None,
+            _ when value.StartsWith("<svg", StringComparison.OrdinalIgnoreCase) => Kind.Document,
+            _ when value[0] == '<' => Kind.Fragment,
+            _ => Kind.None,
+        };
+    }
+}

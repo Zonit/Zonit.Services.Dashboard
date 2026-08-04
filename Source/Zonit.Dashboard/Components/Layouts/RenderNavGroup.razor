@@ -30,10 +30,7 @@
            down renders its whole ancestry collapsed and the sidebar stops showing where you are. *@
         <details class="znav-group" open="@IsOpen">
             <summary aria-disabled="@(Group.Disabled ? "true" : null)" title="@Group.Tooltip">
-                @if (!string.IsNullOrEmpty(Group.Icon))
-                {
-                    <span class="znav-icon" aria-hidden="true">@((MarkupString)Group.Icon)</span>
-                }
+                <NavIcon Icon="@Group.Icon" Reserve="@ReserveIcon" />
                 <span class="znav-label">@Group.Title.Value</span>
                 @if (!string.IsNullOrEmpty(Group.Badge))
                 {
@@ -45,12 +42,16 @@
                 </svg>
             </summary>
 
+            @* One reservation decision for the whole list — items and sub-groups share the
+               column, so they have to agree on whether it exists. *@
+            @{ var listHasIcons = NavRender.AnyIcon(Group.Children) || NavRender.AnyIcon(Group.Groups); }
             <ul class="znav-children" data-depth="@DepthAttr">
                 @if (Group.Children is not null)
                 {
                     @foreach (var item in Group.Children.OrderBy(c => c.Order))
                     {
-                        <RenderNavItem Item="@item" Depth="@(Depth + 1)" CurrentPath="@Current" />
+                        <RenderNavItem Item="@item" Depth="@(Depth + 1)" CurrentPath="@Current"
+                                       ReserveIcon="@listHasIcons" />
                     }
                 }
 
@@ -58,7 +59,7 @@
                 {
                     @foreach (var sub in Group.Groups.OrderBy(g => g.Order))
                     {
-                        <RenderNavGroup Group="@sub" Depth="@(Depth + 1)" />
+                        <RenderNavGroup Group="@sub" Depth="@(Depth + 1)" ReserveIcon="@listHasIcons" />
                     }
                 }
             </ul>
@@ -71,10 +72,7 @@ else if (Group.Link is not null)
     <li>
         <NavLink class="znav-link" href="@Group.Link.Url.ToHref()" Match="NavLinkMatch.Prefix"
                  aria-disabled="@(Group.Disabled ? "true" : null)" title="@Group.Tooltip">
-            @if (!string.IsNullOrEmpty(Group.Icon))
-            {
-                <span class="znav-icon" aria-hidden="true">@((MarkupString)Group.Icon)</span>
-            }
+            <NavIcon Icon="@Group.Icon" Reserve="@ReserveIcon" />
             <span class="znav-label">@Group.Title.Value</span>
             @if (!string.IsNullOrEmpty(Group.Badge))
             {
@@ -96,6 +94,10 @@ else
     /// <summary>Nesting level; 0 is a top-level group.</summary>
     [Parameter]
     public int Depth { get; set; }
+
+    /// <summary>Set by the parent list when at least one sibling declares an icon.</summary>
+    [Parameter]
+    public bool ReserveIcon { get; set; }
 
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
