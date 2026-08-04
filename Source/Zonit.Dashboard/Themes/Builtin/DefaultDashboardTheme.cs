@@ -9,7 +9,8 @@ namespace Zonit.Dashboard.Themes.Builtin;
 /// <c>AccentColor</c> / <c>NeutralColor</c> / <c>SurfaceColor</c> / <c>ContentColor</c>),
 /// so an admin changing the tenant theme propagates straight to the dashboard
 /// without redeploying. Everything else (info / success / warning / error,
-/// surface tints, typography) carries the dashboard's own purple-accented look.
+/// surface tints) carries the dashboard's own look, and the type scale comes from
+/// <see cref="DashboardTypography"/>, shared with the other built-ins.
 /// </summary>
 /// <remarks>
 /// <para>Scoped lifetime: pulls the per-circuit <see cref="ITenantProvider"/> and
@@ -99,6 +100,7 @@ internal sealed class DefaultDashboardTheme(ITenantProvider tenant, IDashboardCu
                 HoverOpacity     = 0.08,
                 RippleOpacity    = 0.12,
             },
+            Typography = DashboardTypography.Create(),
             LayoutProperties = new LayoutProperties
             {
                 DefaultBorderRadius = "12px",

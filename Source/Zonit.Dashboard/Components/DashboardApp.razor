@@ -15,6 +15,7 @@
 @using Zonit.Extensions.Website
 @using Zonit.Extensions.Website.Hydration
 
+@inject Microsoft.Extensions.Hosting.IHostEnvironment HostEnvironment
 @inject ICultureProvider Culture
 @inject ITenantProvider Tenant
 @inject ICurrentSite Site
@@ -57,6 +58,28 @@
        --mud-palette-* custom properties that MudThemeProvider writes, and the later sheet wins
        on equal specificity, so a consumer can still override with their own stylesheet. *@
     <link href="@Assets["_content/Zonit.Dashboard/zonit-dashboard.css"]" rel="stylesheet" />
+
+    @*
+        The host's Blazor scoped-CSS bundle.
+
+        Every *.razor.css in the application and in every RCL it references compiles into one
+        file named after the entry assembly, and a normal Blazor app links it from its own
+        App.razor. A dashboard mount never reaches that App.razor — this component IS the
+        document — so without this line the bundle is simply never requested and EVERY scoped
+        stylesheet in the consuming application stops applying at once.
+
+        That failure is invisible in the worst way: components still render, Blazor still stamps
+        its b-xxxxx scope attributes on the markup, no request 404s, nothing logs. It just looks
+        like the styling regressed. A page that had `::deep .mud-tab { text-transform: none }`
+        silently goes back to MudBlazor's hard-coded uppercase and nobody can point at a cause.
+
+        Emitted LAST so host rules win over ours on equal specificity, which is what a consumer
+        overriding dashboard chrome expects.
+    *@
+    @if (ScopedCssBundle is { } scopedCss)
+    {
+        <link href="@scopedCss" rel="stylesheet" />
+    }
 
     <title>@(Tenant.Settings.Site.Title)</title>
 
@@ -136,6 +159,26 @@
     // file path, so "/admin" would resolve "components/cookies" against "/" instead
     // of "/admin/". Falls back to "/" for the unset/root case so the markup is still
     // valid if DashboardApp is ever rendered outside an active dashboard branch.
+    // Blazor names the scoped-CSS bundle after the entry assembly, which is exactly what
+    // IHostEnvironment.ApplicationName reports. Deriving it beats asking the consumer to
+    // configure it: a setting nobody knows they need is the same as no setting at all, and
+    // the symptom of getting it wrong (see the <link> above) points nowhere near the cause.
+    //
+    // Returns null when the build produced no bundle — a host with no *.razor.css anywhere in
+    // it or its RCLs. Assets[] hands back the key unchanged for anything absent from the
+    // static-asset manifest, and every stylesheet that IS in the manifest comes back
+    // fingerprinted, so "unchanged" is a reliable "this file does not exist". Without the
+    // check that host pays a 404 on every page load for a file it was never going to have.
+    string? ScopedCssBundle
+    {
+        get
+        {
+            var name = $"{HostEnvironment.ApplicationName}.styles.css";
+            var resolved = Assets[name];
+            return resolved == name ? null : resolved;
+        }
+    }
+
     string BaseHref =>
         Site.IsSet && Site.Directory.HasValue
             ? Site.Directory.Value.TrimEnd('/') + "/"

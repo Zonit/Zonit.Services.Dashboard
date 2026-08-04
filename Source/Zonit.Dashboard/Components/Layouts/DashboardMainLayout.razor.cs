@@ -4,6 +4,7 @@ using MudBlazor;
 using MudBlazor.Services;
 using Zonit.Dashboard.Extensions;
 using Zonit.Dashboard.Themes;
+using Zonit.Extensions.Auth;
 using Zonit.Extensions.Cultures;
 using Zonit.Extensions.Tenants;
 using Zonit.Extensions.Website;
@@ -42,6 +43,7 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     [Inject] private IBreadcrumbsProvider BreadcrumbsProvider { get; set; } = default!;
     [Inject] private ICultureProvider Culture { get; set; } = default!;
     [Inject] private IBrowserViewportService BrowserViewport { get; set; } = default!;
+    [Inject] private IAuthenticatedProvider Authenticated { get; set; } = default!;
 
     // Distinct from NavProvider above (that one supplies the tree; this one reports where the
     // browser currently is). The sidebar needs the second: RenderNavGroup decides whether a
@@ -128,19 +130,33 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
 
     /// <summary>
     /// Aggregated navigation tree — every mounted <see cref="IWebsiteArea"/>'s
-    /// <see cref="INavigationProvider.Get"/> result flattened into one
-    /// <see cref="MudNavMenu"/>. Permission filtering happens inside
-    /// <c>INavigationProvider</c> (it already knows the active user).
+    /// <see cref="INavigationProvider.Get"/> result, filtered to what the current identity may
+    /// see, in one list.
     /// </summary>
+    /// <remarks>
+    /// <para><b>Permission filtering happens here, not in the provider.</b> This comment used to
+    /// claim the opposite — "filtering happens inside INavigationProvider (it already knows the
+    /// active user)" — and it was wrong on both counts: <c>NavigationService.Get</c> filters by
+    /// Site only and documents that permissions are deliberately left to the UI layer, and it
+    /// never sees an identity at all. Measured before the fix: an anonymous visitor with no
+    /// permissions saw every gated group in the menu.</para>
+    ///
+    /// <para>Deep nodes are filtered during rendering rather than here, because hiding a leaf
+    /// three levels down would otherwise mean rebuilding every ancestor — see
+    /// <see cref="NavPermissions"/>. This pass only drops whole top-level groups.</para>
+    /// </remarks>
     private IReadOnlyList<NavGroup> NavGroups
     {
         get
         {
             if (CurrentSite.AreaKeys.Count == 0) return Array.Empty<NavGroup>();
 
+            var identity = Authenticated.Current;
             var groups = new List<NavGroup>();
             foreach (var areaKey in CurrentSite.AreaKeys)
-                groups.AddRange(NavProvider.Get(areaKey));
+                foreach (var group in NavProvider.Get(areaKey))
+                    if (NavPermissions.IsVisible(group, identity))
+                        groups.Add(group);
 
             // Stable sort by Order so multi-area dashboards always present the
             // navigation in a deterministic order regardless of area registration
@@ -180,6 +196,10 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
         NavProvider.OnChanged += OnNavigationChanged;
         Tenant.OnChange += OnReactiveSourceChanged;
         Culture.OnChange += OnReactiveSourceChanged;
+        // The menu is now a function of the identity, so a sign-in or sign-out has to
+        // repaint it — otherwise a visitor who just signed in keeps the anonymous menu
+        // until they reload, which reads as the permissions not having taken effect.
+        Authenticated.OnChange += OnReactiveSourceChanged;
         BrowserNavigation.LocationChanged += OnLocationChanged;
     }
 
@@ -261,6 +281,7 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
         NavProvider.OnChanged -= OnNavigationChanged;
         Tenant.OnChange -= OnReactiveSourceChanged;
         Culture.OnChange -= OnReactiveSourceChanged;
+        Authenticated.OnChange -= OnReactiveSourceChanged;
         BrowserNavigation.LocationChanged -= OnLocationChanged;
 
         try

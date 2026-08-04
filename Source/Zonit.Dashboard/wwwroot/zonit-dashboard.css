@@ -35,12 +35,20 @@
 */
 
 .znav {
-    /* Rhythm */
+    /*
+        Rhythm.
+
+        Sized up from the first pass, which measured 13px type in 28px rows and read as cramped —
+        a sidebar is a primary control surface, not a footnote, and it is also the one place on a
+        touch screen where rows sit directly above one another. 36px rows clear the 32px that
+        pointer targets want without turning ten sections into a scroll.
+    */
     --znav-radius: 8px;
-    --znav-row-pad-y: .375rem;
-    --znav-row-pad-x: .5rem;
-    --znav-gap: .625rem;
-    --znav-icon-size: 1.125rem;
+    --znav-row-pad-y: .4375rem;
+    --znav-row-pad-x: .625rem;
+    --znav-gap: .6875rem;
+    --znav-icon-size: 1.25rem;
+    --znav-anim: .22s;
 
     /* Palette — every value derives from the MudBlazor theme, nothing is hard-coded. */
     --znav-fg: var(--mud-palette-text-primary, #e6e6e6);
@@ -59,8 +67,15 @@
     --znav-rail: color-mix(in srgb, var(--znav-fg-muted) 22%, transparent);
     --znav-rail-active: color-mix(in srgb, var(--znav-accent) 55%, transparent);
 
-    padding: .5rem .5rem 1.5rem;
-    font-size: .8125rem;
+    /*
+        Scoped here rather than on :root so the keyword-size interpolation that drives the
+        expand/collapse animation cannot reach the rest of the page. Inherited, so it covers
+        the whole tree. See the ::details-content block further down.
+    */
+    interpolate-size: allow-keywords;
+
+    padding: .625rem .5rem 1.5rem;
+    font-size: .875rem;
     line-height: 1.45;
 }
 
@@ -77,11 +92,11 @@
     display: flex;
     align-items: center;
     gap: var(--znav-gap);
-    padding: .375rem var(--znav-row-pad-x);
+    padding: .4375rem var(--znav-row-pad-x);
     margin-top: .125rem;
     cursor: pointer;
     user-select: none;
-    font-size: .6875rem;
+    font-size: .75rem;
     font-weight: 600;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -112,7 +127,7 @@
 .znav > ul > li + li > .znav-group,
 .znav > ul > li + li > .znav-link,
 .znav > ul > li + li.znav-section-label {
-    margin-top: .75rem;
+    margin-top: .875rem;
 }
 
 /* ── link row ─────────────────────────────────────────────────────────────── */
@@ -214,9 +229,9 @@
 
 .znav-badge {
     flex: 0 0 auto;
-    padding: 0 .375rem;
+    padding: 0 .4375rem;
     border-radius: 999px;
-    font-size: .6875rem;
+    font-size: .75rem;
     font-weight: 600;
     line-height: 1.45;
     letter-spacing: 0;
@@ -235,16 +250,47 @@
 /* ── chevron ──────────────────────────────────────────────────────────────── */
 .znav-chevron {
     flex: 0 0 auto;
-    width: .875rem;
-    height: .875rem;
+    width: 1rem;
+    height: 1rem;
     margin-left: auto;
     opacity: .55;
-    transition: transform .18s ease, opacity .12s ease;
+    transition: transform var(--znav-anim) ease, opacity .12s ease;
 }
 
 .znav-group > summary:hover .znav-chevron { opacity: .9; }
 
 .znav-group[open] > summary .znav-chevron { transform: rotate(90deg); }
+
+/* ── expand / collapse ────────────────────────────────────────────────────────
+   A section that appears instantly gives no clue where it came from; sliding it out
+   from under its own header does, and it costs nothing to follow when several
+   sections open as you move around the app.
+
+   This is the whole animation — no JavaScript, and the tree still expands during
+   prerender with no circuit, which is the entire reason it is built on <details>.
+
+   `::details-content` is the box the browser wraps a <details> body in. Animating it
+   needs `interpolate-size: allow-keywords` (set on .znav) because the open state is
+   `block-size: auto`, and a keyword is not interpolable on its own.
+
+   `allow-discrete` on content-visibility is what keeps the closing half visible: without
+   it the content is hidden the instant `open` flips and the height animates over an
+   already-blank box.
+
+   Browsers without `::details-content` ignore every rule here and keep today's instant
+   toggle. Nothing is layered on top that could break in them — the closed state below is
+   the state a closed <details> is already in. */
+.znav-group::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition:
+        block-size var(--znav-anim) ease,
+        content-visibility var(--znav-anim) allow-discrete;
+}
+
+.znav-group[open]::details-content {
+    block-size: auto;
+}
 
 /* ── children ─────────────────────────────────────────────────────────────────
    A hairline rail carries the eye down the section. The rail sits where the
@@ -281,7 +327,7 @@
 
 /* Nested groups inside children de-emphasise one more step. */
 .znav-children .znav-group > summary {
-    font-size: .625rem;
+    font-size: .6875rem;
     letter-spacing: .06em;
 }
 
@@ -332,8 +378,8 @@
 }
 
 .znav-section-label {
-    padding: .5rem .5rem .25rem;
-    font-size: .6875rem;
+    padding: .625rem .625rem .25rem;
+    font-size: .75rem;
     font-weight: 600;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -346,6 +392,13 @@
     .znav ul.znav-children,
     .znav-icon,
     .znav-group > summary {
+        transition: none;
+    }
+
+    /* Sliding a panel open is exactly the kind of motion this query exists to stop.
+       Killing the transition leaves the disclosure working, just instant. */
+    .znav-group::details-content,
+    .znav-group[open]::details-content {
         transition: none;
     }
 }

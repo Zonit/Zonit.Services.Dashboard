@@ -14,6 +14,8 @@
 *@
 @namespace Zonit.Dashboard.Components.Layouts
 @using Microsoft.AspNetCore.Components.Routing
+@using Zonit.Extensions
+@using Zonit.Extensions.Auth
 @using Zonit.Extensions.Website
 
 @if (Item.Children is { Count: > 0 })
@@ -52,8 +54,11 @@
             </summary>
 
             <ul class="znav-children" data-depth="@DepthAttr">
-                @{ var childrenHaveIcons = NavRender.AnyIcon(Item.Children); }
-                @foreach (var child in Item.Children.OrderBy(c => c.Order))
+                @{
+                    var children = Item.Children.Where(c => NavPermissions.IsVisible(c, Identity)).ToList();
+                    var childrenHaveIcons = NavRender.AnyIcon(children);
+                }
+                @foreach (var child in children.OrderBy(c => c.Order))
                 {
                     <RenderNavItem Item="@child" Depth="@(Depth + 1)" CurrentPath="@CurrentPath"
                                    ReserveIcon="@childrenHaveIcons" />
@@ -101,6 +106,10 @@ else
     /// <summary>Set by the parent list when at least one sibling declares an icon.</summary>
     [Parameter]
     public bool ReserveIcon { get; set; }
+
+    [Inject] private IAuthenticatedProvider Authenticated { get; set; } = default!;
+
+    private Identity Identity => Authenticated.Current;
 
     // A branch stays open when the active page is somewhere inside it. Without this the
     // sidebar collapses the visitor's own position out of view on every navigation.

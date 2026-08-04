@@ -20,6 +20,8 @@
 *@
 @namespace Zonit.Dashboard.Components.Layouts
 @using Microsoft.AspNetCore.Components.Routing
+@using Zonit.Extensions
+@using Zonit.Extensions.Auth
 @using Zonit.Extensions.Website
 
 @if (HasChildren)
@@ -42,22 +44,31 @@
                 </svg>
             </summary>
 
-            @* One reservation decision for the whole list — items and sub-groups share the
-               column, so they have to agree on whether it exists. *@
-            @{ var listHasIcons = NavRender.AnyIcon(Group.Children) || NavRender.AnyIcon(Group.Groups); }
+            @* Permission filtering happens HERE, not in INavigationProvider — the kernel filters
+               by Site only and says so explicitly. See NavPermissions.
+
+               Filtered before the icon-column decision, and once for the whole list: items and
+               sub-groups share that column so they must agree on whether it exists, and deciding
+               it over unfiltered rows would leave an empty column behind whenever the only
+               icon-bearing row is the one being hidden. *@
+            @{
+                var items = Group.Children?.Where(c => NavPermissions.IsVisible(c, Identity)).ToList();
+                var subs  = Group.Groups?.Where(g => NavPermissions.IsVisible(g, Identity)).ToList();
+                var listHasIcons = NavRender.AnyIcon(items) || NavRender.AnyIcon(subs);
+            }
             <ul class="znav-children" data-depth="@DepthAttr">
-                @if (Group.Children is not null)
+                @if (items is not null)
                 {
-                    @foreach (var item in Group.Children.OrderBy(c => c.Order))
+                    @foreach (var item in items.OrderBy(c => c.Order))
                     {
                         <RenderNavItem Item="@item" Depth="@(Depth + 1)" CurrentPath="@Current"
                                        ReserveIcon="@listHasIcons" />
                     }
                 }
 
-                @if (Group.Groups is not null)
+                @if (subs is not null)
                 {
-                    @foreach (var sub in Group.Groups.OrderBy(g => g.Order))
+                    @foreach (var sub in subs.OrderBy(g => g.Order))
                     {
                         <RenderNavGroup Group="@sub" Depth="@(Depth + 1)" ReserveIcon="@listHasIcons" />
                     }
@@ -100,8 +111,11 @@ else
     public bool ReserveIcon { get; set; }
 
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IAuthenticatedProvider Authenticated { get; set; } = default!;
 
     private string Current => NavTree.CurrentPath(Navigation);
+
+    private Identity Identity => Authenticated.Current;
 
     private bool HasChildren =>
         Group.Children is { Count: > 0 } || Group.Groups is { Count: > 0 };

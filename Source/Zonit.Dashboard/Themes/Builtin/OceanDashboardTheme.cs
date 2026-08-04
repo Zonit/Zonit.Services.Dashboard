@@ -65,5 +65,12 @@ internal sealed class OceanDashboardTheme : IDashboardTheme
             HoverOpacity     = 0.08,
             RippleOpacity    = 0.12,
         },
+        // Shared with every other built-in theme: Ocean and Forest differ from Default in
+        // palette only, so the type scale and corner radius must not diverge between them.
+        Typography = DashboardTypography.Create(),
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "12px",
+        },
     };
 }

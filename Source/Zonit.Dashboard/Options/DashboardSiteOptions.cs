@@ -50,6 +50,16 @@ public class DashboardSiteOptions : SiteOptions
     /// Optional HTML/JS snippet injected into the <c>&lt;head&gt;</c> of every page
     /// rendered under this mount. For analytics, error trackers, custom scripts.
     /// </summary>
+    /// <remarks>
+    /// <para><b>This is the ONLY way host <c>&lt;head&gt;</c> content reaches a dashboard
+    /// mount.</b> <c>UseDashboard</c> renders the package's own <c>DashboardApp</c>, which emits
+    /// the whole document — your application's <c>App.razor</c> is not involved. Web fonts,
+    /// icon-font stylesheets, a Tailwind CDN tag, <c>app.css</c>, analytics: none of it carries
+    /// over unless it is repeated here. The one exception is the Blazor scoped-CSS bundle
+    /// (<c>{ApplicationName}.styles.css</c>), which <c>DashboardApp</c> links on its own —
+    /// losing that one silently disables CSS isolation across the whole application, so it is
+    /// not left to memory.</para>
+    /// </remarks>
     public string? CustomSnippet { get; set; }
 
     /// <summary>

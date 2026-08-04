@@ -209,6 +209,32 @@ an icon, the others get an empty slot of the same width, so every label in that 
 left edge. A list where nobody declares an icon keeps its labels flush left instead of carrying a
 column of nothing.
 
+### Permissions
+
+`NavGroup.Permission` and `NavItem.Permission` are honoured by the sidebar: a node the current
+identity cannot satisfy is not rendered, and a group left with no visible children disappears with
+them. A group that carries its own `Link` survives — it is a destination, not just a container.
+
+Matching goes through `Identity.HasPermission`, so wildcards behave exactly as they do everywhere
+else in the grammar. Measured against a node requiring `settings.write`:
+
+| Granted | Node shown |
+| --- | --- |
+| *(anonymous)* | no |
+| `users.read` | no |
+| `*` | **no** — one `*` segment matches one segment, so this implies `settings`, not `settings.write` |
+| `settings.*` | yes |
+| `*.*` | yes |
+
+Two things to be clear about:
+
+- **This is cosmetic, not access control.** The kernel's `INavigationProvider` filters by Site
+  only and deliberately leaves permissions to the UI layer. Guard the destination with
+  `SiteOptions.Permission` or `[RequirePermission]`; hiding the link stops a user being offered a
+  door they cannot open, nothing more.
+- **A host rendering its own navigation gets none of this.** It is the dashboard chrome that
+  filters, not the framework.
+
 ### Responsive behaviour
 
 Three bands, driven by window width:
@@ -228,6 +254,31 @@ Notes worth knowing before you change these:
   whichever is covering the page.
 - Forced open/closed states are applied when the band *changes*, not on every resize frame, so a
   drawer you closed by hand stays closed while you drag the window edge.
+
+## The mount owns the document
+
+`UseDashboard` renders the package's own `DashboardApp`, which emits the entire HTML document.
+**Your application's `App.razor` is not involved**, so nothing you put in its `<head>` reaches a
+dashboard mount: web fonts, an icon-font stylesheet, a Tailwind CDN tag, `app.css`, analytics.
+Repeat whatever the mount needs through `CustomSnippet`:
+
+```csharp
+app.UseDashboard("/management", o =>
+{
+    o.AddArea<ManagementArea>();
+    o.CustomSnippet = """
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+        """;
+});
+```
+
+One thing is **not** left to memory: the Blazor scoped-CSS bundle, `{ApplicationName}.styles.css`.
+`DashboardApp` links it automatically, because forgetting it disables CSS isolation across the
+whole application at once — every `*.razor.css` in the host and in every RCL it references stops
+applying, while components still render, scope attributes are still emitted and nothing 404s or
+logs. The symptom is "the styling regressed" with no thread to pull. The link is skipped when the
+build produced no bundle, so a host with no scoped CSS does not pay a 404 for it.
 
 ## Per-mount options
 
