@@ -17,9 +17,9 @@
       value for them. The previous <AssemblyVersion>$(Version)</AssemblyVersion> only ever
       worked because $(Version) was the plain 0.1.63 it was left at.
     -->
-    <Version>10.0.0-preview.13</Version>
+    <Version>10.0.0-preview.14</Version>
     <AssemblyVersion>10.0.0.0</AssemblyVersion>
-    <FileVersion>10.0.0.11</FileVersion>
+    <FileVersion>10.0.0.14</FileVersion>
     <!-- Package Output -->
     <PackageOutputPath>$(MSBuildThisFileDirectory)..\Packages</PackageOutputPath>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -58,8 +58,8 @@
       publishing this package; inside the SDK workspace these pins are bypassed in favour of the
       source-side ProjectReference, so a local build does not tell you whether they resolve.
     -->
-    <PackageVersion Include="Zonit.Extensions.Website" Version="10.0.0-preview.11" />
-    <PackageVersion Include="Zonit.Extensions.Website.MudBlazor" Version="10.0.0-preview.11" />
+    <PackageVersion Include="Zonit.Extensions.Website" Version="10.0.0-preview.13" />
+    <PackageVersion Include="Zonit.Extensions.Website.MudBlazor" Version="10.0.0-preview.13" />
     <!--
       Zonit.Messaging is on the 10.x line too — these sat at 1.1.0, a version this package has
       not built against for a while. It never surfaced because the workspace substitutes a
