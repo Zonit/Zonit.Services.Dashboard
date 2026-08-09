@@ -1,23 +1,22 @@
 @*
-    Dashboard router. Identical structure to Example's Routes.razor but pulls page
-    assemblies from WebsiteAreaRegistry (no hard-coded typeof(SomeArea).Assembly list)
-    so a host can mount any plug-in area in a dashboard without editing this file.
+    Dashboard router.
 
-    Why the singleton registry instead of scoped ICurrentSite.Areas:
-    Routes is rendered with @rendermode="InteractiveServer", so after the SSR
-    prerender pass it hydrates inside a SignalR circuit scope. That scope NEVER
-    runs the per-Site branch middleware (current.Set(site)) — UseWebsite's
-    branch.Use(...) only fires for HTTP requests, not circuit lifecycle. Reading
-    ICurrentSite.Areas from the circuit therefore returns the unset default
-    (IsSet=false, Areas=Array.Empty), the Router gets zero AdditionalAssemblies,
-    and every cross-assembly @page is "Not Found" the moment the page goes
-    interactive — even though the same URL renders fine on the SSR pass.
-    WebsiteAreaRegistry is a singleton populated at AddWebsite() time, so it
-    survives the HTTP-scope-to-circuit-scope transition cleanly.
+    The framework ships WebsiteRoutes, which does the same assembly discovery. The dashboard
+    keeps its own for exactly one reason: the 403 panel below is MudBlazor markup, and the
+    kernel does not reference MudBlazor. An unmatched route is a status code and is handled by
+    the branch's status-code re-execution; an AUTHORIZATION failure on a matched route is a real
+    page, and this is what it looks like.
 
-    ZonitRouteView honours [LayoutKey] / [NoLayout] / runtime ILayoutContext, so
-    plug-in pages can @attribute [LayoutKey("Dashboard.Main")] without taking a
-    project reference on Zonit.Dashboard.
+    Page assemblies come from ICurrentSite.Areas — which self-hydrates from WebsiteMountRegistry
+    when the per-Site branch middleware has not run on the current scope. That matters here:
+    Routes renders with @rendermode="InteractiveServer", so after the SSR prerender it hydrates
+    inside a SignalR circuit, and a circuit never passes through branch.Use(...). Before the
+    framework grew that fallback this file had to consult a dashboard-local registry instead, or
+    every cross-assembly @page turned into "Not Found" the moment the page went interactive.
+
+    ZonitRouteView honours [LayoutKey] / [NoLayout] / runtime ILayoutContext, so plug-in pages
+    can @attribute [LayoutKey("Dashboard.Main")] without taking a project reference on
+    Zonit.Dashboard.
 *@
 @namespace Zonit.Dashboard.Components
 @using Microsoft.AspNetCore.Components.Routing
@@ -25,8 +24,8 @@
 @using Zonit.Extensions.Website
 @using Zonit.Extensions.Website.Layouts.Components
 
-@inject DashboardMountRegistry Mounts
-@inject NavigationManager Nav
+@inject ICurrentSite Site
+
 
 <Router AppAssembly="@typeof(DashboardApp).Assembly"
         AdditionalAssemblies="@AreaAssemblies">
@@ -54,18 +53,22 @@
 </Router>
 
 @code {
-    // Resolve the active mount from NavigationManager.BaseUri — it's available in
-    // BOTH the SSR HTTP scope and the interactive SignalR circuit scope, unlike
-    // ICurrentSite.Directory which is only populated by per-Site branch middleware
-    // (the circuit lifecycle does not pass through branch.Use(...)). For a
-    // dashboard mounted at "/admin", BaseUri is "https://host/admin/", and
-    // new Uri(BaseUri).AbsolutePath gives "/admin/" — TrimEnd inside the registry
-    // makes it match the normalised "/admin" key set by UseDashboard.
+    // Area assemblies come from ICurrentSite, not from a dashboard-local registry.
     //
-    // Distinct because the same plug-in may live in the same assembly as another;
-    // Router rejects duplicate assemblies with "Assembly already defined".
+    // This used to resolve the mount from NavigationManager.BaseUri and look the assemblies up
+    // in DashboardMountRegistry, because ICurrentSite was only populated by the per-Site branch
+    // middleware and a SignalR circuit never passes through it. ICurrentSite self-hydrates from
+    // WebsiteMountRegistry now — the same longest-prefix lookup, off the same BaseUri — so both
+    // scopes get the same answer and the dashboard no longer needs a second registry to hold
+    // what the framework already tracks. DashboardMountRegistry keeps only the per-mount data
+    // that is genuinely dashboard-specific.
+    //
+    // The entry assembly is scanned by MapRazorComponents<DashboardApp>() separately, and this
+    // component's own assembly is excluded because Router rejects duplicates with
+    // "Assembly already defined".
     IEnumerable<System.Reflection.Assembly> AreaAssemblies
-        => Mounts.ForMount(new Uri(Nav.BaseUri).AbsolutePath)
-            .Where(a => a != typeof(DashboardApp).Assembly)
+        => Site.Areas
+            .Select(a => a.ComponentsAssembly)
+            .Where(a => a is not null && a != typeof(DashboardApp).Assembly)
             .Distinct();
 }

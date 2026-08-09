@@ -81,7 +81,7 @@ else if (Group.Link is not null)
 {
     @* Header-only group: one link, no disclosure. *@
     <li>
-        <NavLink class="znav-link" href="@Group.Link.Url.ToHref()" Match="NavLinkMatch.Prefix"
+        <NavLink class="znav-link" href="@Group.Link.ToHref()" Match="NavLinkMatch.Prefix"
                  aria-disabled="@(Group.Disabled ? "true" : null)" title="@Group.Tooltip">
             <NavIcon Icon="@Group.Icon" Reserve="@ReserveIcon" />
             <span class="znav-label">@Group.Title.Value</span>

@@ -17,9 +17,9 @@
       value for them. The previous <AssemblyVersion>$(Version)</AssemblyVersion> only ever
       worked because $(Version) was the plain 0.1.63 it was left at.
     -->
-    <Version>10.0.0-preview.14</Version>
+    <Version>10.0.0-preview.17</Version>
     <AssemblyVersion>10.0.0.0</AssemblyVersion>
-    <FileVersion>10.0.0.14</FileVersion>
+    <FileVersion>10.0.0.17</FileVersion>
     <!-- Package Output -->
     <PackageOutputPath>$(MSBuildThisFileDirectory)..\Packages</PackageOutputPath>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -48,18 +48,25 @@
   <!-- Common Dependencies -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.11" />
-    <PackageVersion Include="MudBlazor" Version="9.7.0" />
+    <PackageVersion Include="MudBlazor" Version="9.8.0" />
     <PackageVersion Include="MudBlazor.Translations" Version="3.4.0" />
     <!--
-      preview.11, not .10: the dashboard ships /401, /403, /404 and /500 pages, and they are
-      dead in Production without the kernel fix in that release — UseStatusCodePagesWithReExecute
-      was registered only in the Development branch, so a 404 outside Development returned an
-      empty body. Publishing Zonit.Extensions 10.0.0-preview.11 is therefore a prerequisite for
-      publishing this package; inside the SDK workspace these pins are bypassed in favour of the
-      source-side ProjectReference, so a local build does not tell you whether they resolve.
+      preview.16 is a HARD MINIMUM, not a courtesy bump: Components/DashboardApp.cs derives from
+      Zonit.Extensions.Website.AppBase, and that type does not exist before .16. Verified by
+      building this project standalone (-p:IsZonitSdkWorkspace=false) against each pin — .13 fails
+      with CS0246 'AppBase', and the type is absent from the .13, .14 and .15 assemblies alike.
+
+      Earlier floor, still in force: the dashboard ships /401, /403, /404 and /500 pages, dead in
+      Production before the preview.11 kernel fix (UseStatusCodePagesWithReExecute was registered
+      only in the Development branch, so a 404 outside Development returned an empty body).
+
+      Publishing the matching Zonit.Extensions release is therefore a prerequisite for publishing
+      this package. Inside the SDK workspace these pins are BYPASSED in favour of the source-side
+      ProjectReference, so an ordinary local build does not tell you whether they resolve — to
+      exercise them, build with -p:IsZonitSdkWorkspace=false.
     -->
-    <PackageVersion Include="Zonit.Extensions.Website" Version="10.0.0-preview.13" />
-    <PackageVersion Include="Zonit.Extensions.Website.MudBlazor" Version="10.0.0-preview.13" />
+    <PackageVersion Include="Zonit.Extensions.Website" Version="10.0.0-preview.16" />
+    <PackageVersion Include="Zonit.Extensions.Website.MudBlazor" Version="10.0.0-preview.16" />
     <!--
       Zonit.Messaging is on the 10.x line too — these sat at 1.1.0, a version this package has
       not built against for a while. It never surfaced because the workspace substitutes a

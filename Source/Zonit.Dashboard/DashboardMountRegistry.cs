@@ -52,26 +52,25 @@ public sealed class DashboardMountRegistry
     /// previous registration for the same mount (last call wins — consistent with
     /// multi-mount overrides).
     /// </summary>
+    /// <remarks>
+    /// Route assemblies are deliberately <b>not</b> stored here any more. They used to be, back
+    /// when <c>ICurrentSite</c> was populated only by the per-Site branch middleware and a
+    /// SignalR circuit therefore saw an empty area list. <c>ICurrentSite</c> self-hydrates from
+    /// <c>WebsiteMountRegistry</c> now, so <c>Routes.razor</c> reads <c>Site.Areas</c> directly
+    /// and this registry keeps only what is genuinely dashboard-specific — two registries
+    /// tracking the same assemblies is one registry too many, and the second one is the one that
+    /// goes stale.
+    /// </remarks>
     public void Register(
         UrlPath directory,
-        IEnumerable<IWebsiteArea> areas,
         DashboardLayoutOptions layout,
         string[]? extensionsWhitelist,
         string? customSnippet,
         DashboardThemeOverrides? themeOverrides = null)
     {
-        ArgumentNullException.ThrowIfNull(areas);
         ArgumentNullException.ThrowIfNull(layout);
 
-        var key = Normalize(directory);
-        var assemblies = areas
-            .Select(a => a.ComponentsAssembly)
-            .Where(a => a is not null)
-            .Distinct()
-            .ToArray()!;
-
-        _byMount[key] = new MountSnapshot(
-            Assemblies: assemblies,
+        _byMount[Normalize(directory)] = new MountSnapshot(
             Layout: layout,
             ExtensionsWhitelist: extensionsWhitelist,
             CustomSnippet: customSnippet,
@@ -79,22 +78,8 @@ public sealed class DashboardMountRegistry
     }
 
     /// <summary>
-    /// Looks up route assemblies for the dashboard mount serving the given URL path.
-    /// Returns an empty list when no dashboard is mounted at that prefix (covers the
-    /// degenerate case where Routes.razor is rendered outside any UseDashboard branch,
-    /// e.g. a host accidentally mounting DashboardApp through plain UseWebsite&lt;&gt;).
-    /// </summary>
-    /// <param name="absolutePath">
-    /// Absolute URL path — typically <c>new Uri(NavigationManager.BaseUri).AbsolutePath</c>.
-    /// Trailing slash is tolerated; the path is matched against the registered mount
-    /// roots by longest-prefix wins.
-    /// </param>
-    public IReadOnlyList<Assembly> ForMount(string absolutePath)
-        => SnapshotFor(absolutePath)?.Assemblies ?? Array.Empty<Assembly>();
-
-    /// <summary>
-    /// Resolves the full per-mount snapshot (assemblies + layout + whitelist +
-    /// snippet) for the dashboard serving <paramref name="absolutePath"/>. Returns
+    /// Resolves the per-mount snapshot (layout + whitelist + snippet + theme overrides)
+    /// for the dashboard serving <paramref name="absolutePath"/>. Returns
     /// <see langword="null"/> when no dashboard is mounted at that prefix — callers
     /// fall back to the defaults baked into <see cref="DashboardCurrentSite"/>.
     /// </summary>
@@ -137,14 +122,11 @@ public sealed class DashboardMountRegistry
     }
 
     /// <summary>
-    /// Immutable per-mount snapshot consumed by <see cref="IDashboardCurrentSite"/>
-    /// (Layout / Whitelist / Snippet) and <c>Routes.razor</c>
-    /// (<see cref="Assemblies"/>) when the middleware-populated request scope is
-    /// unavailable (interactive Blazor circuit, hosted services, anywhere outside
-    /// a <c>UseDashboard</c> branch).
+    /// Immutable per-mount snapshot consumed by <see cref="IDashboardCurrentSite"/> when the
+    /// middleware-populated request scope is unavailable (interactive Blazor circuit, hosted
+    /// services, anywhere outside a <c>UseDashboard</c> branch).
     /// </summary>
     public sealed record MountSnapshot(
-        IReadOnlyList<Assembly> Assemblies,
         DashboardLayoutOptions Layout,
         string[]? ExtensionsWhitelist,
         string? CustomSnippet,

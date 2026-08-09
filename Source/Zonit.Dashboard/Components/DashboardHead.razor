@@ -1,0 +1,62 @@
+@*
+    Dashboard-specific head content, contributed to AppBase through
+    DocumentOptions.AddHeadComponent<DashboardHead>() in DashboardSiteOptions.
+
+    Everything structural — charset, viewport, <base href>, stylesheets, the scoped-CSS bundle,
+    ImportMap, HeadOutlet — is emitted by AppBase. What remains here is what only the dashboard
+    knows: the tenant's brand colour, the server-rendered colour scheme, the zero-flicker
+    handshake that MudBlazor's server-side theming needs, the tenant favicon, and the consumer's
+    custom snippet.
+
+    No <title> here on purpose. PageHead emits it through HeadOutlet for every routed page,
+    already composed with the tenant's website title — a raw <title> in this component would
+    render earlier in the document and win, permanently freezing every page on the site name.
+*@
+@namespace Zonit.Dashboard.Components
+@using Zonit.Extensions.Tenants
+
+@inject ITenantProvider Tenant
+@inject IDashboardCurrentSite Dashboard
+@inject Zonit.Dashboard.Themes.IThemeManager ThemeManager
+
+<meta name="color-scheme" content="@(ThemeManager.IsDark ? "dark" : "light")" />
+
+@* Zero-flicker dark-mode handshake. Runs BEFORE Blazor boots:
+     1. Detects prefers-color-scheme.
+     2. Stamps the result into a cookie so the next SSR can render the matching palette without
+        a round-trip to JS (no flash-of-light).
+     3. Paints a matching background on <html> immediately so the browser does not show its
+        default white between the first byte and MudBlazor's CSS loading. Once MudThemeProvider
+        mounts it owns the palette and the inline style is overridden cleanly.
+
+   This is deliberately NOT the framework's AppearanceScript. That one is purely client-side and
+   keeps the HTML identical for every visitor, which is what makes a public site cacheable.
+   MudThemeProvider resolves its palette on the SERVER, so the dashboard has to tell the server
+   what the visitor's system preference is — hence the cookie. The dashboard is behind a login
+   and never cached, so it pays nothing for that. *@
+<script>
+    (function () {
+        try {
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var current = (document.cookie.match(/(?:^|; )ui\.scheme=([^;]*)/) || [])[1];
+            var desired = prefersDark ? '1' : '0';
+            if (current !== desired) {
+                document.cookie = 'ui.scheme=' + desired + '; path=/; max-age=31536000; SameSite=Lax';
+            }
+            var mode = (document.cookie.match(/(?:^|; )ui\.mode=([^;]*)/) || [])[1];
+            var isDark = mode === 'Dark' || (mode !== 'Light' && prefersDark);
+            document.documentElement.style.backgroundColor = isDark ? '#161723' : '#f8f9fc';
+            document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+        } catch (e) { /* failures here must never block render */ }
+    })();
+</script>
+
+@if (!string.IsNullOrWhiteSpace(Tenant.Settings.Site.FaviconUrl))
+{
+    <link rel="icon" type="image/svg+xml" href="@(Tenant.Settings.Site.FaviconUrl)" />
+}
+
+@if (!string.IsNullOrWhiteSpace(Dashboard.CustomSnippet))
+{
+    @((MarkupString)Dashboard.CustomSnippet!)
+}

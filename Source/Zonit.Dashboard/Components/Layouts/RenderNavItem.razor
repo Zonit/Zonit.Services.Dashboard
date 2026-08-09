@@ -35,7 +35,7 @@
         <details class="znav-group znav-branch" open="@IsOpen">
             <summary title="@Item.Tooltip">
                 <NavLink class="znav-link znav-branch-link"
-                         href="@Item.Url.ToHref()"
+                         href="@Item.ToHref()"
                          Match="@(Item.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)"
                          target="@TargetAttr(Item.Target)"
                          rel="@RelAttr(Item.Target)"
@@ -75,7 +75,7 @@ else
            <base href> — "/docs/" + "components" → "/docs/components". An absolute "/components"
            would bypass the path base and land on the root site. See UrlPathRendering.cs. *@
         <NavLink class="znav-link"
-                 href="@Item.Url.ToHref()"
+                 href="@Item.ToHref()"
                  Match="@(Item.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)"
                  target="@TargetAttr(Item.Target)"
                  rel="@RelAttr(Item.Target)"

@@ -15,14 +15,14 @@
 *@
 @namespace Zonit.Dashboard.Components
 
-<div id="components-reconnect-modal" class="zonit-reconnect-modal">
-    <div class="zonit-reconnect-content">
-        <div class="zonit-reconnect-spinner" aria-hidden="true"></div>
-        <div class="zonit-reconnect-title" data-zonit-reconnect-state="show">Reconnecting...</div>
-        <div class="zonit-reconnect-title" data-zonit-reconnect-state="failed">Reconnection failed</div>
-        <div class="zonit-reconnect-title" data-zonit-reconnect-state="rejected">Connection rejected</div>
-        <div class="zonit-reconnect-actions">
-            <a href="" class="zonit-reconnect-button">Reload page</a>
+<div id="components-reconnect-modal" class="reconnect-modal">
+    <div class="reconnect-content">
+        <div class="reconnect-spinner" aria-hidden="true"></div>
+        <div class="reconnect-title" data-reconnect-state="show">Reconnecting...</div>
+        <div class="reconnect-title" data-reconnect-state="failed">Reconnection failed</div>
+        <div class="reconnect-title" data-reconnect-state="rejected">Connection rejected</div>
+        <div class="reconnect-actions">
+            <a href="" class="reconnect-button">Reload page</a>
         </div>
     </div>
 </div>
@@ -48,7 +48,7 @@
         display: flex;
     }
 
-    .zonit-reconnect-content {
+    .reconnect-content {
         background: var(--mud-palette-surface, #ffffff);
         color: var(--mud-palette-text-primary, #1f2937);
         border-radius: 12px;
@@ -58,41 +58,41 @@
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
         text-align: center;
     }
-    .zonit-reconnect-spinner {
+    .reconnect-spinner {
         width: 48px;
         height: 48px;
         margin: 0 auto 16px;
         border-radius: 50%;
         border: 3px solid var(--mud-palette-divider, rgba(0,0,0,0.12));
         border-top-color: var(--mud-palette-primary, #7764e5);
-        animation: zonit-reconnect-spin 0.9s linear infinite;
+        animation: reconnect-spin 0.9s linear infinite;
     }
-    @@keyframes zonit-reconnect-spin {
+    @@keyframes reconnect-spin {
         to { transform: rotate(360deg); }
     }
-    .zonit-reconnect-title {
+    .reconnect-title {
         font-size: 1.05rem;
         font-weight: 600;
         margin-bottom: 8px;
         display: none;
     }
     /* Per-state visibility — show the matching label, hide the others. */
-    #components-reconnect-modal.components-reconnect-show .zonit-reconnect-title[data-zonit-reconnect-state="show"] { display: block; }
-    #components-reconnect-modal.components-reconnect-failed .zonit-reconnect-title[data-zonit-reconnect-state="failed"] { display: block; }
-    #components-reconnect-modal.components-reconnect-rejected .zonit-reconnect-title[data-zonit-reconnect-state="rejected"],
-    #components-reconnect-modal.components-reconnect-refused .zonit-reconnect-title[data-zonit-reconnect-state="rejected"] { display: block; }
+    #components-reconnect-modal.components-reconnect-show .reconnect-title[data-reconnect-state="show"] { display: block; }
+    #components-reconnect-modal.components-reconnect-failed .reconnect-title[data-reconnect-state="failed"] { display: block; }
+    #components-reconnect-modal.components-reconnect-rejected .reconnect-title[data-reconnect-state="rejected"],
+    #components-reconnect-modal.components-reconnect-refused .reconnect-title[data-reconnect-state="rejected"] { display: block; }
 
     /* Actions only matter once auto-reconnect has actually given up. The "show"
        state still has the spinner running, so a Reload button there would race
        the framework's own retry. */
-    .zonit-reconnect-actions { display: none; }
-    #components-reconnect-modal.components-reconnect-failed .zonit-reconnect-actions,
-    #components-reconnect-modal.components-reconnect-rejected .zonit-reconnect-actions,
-    #components-reconnect-modal.components-reconnect-refused .zonit-reconnect-actions {
+    .reconnect-actions { display: none; }
+    #components-reconnect-modal.components-reconnect-failed .reconnect-actions,
+    #components-reconnect-modal.components-reconnect-rejected .reconnect-actions,
+    #components-reconnect-modal.components-reconnect-refused .reconnect-actions {
         display: block;
         margin-top: 12px;
     }
-    .zonit-reconnect-button {
+    .reconnect-button {
         display: inline-block;
         padding: 8px 18px;
         border-radius: 8px;
@@ -101,7 +101,7 @@
         text-decoration: none;
         font-weight: 600;
     }
-    .zonit-reconnect-button:hover {
+    .reconnect-button:hover {
         filter: brightness(1.1);
     }
 </style>

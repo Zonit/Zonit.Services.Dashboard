@@ -11,8 +11,8 @@ namespace Zonit.Dashboard.Themes.Services;
 /// <remarks>
 /// <para><b>Cookie names.</b> Two cookies, each 365 d. lifetime:</para>
 /// <list type="bullet">
-///   <item><c>zonit.dashboard.theme</c> — value = <see cref="IDashboardTheme.Id"/>.</item>
-///   <item><c>zonit.dashboard.mode</c> — value = <see cref="ThemeMode"/> stringified.</item>
+///   <item><c>ui.theme</c> — value = <see cref="IDashboardTheme.Id"/>.</item>
+///   <item><c>ui.mode</c> — value = <see cref="ThemeMode"/> stringified.</item>
 /// </list>
 ///
 /// <para><b>JS interop.</b> <see cref="HydrateAsync"/> queries
@@ -23,12 +23,18 @@ namespace Zonit.Dashboard.Themes.Services;
 /// </remarks>
 internal sealed class ThemeManager : IThemeManager
 {
-    // Cookie keys kept stable across versions — changing them resets every user's
-    // preference on upgrade. Public consts so external tooling (admin diagnostics)
-    // can inspect them via reflection without re-declaring the names.
-    public const string ThemeCookieKey = "zonit.dashboard.theme";
-    public const string ModeCookieKey  = "zonit.dashboard.mode";
-    public const string SystemDarkCookieKey = "zonit.dashboard.system-dark";
+    // Cookie keys. Public consts so external tooling (admin diagnostics) can inspect them
+    // without re-declaring the names.
+    //
+    // Renamed in 10.0.0-preview.11 to drop the framework name. Cookie names are visible to
+    // anyone who opens developer tools, and a recognisable one tells an attacker exactly which
+    // open-source stack — and often which version — to go looking for advisories against. The
+    // cost of the rename is one reset of each user's stored preference on upgrade: the old
+    // cookies are simply not read, the theme falls back to its default once, and the next change
+    // persists under the new name. That is a fair trade for not advertising the stack.
+    public const string ThemeCookieKey = "ui.theme";
+    public const string ModeCookieKey  = "ui.mode";
+    public const string SystemDarkCookieKey = "ui.scheme";
 
     private readonly ICookieProvider _cookies;
     private readonly IJSRuntime _js;

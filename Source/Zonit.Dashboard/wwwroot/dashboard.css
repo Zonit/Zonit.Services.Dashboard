@@ -12,7 +12,8 @@
         MudNavGroup could not do.
       * There is nothing to purge. These are the only classes the package emits.
 
-    Served as an RCL static asset at _content/Zonit.Dashboard/zonit-dashboard.css.
+    Served as an RCL static asset at _content/ui/dashboard.css — the base path is set by
+    StaticWebAssetBasePath in the csproj so the URL does not name the framework.
 
     ── Layout intent ────────────────────────────────────────────────────────────
     A sidebar is scanned, not read, and a tree four levels deep is scanned by SHAPE before it is

@@ -67,7 +67,7 @@ internal static class NavTree
     /// <summary>Whether <paramref name="item"/> or any descendant points at <paramref name="current"/>.</summary>
     public static bool ContainsActive(NavItem item, string current)
     {
-        if (IsActive(item.Url, item.Match, current))
+        if (item.IsMatchable() && IsActive(item.Url, item.Match, current))
             return true;
 
         if (item.Children is not null)

@@ -85,6 +85,50 @@ public class DashboardSiteOptions : SiteOptions
     {
         base.OnConfiguring(services);
 
+        // A dashboard is never a search result. The framework already derives that from
+        // SiteOptions.Permission, but a panel mounted without one — an internal tool behind a
+        // VPN, a staging admin, anything still being wired up — would be indexable by default,
+        // and the failure is silent until panel URLs turn up in a search. Stated outright here
+        // so it cannot be forgotten; a consumer who genuinely wants a public dashboard sets
+        // Indexable = true in their configure lambda, which runs after this.
+        Indexable = false;
+
+        // No culture in the path. A panel is behind a login, is never indexed, and gains nothing
+        // from a language segment except longer bookmarks. This is also the default, and it is
+        // repeated here so that a future change to the framework default cannot quietly start
+        // rewriting dashboard URLs.
+        Cultures.Strategy = CultureUrlStrategy.None;
+
+        // The framework's client-side appearance script is off here. It stamps a data-theme
+        // attribute and keeps the HTML identical for every visitor, which is what makes a public
+        // site cacheable — but MudThemeProvider resolves its palette on the SERVER, so the
+        // dashboard needs the opposite handshake: tell the server the visitor's system
+        // preference, via a cookie, before the first render. DashboardHead does that. Running
+        // both would leave two scripts fighting over the same root element.
+        Appearance.Enabled = false;
+
+        // Document contents, declared rather than hand-written. AppBase emits them in the right
+        // places and resolves each through the static-asset manifest for cache-busting.
+        Document
+            // Relative paths intentionally — they resolve against <base href> into
+            // /dashboard/_content/... and are served by the per-branch MapStaticAssets().
+            // Absolute /_content/... would not work: blazor.web.js hard-codes its negotiate URL
+            // as a relative path, so the SignalR hub lives under the mount prefix anyway and a
+            // mixed scheme buys nothing.
+            .AddStylesheet("https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap")
+            .AddStylesheet("_content/MudBlazor/MudBlazor.min.css")
+            // Dashboard chrome AFTER MudBlazor on purpose: its rules read the --mud-palette-*
+            // custom properties MudThemeProvider writes, and the later sheet wins on equal
+            // specificity — so a consumer can still override with their own stylesheet, which
+            // AppBase emits after both as the scoped-CSS bundle.
+            .AddStylesheet("_content/ui/dashboard.css")
+            .AddScript("_content/MudBlazor/MudBlazor.min.js")
+            .AddHeadComponent<Components.DashboardHead>()
+            // Branded reconnect modal. Blazor Server's framework JS toggles the
+            // #components-reconnect-modal classes; this component only supplies the DOM and CSS
+            // so the indicator matches the dashboard chrome.
+            .AddBodyEndComponent<Components.Connection>();
+
         // Implicit dashboard chrome — always mounted first so consumer hooks may
         // augment but not displace it.
         AddArea<DashboardArea>();
@@ -124,7 +168,7 @@ public class DashboardSiteOptions : SiteOptions
         // per-request, which it isn't (mount config is static for the host's lifetime).
         // See DashboardMountRegistry remarks for the full rationale.
         var mounts = services.GetRequiredService<DashboardMountRegistry>();
-        mounts.Register(Directory, Areas, Layout, ExtensionsWhitelist, CustomSnippet, Theme);
+        mounts.Register(Directory, Layout, ExtensionsWhitelist, CustomSnippet, Theme);
 
         // Late-pipeline middleware: stamp IDashboardCurrentSite for this branch
         // BEFORE the page is resolved, so layouts and components see the per-mount
