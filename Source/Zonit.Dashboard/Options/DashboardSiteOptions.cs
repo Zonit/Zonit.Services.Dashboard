@@ -219,6 +219,39 @@ public sealed class DashboardLayoutOptions
     /// <summary>Render breadcrumbs above the page body.</summary>
     public bool ShowBreadcrumbs { get; set; } = true;
 
+    /// <summary>
+    /// Render the page's own <c>PageMeta.Title</c> as the <c>&lt;h1&gt;</c> above its body.
+    /// </summary>
+    /// <remarks>
+    /// <para>The title is already declared — it composes the document title and the Open Graph
+    /// tags — so a page that also writes its own heading is stating the same string twice, and the
+    /// two drift the first time someone edits one of them. Turning this on lets a page delete the
+    /// heading markup entirely, the same way breadcrumbs already work here.</para>
+    ///
+    /// <para><b>On by default — and it is a breaking change for a dashboard that already renders
+    /// its own headings</b>, which will now show two. That is deliberate: the correct end state is
+    /// pages that state a title and nothing else, and a default of <see langword="false"/> would
+    /// leave every project one forgotten setting away from never getting there. Set it to
+    /// <see langword="false"/> to keep the old behaviour while the markup is removed.</para>
+    /// </remarks>
+    public bool ShowPageTitle { get; set; } = true;
+
+    /// <summary>
+    /// Honour <c>PageWidth</c> when sizing the content container.
+    /// </summary>
+    /// <remarks>
+    /// <para>The mapping is deliberately conservative: <c>Content</c> — what a page gets when it
+    /// says nothing — stays <c>MaxWidth.False</c>, exactly what this layout did before, so nothing
+    /// existing moves. Only a page that asks for something else gets something else.</para>
+    ///
+    /// <para><c>Content</c> and <c>Wide</c> resolve to the same width here, and that is honest
+    /// rather than an oversight: a dashboard's ordinary page <em>is</em> full-bleed, so the
+    /// distinction the enum draws for a content site has nothing to separate here. The value of the
+    /// mapping is at the other end — a settings form that says <c>Narrow</c> and stops being a
+    /// single input stretched across an ultrawide monitor.</para>
+    /// </remarks>
+    public bool HonourPageWidth { get; set; } = true;
+
     /// <summary>Render top progress bar while long-running tasks are executing.</summary>
     public bool ShowProgressBar { get; set; } = true;
 

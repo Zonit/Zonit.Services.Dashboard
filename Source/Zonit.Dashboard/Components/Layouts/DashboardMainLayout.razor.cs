@@ -41,6 +41,8 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     [Inject] private IExtensionRegistry Extensions { get; set; } = default!;
     [Inject] private IExtensionDrawerStates DrawerStates { get; set; } = default!;
     [Inject] private IBreadcrumbsProvider BreadcrumbsProvider { get; set; } = default!;
+    [Inject] private IPageMetaState PageMeta { get; set; } = default!;
+    [Inject] private ILayoutContext LayoutContext { get; set; } = default!;
     [Inject] private ICultureProvider Culture { get; set; } = default!;
     [Inject] private IBrowserViewportService BrowserViewport { get; set; } = default!;
     [Inject] private IAuthenticatedProvider Authenticated { get; set; } = default!;
@@ -171,25 +173,67 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     /// <see cref="BreadcrumbItem"/>. Returns an empty list (never null) so the
     /// markup can use <c>Count &gt; 0</c> uniformly.
     /// </summary>
-    private List<BreadcrumbItem> BreadcrumbItems
-        => BreadcrumbsProvider.Get() is { } items
-            ? items.Select(c => new BreadcrumbItem(
-                text: c.Text.Value,
-                // Strip the leading slash so MudBreadcrumbs emits a RELATIVE href
-                // that resolves against the active <base href>. With base
-                // "/dashboard/" a crumb declared as Href="/components" then
-                // navigates to "/dashboard/components" instead of falling through
-                // to the root site's "/components" page (absolute paths bypass
-                // <base href>). See Extensions/UrlPathRendering.cs.
-                href: c.Href.ToHref(),
-                disabled: c.Disabled,
-                icon: c.Icon)).ToList()
-            : [];
+    /// <summary>
+    /// The trail the page pushed, or empty. Returned as the framework's own model rather than
+    /// MudBlazor's: the markup decides what is a link and what is text, and a projection through
+    /// <c>BreadcrumbItem</c> would have to encode that decision in a flag first.
+    /// </summary>
+    private IReadOnlyList<BreadcrumbsModel> BreadcrumbTrail
+        => BreadcrumbsProvider.Get() ?? [];
+
+    /// <summary>
+    /// The page's own title, for the <c>&lt;h1&gt;</c> above its body.
+    /// </summary>
+    /// <remarks>
+    /// <para>The <em>page's</em> title, not the composed document title — the browser tab wants
+    /// "Users - Acme", a heading does not. <see cref="PageMeta"/> holds the uncomposed value, which
+    /// is why this reads it rather than anything the head produced.</para>
+    ///
+    /// <para><b>Translated here, because this is the endpoint.</b> A page states its title as the
+    /// raw English string — that string <em>is</em> the translation key in this framework — and
+    /// every place that renders it looks up a rendition. The SEO layer already did this for the
+    /// document title and Open Graph tags; a heading that skipped it would print English inside an
+    /// otherwise Polish page, and only on the dashboard. Text with no rendition falls through to
+    /// itself, so this is safe for a value that was never meant to be translated.</para>
+    /// </remarks>
+    private string? PageTitle => PageMeta.Current?.Title is { Length: > 0 } title
+        ? Culture.Translate(title).Value
+        : null;
+
+    /// <summary>
+    /// The content container's width, from whatever the routed page asked for.
+    /// </summary>
+    /// <remarks>
+    /// <para><see cref="PageWidth.Content"/> — the value a page gets when it says nothing — maps to
+    /// <c>MaxWidth.False</c>, which is precisely what this container was hard-coded to before. That
+    /// is the point: turning the feature on moves nothing that existed.</para>
+    ///
+    /// <para><see cref="PageWidth.Wide"/> lands on the same value, and that is not an omission. A
+    /// dashboard page is full-bleed by nature, so the distinction the enum draws for a content site
+    /// has nothing to separate here; the mapping earns its keep at the narrow end, where a settings
+    /// form stops being one input stretched across an ultrawide monitor.</para>
+    /// </remarks>
+    private MaxWidth ContentWidth => Site.Layout.HonourPageWidth
+        ? LayoutContext.Width switch
+        {
+            PageWidth.Narrow => MaxWidth.Small,
+            PageWidth.Reading => MaxWidth.Medium,
+            PageWidth.Wide => MaxWidth.False,
+            PageWidth.Full => MaxWidth.False,
+            _ => MaxWidth.False,
+        }
+        : MaxWidth.False;
 
     // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
     protected override void OnInitialized()
     {
+        // Both of these change while the page is already rendered — a title assigned after an
+        // await, a width decided once the record is loaded — so the layout has to repaint on them
+        // exactly as it does on breadcrumbs.
+        PageMeta.OnChange += OnReactiveSourceChanged;
+        LayoutContext.OnChange += OnReactiveSourceChanged;
+
         ThemeManager.OnChange += OnReactiveSourceChanged;
         DrawerStates.OnChange += OnReactiveSourceChanged;
         BreadcrumbsProvider.OnChange += OnReactiveSourceChanged;
@@ -275,6 +319,8 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
 
     public async ValueTask DisposeAsync()
     {
+        PageMeta.OnChange -= OnReactiveSourceChanged;
+        LayoutContext.OnChange -= OnReactiveSourceChanged;
         ThemeManager.OnChange -= OnReactiveSourceChanged;
         DrawerStates.OnChange -= OnReactiveSourceChanged;
         BreadcrumbsProvider.OnChange -= OnReactiveSourceChanged;

@@ -455,3 +455,89 @@
    240px column is a visible 8px of chrome for no information. */
 .mud-drawer .znav { scrollbar-width: thin; scrollbar-color: transparent transparent; }
 .mud-drawer .znav:hover { scrollbar-color: var(--znav-rail) transparent; }
+
+/* ── breadcrumbs ──────────────────────────────────────────────────────────────
+   Hand-written for the same reason .znav is: MudBreadcrumbs renders every crumb
+   as an <a>, decides clickability from a Disabled flag rather than from whether
+   there is anywhere to go, and pushes a "/" glyph at body-text weight between
+   them. The result reads as three links of equal importance, one of which is the
+   page you are already on.
+
+   Here a crumb with no destination is a <span> — not a link that does nothing —
+   and the separator is a chevron at the size a separator deserves. Tokens come
+   from the MudBlazor palette, so this follows the theme rather than pinning
+   colours next to it. */
+.zcrumbs {
+    --zcrumb-fg: var(--mud-palette-text-secondary, #9a9a9a);
+    --zcrumb-fg-current: var(--mud-palette-text-primary, #e6e6e6);
+    --zcrumb-sep: color-mix(in srgb, var(--zcrumb-fg) 45%, transparent);
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .375rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: .8125rem;
+    line-height: 1.4;
+}
+
+/* Links are the only interactive crumbs, so they are the only ones that react. */
+.zcrumbs a {
+    color: var(--zcrumb-fg);
+    text-decoration: none;
+    padding: .125rem .25rem;
+    margin: -.125rem -.25rem;
+    border-radius: 5px;
+    transition: color .15s, background-color .15s;
+}
+
+.zcrumbs a:hover {
+    color: var(--zcrumb-fg-current);
+    background: color-mix(in srgb, var(--zcrumb-fg-current) 7%, transparent);
+}
+
+.zcrumbs a:focus-visible {
+    outline: 2px solid var(--mud-palette-primary, #7c6cff);
+    outline-offset: 1px;
+}
+
+/* A crumb that names a section with no page, and the current page itself. Not
+   links, so not styled as such — the current one carries the weight. */
+.zcrumbs span { color: var(--zcrumb-fg); }
+
+.zcrumbs [aria-current="page"] {
+    color: var(--zcrumb-fg-current);
+    font-weight: 500;
+}
+
+.zcrumbs li {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    min-width: 0;
+}
+
+/* Chevron drawn in CSS rather than shipped as an icon: one character, no request,
+   and it inherits the colour it should already have. */
+.zcrumbs li + li::before {
+    content: "";
+    width: .3125rem;
+    height: .3125rem;
+    border-right: 1.5px solid var(--zcrumb-sep);
+    border-bottom: 1.5px solid var(--zcrumb-sep);
+    transform: rotate(-45deg);
+    flex: none;
+}
+
+/* Long titles truncate instead of wrapping the trail onto a second line, which on
+   a phone pushed the page heading below the fold. */
+.zcrumbs li > :is(a, span) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 22ch;
+}
+
+.zcrumbs li:last-child > :is(a, span) { max-width: none; }

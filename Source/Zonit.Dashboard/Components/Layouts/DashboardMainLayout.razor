@@ -196,14 +196,45 @@
 
     @* ─── Main content ─── *@
     <MudMainContent>
-        @if (Site.Layout.ShowBreadcrumbs && BreadcrumbItems.Count > 0)
+        @if (Site.Layout.ShowBreadcrumbs && BreadcrumbTrail.Count > 0)
         {
-            <MudContainer MaxWidth="MaxWidth.False" Class="pt-3">
-                <MudBreadcrumbs Items="@BreadcrumbItems" />
+            @* Plain markup, not MudBreadcrumbs — see the .zcrumbs block in dashboard.css. The
+               short version: a crumb with nowhere to go must not be an <a>. *@
+            <MudContainer MaxWidth="@ContentWidth" Class="pt-3">
+                <nav aria-label="@Culture.Translate("Breadcrumb").Value">
+                    <ol class="zcrumbs">
+                        @for (var i = 0; i < BreadcrumbTrail.Count; i++)
+                        {
+                            var crumb = BreadcrumbTrail[i];
+                            var isCurrent = i == BreadcrumbTrail.Count - 1;
+                            <li>
+                                @if (!isCurrent && crumb.Href.HasValue)
+                                {
+                                    <a href="@crumb.Href.ToHref()">@Culture.Translate(crumb.Text.Value).Value</a>
+                                }
+                                else
+                                {
+                                    <span aria-current="@(isCurrent ? "page" : null)">@Culture.Translate(crumb.Text.Value).Value</span>
+                                }
+                            </li>
+                        }
+                    </ol>
+                </nav>
             </MudContainer>
         }
 
-        <MudContainer MaxWidth="MaxWidth.False" Class="py-4">
+        @* Width, title and breadcrumbs all come from what the page already declared — the layout
+           reads them so no page has to render its own chrome. *@
+        <MudContainer MaxWidth="@ContentWidth" Class="py-4">
+            @if (Site.Layout.ShowPageTitle && PageTitle is { Length: > 0 } heading)
+            {
+                @* A real <h1> carrying the theme's own h1 typography — DashboardTypography sizes
+                   it at 1.75rem/600 precisely because MudBlazor's stock h1 is 6rem and unusable as
+                   a page heading. Not <MudText Typo="Typo.h1">: MudText picks its element from
+                   Typo, and asking for a smaller size would emit <h5>, leaving a page whose only
+                   heading is an <h5> — no document outline for a screen reader or a crawler. *@
+                <h1 class="mud-typography mud-typography-h1 mb-4">@heading</h1>
+            }
             @Body
         </MudContainer>
     </MudMainContent>
