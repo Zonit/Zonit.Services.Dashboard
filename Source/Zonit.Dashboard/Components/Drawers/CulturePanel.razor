@@ -12,7 +12,6 @@
 @using Zonit.Extensions
 @using Zonit.Extensions.Cultures
 @using Zonit.Extensions.Website
-@using Zonit.Extensions.Website.Cultures
 @implements IDisposable
 
 @inject ICultureProvider Culture
@@ -120,6 +119,29 @@
 
     private void OnExternalChange() => InvokeAsync(StateHasChanged);
 
+    /// <summary>
+    /// Name of the cookie <c>CultureMiddleware</c> negotiates language from.
+    /// </summary>
+    /// <remarks>
+    /// <para><b>A literal, deliberately, and temporarily.</b> The kernel owns this contract and
+    /// now exposes it as <c>Zonit.Extensions.Website.Cultures.CultureCookie.Name</c> — but this
+    /// package is built two ways: against the kernel SOURCE inside the Zonit.Sdk workspace, and
+    /// against the PUBLISHED <c>Zonit.Extensions.Website</c> package everywhere else, which is
+    /// what the NuGet publish workflow does. Referencing a kernel type that has not shipped yet
+    /// compiles locally and breaks the release build — it did, with exactly this line.</para>
+    ///
+    /// <para><b>Delete this once the kernel ships</b> and the pin in Directory.Packages.props is
+    /// bumped past it: replace with <c>CultureCookie.PersistAsync(Cookies, code)</c>. Until then
+    /// the value is duplicated rather than the feature dropped, because without the write the
+    /// language switcher silently forgets the choice on the next navigation.</para>
+    ///
+    /// <para>Lower-cased on write to match <c>CultureMiddleware.TryNormalize</c>, and left at
+    /// <c>CookieModel</c>'s default <c>Path="/"</c> — a document.cookie write with no path is
+    /// scoped to the current DIRECTORY, which would lose the choice as soon as the visitor moved
+    /// to a page at a different depth.</para>
+    /// </remarks>
+    private const string LanguageCookie = "lang";
+
     /// <summary>The active culture in the same casing the list items use.</summary>
     private string CurrentCode => Culture.Current.HasValue
         ? Culture.Current.ValueOrDefault.ToLowerInvariant()
@@ -140,7 +162,7 @@
         // the "lang" cookie before anything else, so without this write the page turns Polish and
         // the very next navigation turns it back — a language switcher that appears to work and
         // then silently undoes itself.
-        await CultureCookie.PersistAsync(Cookies, code);
+        await Cookies.SetAsync(LanguageCookie, code.ToLowerInvariant(), TimeSpan.FromDays(365));
 
         Close();
     }
