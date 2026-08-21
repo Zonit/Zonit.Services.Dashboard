@@ -904,3 +904,48 @@
     flex-wrap: wrap;
     gap: .5rem;
 }
+
+/*
+    ── Responsive backstop ──────────────────────────────────────────────────────
+    The layout decides docked-vs-overlay in C#, from a width IBrowserViewportService reports over
+    the circuit. That decision cannot exist during server rendering and it can be late, wrong, or
+    absent — and when it is, the drawers stay docked and MudLayout keeps offsetting the content by
+    their full width.
+
+    Photographed on a phone: navigation docked at 260px and the rail docked at 220px on a ~390px
+    screen, the content column crushed between them, and a panel opening past the right edge where
+    it could not be read or dismissed.
+
+    These rules restate the same breakpoints in CSS, where they need no round-trip and cannot be
+    stale. They only ever REMOVE an offset, so on a wide screen — where the C# is right and the
+    media queries do not match — they do nothing at all.
+
+    The margins are the whole problem: MudBlazor's drawers are position:fixed, so zeroing the
+    offset costs nothing but reclaimed width. A drawer that is wrongly docked then overlays the
+    content instead of squeezing it, which is recoverable — the visitor taps the scrim or the app
+    bar. Being squeezed to nothing is not.
+*/
+@media (max-width: 959px) {
+    .mud-layout > .mud-main-content { margin-left: 0 !important; }
+}
+
+@media (max-width: 1279px) {
+    .mud-layout > .mud-main-content { margin-right: 0 !important; }
+}
+
+/*
+    Nothing in the chrome may make the document wider than the screen.
+
+    On iOS a page that overflows horizontally grows the layout viewport, and window.innerWidth
+    grows with it — which is the number the C# breakpoints are read from. A too-wide layout can
+    therefore report a width that confirms the too-wide layout, and the chrome never recovers into
+    its phone form. Clamping the root ends that loop at the only place it can be ended.
+
+    Scoped to the layout rather than set as overflow-x:hidden on <body>, because hiding overflow on
+    the scrolling element also breaks position:sticky inside pages, and a page is entitled to its
+    own horizontal scroller (a wide table) as long as it scrolls INSIDE its own box.
+*/
+.mud-layout {
+    max-width: 100vw;
+    overflow-x: clip;
+}

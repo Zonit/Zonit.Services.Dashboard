@@ -37,15 +37,41 @@
 <script>
     (function () {
         try {
-            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-            var current = (document.cookie.match(/(?:^|; )ui\.scheme=([^;]*)/) || [])[1];
-            var desired = prefersDark ? '1' : '0';
-            if (current !== desired) {
-                document.cookie = 'ui.scheme=' + desired + '; path=/; max-age=31536000; SameSite=Lax';
+            var prefersDark = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            var cookie = function (n) { return (document.cookie.match(new RegExp('(?:^|; )' + n + '=([^;]*)')) || [])[1]; };
+
+            var mode = cookie('ui\\.mode');
+            var seen = cookie('ui\\.scheme');
+            var actual = prefersDark ? '1' : '0';
+
+            if (seen !== actual) {
+                document.cookie = 'ui.scheme=' + actual + '; path=/; max-age=31536000; SameSite=Lax';
             }
-            var mode = (document.cookie.match(/(?:^|; )ui\.mode=([^;]*)/) || [])[1];
+
+            //  The server resolves Auto from ui.scheme, and this script is the only thing that
+            //  writes it — which means the server is always working from the PREVIOUS visit's
+            //  answer. Measured both ways: with a stale ui.scheme=1 and the system now light, the
+            //  server emitted the dark palette and the circuit then repainted light; on a first
+            //  visit with no cookie at all and a dark system, it emitted light and repainted dark.
+            //  That repaint is the flash — dark for a moment, then light.
+            //
+            //  Only Auto is affected. An explicit Light or Dark needs no system answer, so the
+            //  server already had everything it needed and nothing below runs.
+            //
+            //  Reloading here costs one round-trip on the rare load where the system preference
+            //  actually changed (or the very first visit), and it happens BEFORE first paint, so
+            //  there is nothing on screen to flash. replace() rather than assign() keeps it out of
+            //  session history — the back button must not walk through it.
+            if (mode !== 'Dark' && mode !== 'Light' && seen !== actual) {
+                window.location.replace(window.location.href);
+                return;
+            }
+
+            //  First paint, before any stylesheet has loaded. Values track the themes' own
+            //  Background slots; they were left behind on an older palette and painted #161723
+            //  under a page whose real background had moved to #0a0d12.
             var isDark = mode === 'Dark' || (mode !== 'Light' && prefersDark);
-            document.documentElement.style.backgroundColor = isDark ? '#161723' : '#f8f9fc';
+            document.documentElement.style.backgroundColor = isDark ? '#0a0d12' : '#f4f6fa';
             document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
         } catch (e) { /* failures here must never block render */ }
     })();

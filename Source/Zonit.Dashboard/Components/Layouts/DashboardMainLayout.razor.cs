@@ -61,17 +61,38 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     // The left drawer has no dedicated service because there's exactly one — it's
     // simpler to keep its open/close in the layout than to introduce a service for
     // a single boolean.
-    private bool _leftDrawerOpen = true;
+    // ─── Responsive state: MOBILE-FIRST defaults ─────────────────────────────────────────
+    //
+    // These start narrow on purpose, and it is the most important thing in this file.
+    //
+    // The server cannot measure a browser. The first render therefore uses whatever these fields
+    // say, and they are corrected only once the circuit is alive and IBrowserViewportService has
+    // reported a width. They used to start at 1920 with both drawers docked open, so every phone
+    // rendered the three-column desktop chrome until that round-trip landed — and if it never
+    // landed, it stayed that way.
+    //
+    // Photographed in the field on a phone: navigation docked at 260px, the rail docked at 220px
+    // showing a bare column of icons with every label clipped, and the theme panel opening past
+    // the right edge of the screen where it could not be read or dismissed. The content column
+    // between them had almost nothing left.
+    //
+    // Starting narrow inverts the failure. If the viewport report never arrives, a desktop gets
+    // phone chrome: drawers closed, both reachable from the app bar. That is a smaller layout
+    // than the screen deserves, but everything works. The reverse — a phone getting desktop —
+    // is not a degraded layout, it is an unusable one, and it is the one that shipped.
+    //
+    // dashboard.css carries the same rule independently, so a docked drawer cannot crush the
+    // content even when this state is wrong.
+    private bool _leftDrawerOpen = false;
 
-    // Persistent right rail (user/theme/org/project/culture inline switchers).
-    // Default open on desktop; the viewport observer flips it to closed on
-    // narrow windows where there's no room for two persistent drawers side by side.
-    private bool _rightRailOpen = true;
-    private DrawerVariant _rightRailVariant = DrawerVariant.Persistent;
+    // Right rail (user/theme/org/project/culture inline switchers). Closed and overlaying
+    // until a viewport report says there is room to dock it.
+    private bool _rightRailOpen = false;
+    private DrawerVariant _rightRailVariant = DrawerVariant.Temporary;
 
     // Responsive drawer state, driven by IBrowserViewportObserver below.
-    private DrawerVariant _leftDrawerVariant = DrawerVariant.Persistent;
-    private int _viewportWidth = 1920;
+    private DrawerVariant _leftDrawerVariant = DrawerVariant.Temporary;
+    private int _viewportWidth = 0;
 
     // Below this the left drawer becomes a temporary overlay instead of stealing a
     // permanent column. 960 is MudBlazor's "md" edge and also roughly where a 240px
@@ -84,7 +105,7 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
 
     // Whether the rail is currently a permanent column rather than an overlay. Drives
     // the single appbar button — no point offering to open something already on screen.
-    private bool _railIsPersistent = true;
+    private bool _railIsPersistent = false;
 
     // Which responsive band the last viewport report landed in. The observer fires on
     // every resize frame, not only on breakpoint crossings, so the forced open/closed
@@ -359,7 +380,14 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     /// </remarks>
     private void SyncOverlayDrawers()
     {
-        if (_rightRailVariant != DrawerVariant.Temporary || !_rightRailOpen)
+        if (!_rightRailOpen)
+            return;
+
+        // Tested on width as well as variant. The variant is set from a viewport report that may
+        // not have arrived, and a stale "Persistent" is exactly what let the rail and a panel sit
+        // side by side on a phone with the panel pushed off the screen edge. Below the rail
+        // breakpoint there is no width at which both belong on screen, whatever the variant says.
+        if (_rightRailVariant != DrawerVariant.Temporary && _viewportWidth >= RailBreakpoint)
             return;
 
         foreach (var ext in RightAnchorDrawerExtensions)

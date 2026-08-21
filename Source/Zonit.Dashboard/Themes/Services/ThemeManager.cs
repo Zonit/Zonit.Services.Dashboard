@@ -1,4 +1,3 @@
-using Microsoft.JSInterop;
 using Zonit.Extensions.Website;
 
 namespace Zonit.Dashboard.Themes.Services;
@@ -15,11 +14,12 @@ namespace Zonit.Dashboard.Themes.Services;
 ///   <item><c>ui.mode</c> — value = <see cref="ThemeMode"/> stringified.</item>
 /// </list>
 ///
-/// <para><b>JS interop.</b> <see cref="HydrateAsync"/> queries
-/// <c>window.matchMedia('(prefers-color-scheme: dark)').matches</c> to resolve
-/// <see cref="ThemeMode.Auto"/>. Silently catches <c>InvalidOperationException</c>
-/// raised during prerender (no JS runtime available) — the resolved value stays at
-/// its server-side default until the interactive circuit completes hydration.</para>
+/// <para><b>Resolved on the server, once.</b> <see cref="ThemeMode.Auto"/> is answered from the
+/// <c>ui.scheme</c> cookie, which the pre-boot script in <c>DashboardHead</c> writes before the
+/// request that reads it. Nothing re-asks the browser afterwards: this class used to query
+/// <c>prefers-color-scheme</c> over JS interop during hydration and overwrite the server-side
+/// answer, which is exactly what made a page render dark and then repaint light a second later
+/// whenever the cookie and the live media query disagreed.</para>
 /// </remarks>
 internal sealed class ThemeManager : IThemeManager
 {
@@ -37,7 +37,6 @@ internal sealed class ThemeManager : IThemeManager
     public const string SystemDarkCookieKey = "ui.scheme";
 
     private readonly ICookieProvider _cookies;
-    private readonly IJSRuntime _js;
 
     // Cached system preference. Populated either from the SystemDarkCookieKey
     // cookie (set by the inline script in DashboardApp.razor before Blazor boots)
@@ -46,10 +45,9 @@ internal sealed class ThemeManager : IThemeManager
     // every second+ visit instead of always rendering light then re-rendering dark.
     private bool _systemPrefersDark;
 
-    public ThemeManager(IEnumerable<IDashboardTheme> themes, ICookieProvider cookies, IJSRuntime js)
+    public ThemeManager(IEnumerable<IDashboardTheme> themes, ICookieProvider cookies)
     {
         _cookies = cookies;
-        _js = js;
 
         // Preserve registration order. The first registered theme is the default
         // when no cookie is present — this is why AddDashboard registers Default
@@ -106,31 +104,17 @@ internal sealed class ThemeManager : IThemeManager
 
         var changed = ReadFromCookies();
 
-        // ---- 2. Live system color-scheme query (Auto mode only). ----
-        // Only worth a JSInterop round-trip when the user actually has Auto mode
-        // selected; Light / Dark resolve without it.
-        if (Mode == ThemeMode.Auto)
-        {
-            try
-            {
-                var live = await _js.InvokeAsync<bool>(
-                    "eval",
-                    "window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches");
-                if (live != _systemPrefersDark)
-                {
-                    _systemPrefersDark = live;
-                    changed = true;
-                }
-
-                // Persist for next SSR — see SystemDarkCookieKey on the field.
-                await _cookies.SetAsync(SystemDarkCookieKey, live ? "1" : "0", TimeSpan.FromDays(365));
-            }
-            catch (InvalidOperationException)
-            {
-                // Prerender — cookie value (if any) already applied by ReadFromCookies.
-            }
-        }
-
+        // ---- 2. No live re-query. ----
+        //
+        // This used to ask the browser for prefers-color-scheme over JS interop and overwrite
+        // whatever the server had resolved. That is precisely what produced the flash: the server
+        // renders from the ui.scheme cookie, the circuit answered from the live media query, and
+        // whenever the two disagreed the page visibly repainted a second after it appeared.
+        //
+        // The cookie is no longer allowed to disagree — the pre-boot script in DashboardHead now
+        // corrects it before the server renders — so re-asking here can only reintroduce a race
+        // it cannot win. The server's answer stands for the lifetime of the page, and a system
+        // preference changed mid-session is picked up on the next navigation.
         if (changed)
             OnChange?.Invoke();
     }
@@ -163,11 +147,13 @@ internal sealed class ThemeManager : IThemeManager
             changed = true;
         }
 
-        // System dark preference is cached in a cookie set by the inline script in
-        // DashboardApp.razor BEFORE Blazor boots — so SSR can render the correct
-        // dark/light HTML on every visit after the first. "1" / "0" to keep the
-        // cookie one byte; missing cookie falls back to false (light), which is
-        // overridden the moment HydrateAsync runs JSInterop in the circuit.
+        // System dark preference, from the cookie the pre-boot script in DashboardHead writes
+        // before Blazor boots. "1" / "0" to keep it one byte.
+        //
+        // That script also reloads once when it finds the cookie disagreed with the real
+        // preference, so by the time this read happens the value is the truth rather than the
+        // previous visit's guess. A missing cookie still falls back to light — that is the very
+        // first request of the very first visit, and the script corrects it before first paint.
         var systemDark = _cookies.Get(SystemDarkCookieKey)?.Value == "1";
         if (systemDark != _systemPrefersDark)
         {
