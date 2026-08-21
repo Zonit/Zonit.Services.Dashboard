@@ -689,7 +689,20 @@
         the override was the one state excluded from it. Photographed on a phone: the rail kept
         its docked 220px and rendered as a bare strip of icons with every label clipped.
     */
-    .mud-drawer.zrail { width: min(300px, 86vw) !important; }
+    /*
+        OPEN only, and that qualifier is load-bearing.
+
+        MudBlazor hides a closed right-hand drawer by pushing it out with right:-<width>, and it
+        computes that width in C# from the CONFIGURED value — 220px for the rail, 320px for a
+        panel. Overriding the CSS width without touching that offset desynchronises the two, and
+        the difference stays on screen: measured on an iPhone profile, a shut rail at width 300px
+        with right:-220px sat at [310..610] on a 390px viewport, i.e. an 80px strip of it visible
+        and covering the page, permanently. Each of the four shut panels added another 39px.
+
+        Widening only while open leaves the closed geometry exactly as MudBlazor computed it, so
+        the drawer disappears completely, and the wider box applies at the only moment it matters.
+    */
+    .mud-drawer.zrail.mud-drawer--open { width: min(300px, 86vw) !important; }
 
     /*
         Flush to the edge, whatever MudLayout thinks.
@@ -710,7 +723,7 @@
     }
 
     /* No drawer may ever be wider than the screen it is on. */
-    .mud-drawer { max-width: 100vw !important; }
+    .mud-drawer.mud-drawer--open { max-width: 100vw !important; }
 
     /*
         One right-hand overlay at a time, enforced in CSS rather than trusted to state.
@@ -726,7 +739,7 @@
 /* Same for the panels: a fixed 320px on a 360px phone leaves a 40px sliver of page, which reads
    as a rendering fault rather than as an overlay. */
 @media (max-width: 599px) {
-    .mud-drawer.zpanel { width: min(360px, 92vw) !important; }
+    .mud-drawer.zpanel.mud-drawer--open { width: min(360px, 92vw) !important; }
 }
 
 .zrail .rail-row {

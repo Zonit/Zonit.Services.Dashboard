@@ -1,5 +1,10 @@
 @*
-    Theme handover diagnostics. Reachable at <mount>/diagnostics/theme.
+    Chrome + theme diagnostics. Reachable at <mount>/diagnostics/theme, anonymously.
+
+    Deliberately on the FULL dashboard layout rather than the minimal box: the two open reports
+    are a theme flash and a mobile chrome that renders desktop, and the minimal layout has no
+    navigation, no rail and no drawers, so it cannot show the second one at all. On the main
+    layout this single URL exercises both.
 
     Exists because a theme flash was reported from a device I cannot reach — Edge on iOS — and
     three rounds of reasoning from the code produced three wrong answers. This page reports what
@@ -10,7 +15,6 @@
     media query. No identity, no tenant data, no configuration.
 *@
 @page "/diagnostics/theme"
-@attribute [LayoutKey("Zonit.Minimal")]
 @attribute [AllowAnonymous]
 @inherits PageBase
 @namespace Zonit.Dashboard.Components.Pages
@@ -21,7 +25,6 @@
 @inject IThemeManager Theme
 
 <div class="zauth">
-    <h1 class="zauth-title">Theme diagnostics</h1>
     <p class="zauth-subtitle">Server vs circuit. If the two columns differ, the handover is broken.</p>
 
     @*
@@ -53,6 +56,20 @@
         </tbody>
     </table>
 
+    <h2 class="zdiag-h2">Chrome / layout</h2>
+    <table class="zdiag-table">
+        <tbody>
+            <tr><td>viewport</td><td id="l-vp">—</td></tr>
+            <tr><td>visual viewport</td><td id="l-visual">—</td></tr>
+            <tr><td>document scrollWidth</td><td id="l-scroll">—</td></tr>
+            <tr><td>content margins</td><td id="l-margins">—</td></tr>
+            <tr><td>content width</td><td id="l-content">—</td></tr>
+            <tr><td>drawers</td><td id="l-drawers">—</td></tr>
+            <tr><td>rail width</td><td id="l-rail">—</td></tr>
+            <tr><td>Tune button</td><td id="l-tune">—</td></tr>
+        </tbody>
+    </table>
+
     <h2 class="zdiag-h2">Browser</h2>
     <table class="zdiag-table">
         <tbody>
@@ -81,6 +98,21 @@
                 set('b-scheme', ck('ui\\.scheme'));
                 set('b-bg', css());
                 set('b-w', window.innerWidth);
+
+                var m = document.querySelector('.mud-main-content');
+                var rail = document.querySelector('.mud-drawer.zrail');
+                set('l-vp', window.innerWidth + ' x ' + window.innerHeight);
+                set('l-visual', window.visualViewport ? Math.round(window.visualViewport.width) + ' x ' + Math.round(window.visualViewport.height) : '(none)');
+                set('l-scroll', document.documentElement.scrollWidth + (document.documentElement.scrollWidth > window.innerWidth ? '  OVERFLOW' : ''));
+                set('l-margins', m ? getComputedStyle(m).marginLeft + ' / ' + getComputedStyle(m).marginRight : '(no main)');
+                set('l-content', m ? Math.round(m.getBoundingClientRect().width) + 'px' : '(no main)');
+                set('l-drawers', Array.prototype.map.call(document.querySelectorAll('.mud-drawer'), function (d) {
+                    return (d.classList.contains('zrail') ? 'rail' : d.classList.contains('zpanel') ? 'panel' : 'nav') + ':' +
+                           (d.classList.contains('mud-drawer-persistent') ? 'DOCKED' : 'overlay') + '/' +
+                           (d.classList.contains('mud-drawer--open') ? 'open' : 'shut');
+                }).join('  '));
+                set('l-rail', rail ? getComputedStyle(rail).width + '  (display ' + getComputedStyle(rail).display + ')' : '(none)');
+                set('l-tune', Array.prototype.some.call(document.querySelectorAll('button'), function (b) { return b.getAttribute('aria-label') === 'Open settings'; }) ? 'present' : 'absent');
             };
 
             // Count how many DISTINCT palettes the page shows over three seconds. Anything above
@@ -102,4 +134,7 @@
 
 @code {
     protected override PageMeta Metadata => new() { Title = "Theme diagnostics", NoIndex = true };
+
+    // No trail of its own, and it must not inherit the previous page's.
+    protected override bool? ShowBreadcrumbs => null;
 }

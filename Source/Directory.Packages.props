@@ -17,9 +17,9 @@
       value for them. The previous <AssemblyVersion>$(Version)</AssemblyVersion> only ever
       worked because $(Version) was the plain 0.1.63 it was left at.
     -->
-    <Version>10.0.0-preview.30</Version>
+    <Version>10.0.0-preview.31</Version>
     <AssemblyVersion>10.0.0.0</AssemblyVersion>
-    <FileVersion>10.0.0.30</FileVersion>
+    <FileVersion>10.0.0.31</FileVersion>
     <!-- Package Output -->
     <PackageOutputPath>$(MSBuildThisFileDirectory)..\Packages</PackageOutputPath>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
