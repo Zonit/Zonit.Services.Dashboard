@@ -599,6 +599,17 @@
     }
 }
 
+/* PageWidth.Full — actually full ─────────────────────────────────────────────
+   MaxWidth.False only lifts the cap; the gutters are a separate property and they stayed, so a
+   page that asked to touch the viewport stopped 16px short on a phone and 32px short on a
+   desktop. A hero or a map with a strip of page background down both sides is the one thing
+   Full must not produce. Vertical padding is untouched — the top gutter separates the content
+   from the appbar and has nothing to do with the horizontal question. */
+.zpage.zpage-full {
+    padding-left: 0;
+    padding-right: 0;
+}
+
 /* ── page heading ─────────────────────────────────────────────────────────────
    Sized here, not by "mud-typography mud-typography-h1". MudBlazor applies typography through
    MudText's inline style rather than as class rules, so that pair on a bare <h1> matched nothing

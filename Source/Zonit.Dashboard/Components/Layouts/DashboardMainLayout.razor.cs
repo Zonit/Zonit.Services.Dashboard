@@ -312,6 +312,26 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
         }
         : MaxWidth.False;
 
+    /// <summary>
+    /// Class list for the page container. <see cref="PageWidth.Full"/> drops the horizontal
+    /// gutters; every other width keeps them.
+    /// </summary>
+    /// <remarks>
+    /// <para><c>MaxWidth.False</c> only removes the cap — the container still carries this
+    /// layout's 16/24/32px gutters, so a page that asked to touch the viewport was landing 16px
+    /// short of it on a phone and 32px short on a desktop. <c>Full</c> is documented as "edge to
+    /// edge. Hero sections, maps, anything that should touch the viewport", and a hero image with
+    /// a strip of page background down both sides is the one result it must not produce.</para>
+    ///
+    /// <para>Vertical padding stays: the top gutter separates the content from the appbar, which
+    /// has nothing to do with the horizontal question. A <c>Full</c> page that wants the viewport
+    /// edge on a notched phone applies <c>env(safe-area-inset-*)</c> itself — it asked to own the
+    /// full width, so it owns the insets too.</para>
+    /// </remarks>
+    private string PageClass => Site.Layout.HonourPageWidth && LayoutContext.Width == PageWidth.Full
+        ? "zpage zpage-full"
+        : "zpage";
+
     // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
     protected override void OnInitialized()

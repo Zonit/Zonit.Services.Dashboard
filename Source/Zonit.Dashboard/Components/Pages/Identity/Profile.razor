@@ -1,6 +1,6 @@
 @*
     Built-in profile page — the destination of the right rail's Account row and the app-bar menu's
-    "Profile" item, both of which linked at identity/profile while nothing served it.
+    "Profile" item, both of which linked at dashboard/profile while nothing served it.
 
     Shows what the framework actually knows about the signed-in visitor: name, id, roles and
     permissions, straight off IAuthenticatedProvider. That is deliberately the whole feature. A
@@ -12,7 +12,7 @@
     Sign-out is a form post for the same reason as sign-in: clearing the auth cookie needs an HTTP
     response, which a Blazor circuit cannot produce.
 *@
-@page "/identity/profile"
+@page "/dashboard/profile"
 @*
     Reading width, not the layout's full-bleed default: this page is three stacked cards of short
     text, and at MaxWidth.False on an ultrawide the "Roles" chip row ends up a long way from its

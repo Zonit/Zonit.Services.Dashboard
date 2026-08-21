@@ -219,7 +219,7 @@
            the two renders, or any future edit to one of the two Class strings, would step them
            apart. It also stacked pt-3 on top of py-4 under a 48px MudMainContent offset, pushing
            the heading roughly 90px down a phone screen before a single word of content. *@
-        <MudContainer MaxWidth="@ContentWidth" Class="zpage">
+        <MudContainer MaxWidth="@ContentWidth" Class="@PageClass">
             @if (Site.Layout.ShowBreadcrumbs && VisibleCrumbs.Count > 0)
             {
                 @* Plain markup, not MudBreadcrumbs — see the .zcrumbs block in dashboard.css. The

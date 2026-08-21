@@ -41,10 +41,10 @@
     [Parameter, EditorRequired] public string DisplayName { get; set; } = default!;
 
     /// <summary>Route to the profile page.</summary>
-    [Parameter] public string ProfileUrl { get; set; } = "identity/profile";
+    [Parameter] public string ProfileUrl { get; set; } = "dashboard/profile";
 
     /// <summary>Route to the logout endpoint.</summary>
-    [Parameter] public string LogoutUrl { get; set; } = "identity/auth/logout";
+    [Parameter] public string LogoutUrl { get; set; } = "dashboard/sign-out";
 
     private string Initial => string.IsNullOrEmpty(DisplayName) ? "?" : DisplayName[..1].ToUpperInvariant();
 }

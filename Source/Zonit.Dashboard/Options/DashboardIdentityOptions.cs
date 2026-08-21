@@ -36,6 +36,19 @@ namespace Zonit.Dashboard;
 /// <para>Leave a URL <see langword="null"/> and the corresponding chrome entry disappears rather
 /// than pointing at a route nobody serves. With <see cref="SignInEndpoint"/> unset, the built-in
 /// login screen renders an explicit "not configured" panel instead of a form that cannot work.</para>
+///
+/// <para><b>Why the built-in screens live under <c>dashboard/</c> and not <c>identity/auth/</c>.</b>
+/// They used to sit on <c>identity/auth/login</c> and <c>identity/auth/logout</c>, which is the
+/// route namespace an identity PLUGIN owns. A host that mounted such a plugin ended up with two
+/// components claiming one route, and routing does not pick a winner — it throws
+/// <c>AmbiguousMatchException</c>, so every sign-in URL answered 500 on every mount. Worse, the
+/// failure only appeared once someone actually tried to log in, long after the mount looked healthy.
+/// Nothing here can yield the route at runtime either: these are Razor components in the app
+/// assembly, so they are in the route table whether a host wants them or not.</para>
+///
+/// <para>Hence a namespace this package owns outright. A host that brings its own login page points
+/// <see cref="LoginPage"/> at it and the built-in screen simply stops being linked; a host that
+/// brings nothing still gets a working screen. Do not move these back under <c>identity/</c>.</para>
 /// </remarks>
 public sealed class DashboardIdentityOptions
 {
@@ -45,7 +58,7 @@ public sealed class DashboardIdentityOptions
     /// own page.
     /// </summary>
     /// <remarks>Base-relative (no leading slash) so it resolves inside the mount.</remarks>
-    public string? LoginPage { get; set; } = "identity/auth/login";
+    public string? LoginPage { get; set; } = "dashboard/sign-in";
 
     /// <summary>
     /// Page the chrome links to for signing out — a page, never the endpoint. The chrome offers
@@ -53,13 +66,13 @@ public sealed class DashboardIdentityOptions
     /// could embed <c>&lt;img src="…/logout"&gt;</c> and quietly log the visitor out. The page
     /// confirms, then posts.
     /// </summary>
-    public string? LogoutPage { get; set; } = "identity/auth/logout";
+    public string? LogoutPage { get; set; } = "dashboard/sign-out";
 
     /// <summary>
     /// Page the chrome links to for the signed-in user's profile. Defaults to the package's
     /// built-in read-only screen (name, id, roles, permissions).
     /// </summary>
-    public string? ProfilePage { get; set; } = "identity/profile";
+    public string? ProfilePage { get; set; } = "dashboard/profile";
 
     /// <summary>
     /// URL the built-in login form POSTs credentials to. <b>Host-owned; no default.</b>
