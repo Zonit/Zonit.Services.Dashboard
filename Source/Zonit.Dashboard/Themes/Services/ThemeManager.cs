@@ -205,15 +205,35 @@ internal sealed class ThemeManager : IThemeManager
         // System dark preference, from the cookie the pre-boot script in DashboardHead writes
         // before Blazor boots. "1" / "0" to keep it one byte.
         //
+        // ADOPTED ONCE PER PAGE, and that is the whole fix for the Auto-mode flash.
+        //
+        // The script writes this cookie on every load — AFTER the server has already rendered
+        // from whatever the previous load left behind. HydrateAsync then calls RefreshAsync,
+        // which re-reads document.cookie and hands this method the value written moments ago. So
+        // in Auto mode the circuit would learn a system preference the server never saw, disagree
+        // with the HTML already on screen, and repaint.
+        //
+        // Measured on WebKit (the iOS engine) at an iPhone profile: first visit with the system
+        // in dark rendered light and flipped to dark at 91ms; a stale cookie with the system in
+        // light rendered dark and flipped to light at 148ms. Explicit Light and Dark were stable
+        // in the same runs, because neither consults this value at all.
+        //
+        // The server's answer therefore stands for the lifetime of the page. The cookie written
+        // this load is for the NEXT request, which is the only place it can be applied without
+        // contradicting pixels the visitor is already looking at.
+        //
         // That script also reloads once when it finds the cookie disagreed with the real
         // preference, so by the time this read happens the value is the truth rather than the
         // previous visit's guess. A missing cookie still falls back to light — that is the very
         // first request of the very first visit, and the script corrects it before first paint.
-        var systemDark = _cookies.Get(SystemDarkCookieKey)?.Value == "1";
-        if (systemDark != _systemPrefersDark)
+        if (!_resolved)
         {
-            _systemPrefersDark = systemDark;
-            changed = true;
+            var systemDark = _cookies.Get(SystemDarkCookieKey)?.Value == "1";
+            if (systemDark != _systemPrefersDark)
+            {
+                _systemPrefersDark = systemDark;
+                changed = true;
+            }
         }
 
         return changed;

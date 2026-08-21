@@ -988,3 +988,29 @@
     max-width: 100vw;
     overflow-x: clip;
 }
+
+/* ── Theme diagnostics page ─────────────────────────────────────────────────── */
+.zdiag-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .8125rem;
+    margin-bottom: 1.25rem;
+}
+
+.zdiag-table th,
+.zdiag-table td {
+    text-align: left;
+    padding: .4375rem .5rem;
+    border-bottom: 1px solid var(--mud-palette-divider);
+    overflow-wrap: anywhere;
+}
+
+.zdiag-table th { font-weight: 600; color: var(--mud-palette-text-secondary); }
+.zdiag-table td:first-child { color: var(--mud-palette-text-secondary); }
+
+.zdiag-h2 {
+    margin: 1.5rem 0 .5rem;
+    font-size: .9375rem;
+    font-weight: 600;
+    color: var(--mud-palette-text-primary);
+}

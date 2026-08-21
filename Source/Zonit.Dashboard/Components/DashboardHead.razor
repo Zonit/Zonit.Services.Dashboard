@@ -59,25 +59,41 @@
                 document.cookie = 'ui.scheme=' + actual + '; path=/; max-age=31536000; SameSite=Lax';
             }
 
-            //  The server resolves Auto from ui.scheme, and this script is the only thing that
-            //  writes it — which means the server is always working from the PREVIOUS visit's
-            //  answer. Measured both ways: with a stale ui.scheme=1 and the system now light, the
-            //  server emitted the dark palette and the circuit then repainted light; on a first
-            //  visit with no cookie at all and a dark system, it emitted light and repainted dark.
-            //  That repaint is the flash — dark for a moment, then light.
+            //  One reload, only when the server had NOTHING to go on.
             //
-            //  Only Auto is affected. An explicit Light or Dark needs no system answer, so the
-            //  server already had everything it needed and nothing below runs.
+            //  Measured on WebKit at an iPhone profile: with Auto and no ui.scheme cookie the
+            //  first load renders light and flips to dark at 163ms, because the server cannot
+            //  know a client-only media query it has never been told. Loads two and three of the
+            //  same session are stable. So this is not the every-refresh flash — it is the very
+            //  first visit, once per browser.
             //
-            //  Reloading here costs one round-trip on the rare load where the system preference
-            //  actually changed (or the very first visit), and it happens BEFORE first paint, so
-            //  there is nothing on screen to flash. replace() rather than assign() keeps it out of
-            //  session history — the back button must not walk through it.
-            if (mode !== 'Dark' && mode !== 'Light' && seen !== actual) {
+            //  Scoped to ABSENT, not to disagreement. An earlier revision reloaded whenever the
+            //  cookie merely differed, which on a browser that does not commit a cookie write
+            //  before the navigation that follows it turns into a flip on every single load —
+            //  the reported symptom, caused by the attempted cure.
+            //
+            //  sessionStorage is a hard one-shot: even if the cookie write never lands, this can
+            //  run at most once per tab, so it cannot become a reload loop.
+            if (!seen && mode !== 'Dark' && mode !== 'Light' && !sessionStorage.getItem('ui.boot')) {
+                try { sessionStorage.setItem('ui.boot', '1'); } catch (e) { }
                 window.location.replace(window.location.href);
                 return;
             }
 
+            //  NO reload here any more, and removing it is the point.
+            //
+            //  A previous revision reloaded the page whenever it found ui.scheme disagreed with
+            //  the real preference, so the server could re-render from a corrected cookie. On a
+            //  browser that does not commit a document.cookie write before the navigation that
+            //  follows it, that turns into: paint with the server's value, navigate, paint again
+            //  with the corrected one — a visible flip on EVERY load rather than only on the rare
+            //  one where the preference actually changed. It was a guess, it made the reported
+            //  symptom worse, and it is gone.
+            //
+            //  Auto is therefore resolved from whatever ui.scheme held at request time. On the
+            //  first ever visit, or the first load after the system preference changes, the
+            //  server can be one request behind; the cookie written just above fixes the next
+            //  one. That is the honest cost of resolving a client-only media query on a server.
             //  First paint, before any stylesheet has loaded. Values track the themes' own
             //  Background slots; they were left behind on an older palette and painted #161723
             //  under a page whose real background had moved to #0a0d12.

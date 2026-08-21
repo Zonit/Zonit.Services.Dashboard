@@ -1,0 +1,105 @@
+@*
+    Theme handover diagnostics. Reachable at <mount>/diagnostics/theme.
+
+    Exists because a theme flash was reported from a device I cannot reach — Edge on iOS — and
+    three rounds of reasoning from the code produced three wrong answers. This page reports what
+    the SERVER decided and what the CIRCUIT decided, side by side, on the device itself. Whichever
+    of the two is wrong tells you immediately where to look, with no console and no cable.
+
+    It reports theme state and nothing else: mode, resolved palette, the two cookies, and the live
+    media query. No identity, no tenant data, no configuration.
+*@
+@page "/diagnostics/theme"
+@attribute [LayoutKey("Zonit.Minimal")]
+@attribute [AllowAnonymous]
+@inherits PageBase
+@namespace Zonit.Dashboard.Components.Pages
+@using Microsoft.AspNetCore.Authorization
+@using Zonit.Dashboard.Themes
+@using Zonit.Extensions.Website
+
+@inject IThemeManager Theme
+
+<div class="zauth">
+    <h1 class="zauth-title">Theme diagnostics</h1>
+    <p class="zauth-subtitle">Server vs circuit. If the two columns differ, the handover is broken.</p>
+
+    @*
+        data-* attributes carrying the values THIS render produced, plus an inline script that
+        copies them into a global the moment the element is parsed. During prerender that runs
+        before Blazor has connected, so the global captures the SERVER's answer and survives the
+        interactive re-render that overwrites the DOM. It is the only way to see both numbers at
+        once without a debugger attached.
+    *@
+    <div id="zdiag"
+         data-mode="@Theme.Mode"
+         data-dark="@(Theme.IsDark ? "dark" : "light")"
+         data-theme="@Theme.Current.Id"></div>
+    <script>
+        (function () {
+            if (window.__zdiag) return;              // prerender wins; hydration must not overwrite
+            var d = document.getElementById('zdiag');
+            if (!d) return;
+            window.__zdiag = { mode: d.dataset.mode, dark: d.dataset.dark, theme: d.dataset.theme };
+        })();
+    </script>
+
+    <table class="zdiag-table">
+        <thead><tr><th>value</th><th>server (SSR)</th><th>circuit (now)</th></tr></thead>
+        <tbody>
+            <tr><td>mode</td><td id="s-mode">—</td><td>@Theme.Mode</td></tr>
+            <tr><td>resolved</td><td id="s-dark">—</td><td>@(Theme.IsDark ? "dark" : "light")</td></tr>
+            <tr><td>theme id</td><td id="s-theme">—</td><td>@Theme.Current.Id</td></tr>
+        </tbody>
+    </table>
+
+    <h2 class="zdiag-h2">Browser</h2>
+    <table class="zdiag-table">
+        <tbody>
+            <tr><td>prefers-color-scheme</td><td id="b-media">—</td></tr>
+            <tr><td>ui.mode cookie</td><td id="b-mode">—</td></tr>
+            <tr><td>ui.scheme cookie</td><td id="b-scheme">—</td></tr>
+            <tr><td>--mud-palette-background</td><td id="b-bg">—</td></tr>
+            <tr><td>window.innerWidth</td><td id="b-w">—</td></tr>
+            <tr><td>repaints seen (3 s)</td><td id="b-flash">measuring…</td></tr>
+        </tbody>
+    </table>
+
+    <script>
+        (function () {
+            var set = function (id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+            var css = function () { return getComputedStyle(document.documentElement).getPropertyValue('--mud-palette-background').trim(); };
+            var ck  = function (n) { var m = document.cookie.match(new RegExp('(?:^|; )' + n + '=([^;]*)')); return m ? m[1] : '(none)'; };
+
+            var fill = function () {
+                var s = window.__zdiag || {};
+                set('s-mode', s.mode || '(not captured)');
+                set('s-dark', s.dark || '(not captured)');
+                set('s-theme', s.theme || '(not captured)');
+                set('b-media', (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
+                set('b-mode', ck('ui\\.mode'));
+                set('b-scheme', ck('ui\\.scheme'));
+                set('b-bg', css());
+                set('b-w', window.innerWidth);
+            };
+
+            // Count how many DISTINCT palettes the page shows over three seconds. Anything above
+            // one is the flash, caught in the act and reported as a number instead of an
+            // impression.
+            var seen = [], last = null, n = 0;
+            var tick = setInterval(function () {
+                var v = css();
+                if (v !== last) { seen.push(v); last = v; }
+                fill();
+                if (++n > 60) {
+                    clearInterval(tick);
+                    set('b-flash', seen.length + (seen.length > 1 ? ' — FLASH: ' + seen.join('  →  ') : ' (stable)'));
+                }
+            }, 50);
+        })();
+    </script>
+</div>
+
+@code {
+    protected override PageMeta Metadata => new() { Title = "Theme diagnostics", NoIndex = true };
+}
