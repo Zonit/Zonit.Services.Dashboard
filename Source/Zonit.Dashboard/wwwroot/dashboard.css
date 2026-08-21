@@ -62,11 +62,26 @@
         pointer down the list flashes a stack of grey slabs. 6% of the foreground reads as
         "under the cursor" without competing with the selected row.
     */
-    --znav-hover: color-mix(in srgb, var(--znav-fg) 6%, transparent);
-    --znav-active-bg: color-mix(in srgb, var(--znav-accent) 11%, transparent);
-    --znav-active-bg-hover: color-mix(in srgb, var(--znav-accent) 16%, transparent);
-    --znav-rail: color-mix(in srgb, var(--znav-fg-muted) 22%, transparent);
-    --znav-rail-active: color-mix(in srgb, var(--znav-accent) 55%, transparent);
+    --znav-hover: color-mix(in srgb, var(--znav-fg) 8%, transparent);
+
+    /*
+        18% / 24%, up from 11% / 16%.
+
+        The old percentages were tuned against a light drawer, where a low-alpha wash is still
+        perceptible, and then inherited unchanged by the dark palette, where the same alpha over a
+        near-black ground barely moves the luminance. Measured: the selected row was 1.10:1 against
+        its unselected neighbours in dark mode — which is to say invisible, on the one row whose
+        entire job is to be visible. The hover slab was 1.16:1 and the guide rail 1.50:1.
+
+        The accent bar and the 600 weight are what actually carry the selected state; this tint is
+        reinforcement, and at 1.10:1 it was reinforcing nothing.
+    */
+    --znav-active-bg: color-mix(in srgb, var(--znav-accent) 18%, transparent);
+    --znav-active-bg-hover: color-mix(in srgb, var(--znav-accent) 24%, transparent);
+
+    /* Same story one step quieter: a hairline at 1.50:1 is a hairline nobody sees. */
+    --znav-rail: color-mix(in srgb, var(--znav-fg-muted) 34%, transparent);
+    --znav-rail-active: color-mix(in srgb, var(--znav-accent) 70%, transparent);
 
     /*
         Scoped here rather than on :root so the keyword-size interpolation that drives the
@@ -470,7 +485,10 @@
 .zcrumbs {
     --zcrumb-fg: var(--mud-palette-text-secondary, #9a9a9a);
     --zcrumb-fg-current: var(--mud-palette-text-primary, #e6e6e6);
-    --zcrumb-sep: color-mix(in srgb, var(--zcrumb-fg) 45%, transparent);
+    /* 45% of an already-muted secondary colour, over a background only a shade off the surface,
+       compounded to 2.07:1 light and 2.43:1 dark — a 1.5px glyph at that contrast is a smudge.
+       A separator this small is exactly where the 3:1 non-text floor earns its keep. */
+    --zcrumb-sep: color-mix(in srgb, var(--zcrumb-fg) 72%, transparent);
 
     display: flex;
     flex-wrap: wrap;
@@ -541,3 +559,348 @@
 }
 
 .zcrumbs li:last-child > :is(a, span) { max-width: none; }
+
+/*
+    ═════════════════════════════════════════════════════════════════════════════
+    Page chrome: container, heading, drawer stacking, and the responsive rules the
+    sheet was missing. Added after auditing the running dashboard rather than the
+    markup — every number quoted below is a measured value from that session.
+    ═════════════════════════════════════════════════════════════════════════════
+*/
+
+/* ── page container ───────────────────────────────────────────────────────────
+   Crumbs, heading and body share one container so their left edges cannot drift apart.
+   The vertical rhythm is set here instead of with utility classes on three separate
+   elements: MudMainContent already contributes a 48px top offset for the appbar, and
+   stacking pt-3 + py-4 on top of that spent ~90px of a phone screen before the first word. */
+.zpage {
+    padding-top: 1rem;
+    padding-bottom: 2.5rem;
+}
+
+/* Gutters that track the viewport. MudBlazor's own are a flat 16/24px, which is right in the
+   middle and wrong at both ends — cramped beside a docked drawer on a laptop, a wasteful frame
+   on an ultrawide. */
+@media (min-width: 1280px) {
+    .zpage {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}
+
+@media (max-width: 599px) {
+    .zpage {
+        padding-top: .75rem;
+        padding-bottom: 2rem;
+        /* env() keeps content clear of the rounded corners and the home indicator on a phone held
+           in landscape; it evaluates to 0 everywhere else, so there is no desktop cost. */
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+    }
+}
+
+/* ── page heading ─────────────────────────────────────────────────────────────
+   Sized here, not by "mud-typography mud-typography-h1". MudBlazor applies typography through
+   MudText's inline style rather than as class rules, so that pair on a bare <h1> matched nothing
+   and the heading fell back to the browser's own 2em/bold — the theme's 1.75rem/600 never
+   reached it.
+
+   clamp() answers the actual complaint: a heading pinned at one size does not work with the width
+   of the screen. It tracks the container between a phone and a desktop and stops at both ends, so
+   a long title costs one or two lines instead of three. */
+.zpage-title {
+    margin: 0 0 1rem;
+    font-family: var(--mud-typography-h4-family, var(--mud-typography-default-family, inherit));
+    font-size: clamp(1.35rem, 1.1rem + 1.15vw, 1.75rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--mud-palette-text-primary);
+
+    /* Two lines of nearly equal length instead of a full line and one orphaned word. Browsers
+       without it ignore the declaration, which changes nothing. */
+    text-wrap: balance;
+
+    /* A title with no spaces in it — an id, a URL, a German compound — breaks rather than pushing
+       the whole page sideways. */
+    overflow-wrap: anywhere;
+}
+
+.zcrumbs + .zpage-title { margin-top: .375rem; }
+
+/* ── breadcrumbs, responsive ──────────────────────────────────────────────────
+   The trail is secondary information and it is the first thing that should give up room. On a
+   phone it scrolls sideways inside its own row rather than wrapping onto a second line and
+   pushing the heading down. */
+.zcrumbs { margin-bottom: .25rem; }
+
+@media (max-width: 599px) {
+    .zcrumbs {
+        font-size: .75rem;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .zcrumbs::-webkit-scrollbar { display: none; }
+
+    .zcrumbs li { flex: 0 0 auto; }
+
+    .zcrumbs li > :is(a, span) { max-width: 14ch; }
+    .zcrumbs li:last-child > :is(a, span) { max-width: 20ch; }
+}
+
+/*
+    ── Drawer stacking ──────────────────────────────────────────────────────────
+    MudBlazor gives every drawer the same z-index, so two drawers on the same anchor are ordered
+    by their position in the document — and the right rail is declared after the extension panels
+    in DashboardMainLayout.razor. Caught in the act on a 390px viewport with both open: the
+    language panel was 320px wide starting 70px from the left edge, and the 220px rail sat on top
+    of its right two thirds, so only the leftmost 100px of it could be seen or clicked. The layout
+    now closes the rail whenever a panel opens (see SyncOverlayDrawers); this rule means that even
+    if some future path opens both, the panel the visitor asked for is the one in front.
+*/
+.mud-drawer.zpanel { z-index: 1310; }
+
+/*
+    A drawer that is currently an overlay must never offset the page.
+
+    MudLayout stamps mud-drawer-open-persistent-left / -right onto itself from the state a drawer
+    had when it registered, and crossing a breakpoint does not always restamp it: caught at 462px
+    with every drawer closed and temporary, the layout still carried both persistent classes and
+    .mud-main-content still had margin-left:260px / margin-right:220px — 32px of usable content on
+    a phone-width window. Whatever the ordering race is, this invariant holds unconditionally, so
+    asserting it here costs nothing and cannot itself be raced.
+*/
+.mud-layout:has(> .mud-drawer-pos-left.mud-drawer-temporary) > .mud-main-content { margin-left: 0; }
+.mud-layout:has(> .mud-drawer-pos-right.mud-drawer-temporary.zrail) > .mud-main-content { margin-right: 0; }
+
+/*
+    ── Right rail ───────────────────────────────────────────────────────────────
+    220px is a reasonable docked column and a cramped overlay. As an overlay it takes a
+    phone-appropriate share of the screen instead, capped so it never becomes the whole viewport.
+*/
+@media (max-width: 1279px) {
+    .mud-drawer.zrail.mud-drawer-temporary { width: min(300px, 86vw) !important; }
+}
+
+/* Same for the panels: a fixed 320px on a 360px phone leaves a 40px sliver of page, which reads
+   as a rendering fault rather than as an overlay. */
+@media (max-width: 599px) {
+    .mud-drawer.zpanel { width: min(360px, 92vw) !important; }
+}
+
+.zrail .rail-row {
+    border-radius: 10px;
+    /* Pointer-target floor. The rows sit directly above one another, which is the one place where
+       a few pixels decide whether the right one is hit. */
+    min-height: 44px;
+}
+
+.zrail .rail-row:hover {
+    background-color: color-mix(in srgb, var(--mud-palette-text-primary) 6%, transparent);
+}
+
+/*
+    ── Drawer panel headers ─────────────────────────────────────────────────────
+    A panel header is a title and a way out. The leading Material glyph that used to sit beside
+    each title said nothing the title did not — an office block next to the word "Organizations" —
+    and at Size.Medium it was the heaviest mark in the panel, sitting above the content it was
+    supposed to be introducing.
+*/
+.zpanel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .875rem 1rem .75rem;
+    border-bottom: 1px solid var(--mud-palette-divider);
+}
+
+.zpanel-header h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.005em;
+    color: var(--mud-palette-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The body scrolls, the header does not — a long language list otherwise pushes the close button
+   off the top of the screen, which on a phone leaves the panel with no way out but the scrim. */
+.zpanel-body {
+    padding: .75rem 1rem 1.5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    max-height: calc(100% - 3.25rem);
+}
+
+/* The current selection, shown as a block at the top of each switcher panel. */
+.zpanel-current {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .625rem;
+    padding: 1rem 0 1.25rem;
+}
+
+.zpanel-current-name {
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    overflow-wrap: anywhere;
+    color: var(--mud-palette-text-primary);
+}
+
+.zpanel-section {
+    margin: .25rem 0 .375rem;
+    font-size: .6875rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--mud-palette-text-secondary);
+}
+
+/* Flags in the language list are 32x32 SVG documents; MudListItem's icon slot sizes for a 24px
+   Material glyph and squashes them. */
+.zpanel-flag {
+    display: inline-flex;
+    width: 1.375rem;
+    height: 1.375rem;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+.zpanel-flag > svg {
+    width: 100%;
+    height: 100%;
+}
+
+/*
+    ── App bar, phone ───────────────────────────────────────────────────────────
+    Reserve the safe-area inset so the hamburger is not under a rounded corner in landscape.
+*/
+@media (max-width: 599px) {
+    .zbar .mud-toolbar {
+        padding-left: max(.5rem, env(safe-area-inset-left));
+        padding-right: max(.5rem, env(safe-area-inset-right));
+    }
+}
+
+/*
+    ── Navigation, touch ────────────────────────────────────────────────────────
+    A 36px row is comfortable with a mouse and marginal with a thumb. pointer:coarse rather than a
+    width query is the right test: it is the input device that decides how big a target has to be,
+    and a tablet in landscape is wide and still touched.
+*/
+@media (pointer: coarse) {
+    .znav {
+        --znav-row-pad-y: .5625rem;
+        font-size: .9375rem;
+    }
+
+    .znav-group > summary {
+        padding-top: .5625rem;
+        padding-bottom: .5625rem;
+    }
+}
+
+/*
+    ── Focus ────────────────────────────────────────────────────────────────────
+    The nav already draws its own ring. This covers the chrome this sheet introduced, which
+    otherwise inherits MudBlazor's ripple — an effect that does not survive keyboard-only use.
+*/
+.zpanel-header button:focus-visible,
+.zrail .rail-row:focus-visible {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: -2px;
+}
+
+/*
+    ── Chrome edges ─────────────────────────────────────────────────────────────
+    In dark mode the appbar measured 1.04:1 against the page and the drawers 1.10:1 — the header,
+    the sidebar and the content were one continuous dark field with no boundary anywhere. Fill
+    cannot fix that (see the note on DefaultDashboardTheme: every step in a near-black ramp is
+    worth about 1.1:1), so the boundary is drawn.
+
+    --z-chrome-edge is set by DashboardThemeRoot: a 1px divider border in dark mode, `none` in
+    light, where white-on-#f4f6fa separates on its own and an extra line would just add boxes.
+    The fallback is `none`, so a host that renders these components outside the dashboard chrome
+    gets exactly what it got before.
+*/
+.zbar.mud-appbar { border-bottom: var(--z-chrome-edge, none); }
+
+.mud-drawer.mud-drawer-pos-left { border-right: var(--z-chrome-edge, none); }
+.mud-drawer.mud-drawer-pos-right { border-left: var(--z-chrome-edge, none); }
+
+/* Cards state their own outline through MudBlazor's Outlined flag; this covers the ones that do
+   not, which in a dark theme would otherwise float with no edge at all. Menus, popovers, alerts
+   and snackbars are excluded — they sit above a scrim or carry their own colour, and an outline
+   on them reads as a rendering artefact. */
+.mud-main-content .mud-card:not(.mud-card-outlined) { border: var(--z-chrome-edge, none); }
+
+/*
+    ── Sign-in screen ───────────────────────────────────────────────────────────
+    Rendered inside DashboardMinimalLayout, which already centres a 560px box, so this only has to
+    handle what is inside it. Kept in the sheet rather than as inline style because the login page
+    is the one screen that renders before the circuit exists — it is a plain <form> POST, so any
+    styling that needed JavaScript would arrive after the visitor had already read the page.
+*/
+.zauth {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+
+.zauth-title {
+    margin: 0;
+    font-size: clamp(1.35rem, 1.1rem + 1.15vw, 1.75rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--mud-palette-text-primary);
+}
+
+/* The site name under the heading, so a visitor who arrived at a bare login URL can tell what
+   they are signing in to — the single most useful thing on this screen after the form itself. */
+.zauth-subtitle {
+    margin: 0 0 1.5rem;
+    font-size: .875rem;
+    color: var(--mud-palette-text-secondary);
+    overflow-wrap: anywhere;
+}
+
+.zauth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/*
+    ── Error pages ──────────────────────────────────────────────────────────────
+    The headline is a real <h1>, not a MudText Typo.h5. These pages are the ones most likely to be
+    reached by a crawler or a screen reader arriving cold, and a document whose only heading is an
+    <h5> under a decorative "404" has no outline at all. Sized here for the same reason .zpage-title
+    is: MudBlazor emits typography inline through MudText, so a class on a bare heading matches
+    nothing.
+*/
+.zerror-title {
+    margin: .5rem 0 0;
+    text-align: center;
+    font-size: clamp(1.15rem, 1rem + .7vw, 1.35rem);
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--mud-palette-text-primary);
+    text-wrap: balance;
+}
+
+.zerror-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: .5rem;
+}

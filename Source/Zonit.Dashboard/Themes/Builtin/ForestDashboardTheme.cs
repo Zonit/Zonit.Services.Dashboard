@@ -4,9 +4,22 @@ namespace Zonit.Dashboard.Themes.Builtin;
 
 /// <summary>
 /// Built-in dashboard theme — nature-inspired green. Ignores tenant brand colors
-/// by design (see <see cref="OceanDashboardTheme"/>). Palette taken verbatim from
-/// the legacy dashboard's <c>ForestDashboardTheme</c>.
+/// by design (see <see cref="OceanDashboardTheme"/>). Palette derived from the legacy
+/// dashboard's, with the corrections described below.
 /// </summary>
+/// <remarks>
+/// <para>Brand slots go through <see cref="ThemeColors.EnsureContrast"/> against the surface
+/// they are painted on, exactly as the Default theme does. These palettes were hand-picked and
+/// several of the picks did not survive measurement: Forest's light Tertiary #34d399 scored
+/// 1.7:1 on white and its Secondary 2.3:1, Ocean's light Tertiary 2.6:1 — all of them well under
+/// AA for the colour that paints links and button labels. Running them through the same pass
+/// keeps the aesthetic (hue and saturation are untouched) and removes the possibility of a
+/// future hand-picked value quietly failing again.</para>
+///
+/// <para>Status colours are per-mode literals for the same reason as in the Default theme: the
+/// previous light set (#f59e0b at 1.9:1, #10b981 at 2.5:1) was chosen to look bright rather than
+/// to be read.</para>
+/// </remarks>
 internal sealed class ForestDashboardTheme : IDashboardTheme
 {
     public string Id => "forest";
@@ -17,13 +30,13 @@ internal sealed class ForestDashboardTheme : IDashboardTheme
     {
         PaletteLight = new PaletteLight
         {
-            Primary   = "#059669",
-            Secondary = "#10b981",
-            Tertiary  = "#34d399",
-            Info      = "#3b82f6",
-            Success   = "#22c55e",
-            Warning   = "#f59e0b",
-            Error     = "#ef4444",
+            Primary   = ThemeColors.EnsureContrast("#059669", "#ffffff", ThemeColors.AaText),
+            Secondary = ThemeColors.EnsureContrast("#10b981", "#ffffff", ThemeColors.AaText),
+            Tertiary  = ThemeColors.EnsureContrast("#34d399", "#ffffff", ThemeColors.AaText),
+            Info      = "#0369a1",
+            Success   = "#047857",
+            Warning   = "#b45309",
+            Error     = "#c2263a",
 
             Background       = "#f0fdf4",
             Surface          = "#ffffff",
@@ -35,31 +48,31 @@ internal sealed class ForestDashboardTheme : IDashboardTheme
             AppbarText       = "#15803d",
             DrawerText       = "#166534",
             ActionDefault    = "#059669",
-            Divider          = "rgba(0,0,0,0.12)",
+            Divider          = "rgba(15,23,42,0.18)",
             HoverOpacity     = 0.06,
             RippleOpacity    = 0.10,
         },
         PaletteDark = new PaletteDark
         {
-            Primary   = "#34d399",
-            Secondary = "#4ade80",
-            Tertiary  = "#6ee7b7",
+            Primary   = ThemeColors.EnsureContrast("#34d399", "#123723", ThemeColors.AaText),
+            Secondary = ThemeColors.EnsureContrast("#4ade80", "#123723", ThemeColors.AaText),
+            Tertiary  = ThemeColors.EnsureContrast("#6ee7b7", "#123723", ThemeColors.AaText),
             Info      = "#60a5fa",
             Success   = "#4ade80",
             Warning   = "#fbbf24",
             Error     = "#f87171",
 
-            Background       = "#0a1f13",
-            Surface          = "#0f2d1a",
-            AppbarBackground = "#0c2516",
-            DrawerBackground = "#0c2516",
-            TextPrimary      = "rgba(255,255,255,0.87)",
-            TextSecondary    = "rgba(255,255,255,0.60)",
+            Background       = "#061710",
+            Surface          = "#123723",
+            AppbarBackground = "#0b2619",
+            DrawerBackground = "#0b2619",
+            TextPrimary      = "rgba(255,255,255,0.92)",
+            TextSecondary    = "rgba(255,255,255,0.66)",
             TextDisabled     = "rgba(255,255,255,0.38)",
-            AppbarText       = "rgba(255,255,255,0.87)",
-            DrawerText       = "rgba(255,255,255,0.70)",
+            AppbarText       = "rgba(255,255,255,0.92)",
+            DrawerText       = "rgba(255,255,255,0.74)",
             ActionDefault    = "#6ee7b7",
-            Divider          = "rgba(255,255,255,0.12)",
+            Divider          = "rgba(255,255,255,0.16)",
             HoverOpacity     = 0.08,
             RippleOpacity    = 0.12,
         },

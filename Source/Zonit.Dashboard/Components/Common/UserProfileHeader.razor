@@ -27,10 +27,6 @@
                 <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-2" />
                 @Culture.Translate("Profile")
             </MudMenuItem>
-            <MudMenuItem Href="@SettingsUrl">
-                <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" Class="mr-2" />
-                @Culture.Translate("Settings")
-            </MudMenuItem>
             <MudDivider Class="my-1" />
             <MudMenuItem Href="@LogoutUrl">
                 <MudIcon Icon="@Icons.Material.Filled.Logout" Size="Size.Small" Class="mr-2" />
@@ -46,9 +42,6 @@
 
     /// <summary>Route to the profile page.</summary>
     [Parameter] public string ProfileUrl { get; set; } = "identity/profile";
-
-    /// <summary>Route to the settings page.</summary>
-    [Parameter] public string SettingsUrl { get; set; } = "identity/settings";
 
     /// <summary>Route to the logout endpoint.</summary>
     [Parameter] public string LogoutUrl { get; set; } = "identity/auth/logout";

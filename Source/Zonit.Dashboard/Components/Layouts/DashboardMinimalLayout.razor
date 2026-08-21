@@ -6,10 +6,8 @@
 @inherits LayoutComponentBase
 @namespace Zonit.Dashboard.Components.Layouts
 
-<MudThemeProvider />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+@* Was a bare <MudThemeProvider /> — see DashboardThemeRoot for what that cost. *@
+<DashboardThemeRoot />
 
 <div class="dashboard-minimal" style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
     <div style="max-width: 560px; width: 100%; padding: 32px;">

@@ -15,6 +15,7 @@
 @inject IAuthenticatedProvider Authenticated
 @inject ICultureProvider Culture
 @inject NavigationManager Nav
+@inject IDashboardCurrentSite Site
 
 @if (Authenticated.Current.HasValue)
 {
@@ -36,10 +37,15 @@
                 <MudText Typo="Typo.subtitle2">@name</MudText>
             </div>
             <MudDivider />
-            <MudMenuItem Icon="@Icons.Material.Filled.Person" Href="identity/profile">@Culture.Translate("Profile")</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Filled.Settings" Href="identity/settings">@Culture.Translate("Settings")</MudMenuItem>
+            @if (Site.Identity.ProfilePage is { Length: > 0 })
+            {
+                <MudMenuItem Icon="@Icons.Material.Filled.Person" Href="@Site.Identity.ProfilePage">@Culture.Translate("Profile")</MudMenuItem>
+            }
             <MudDivider />
-            <MudMenuItem Icon="@Icons.Material.Filled.Logout" Href="identity/auth/logout">@Culture.Translate("Logout")</MudMenuItem>
+            @if (Site.Identity.LogoutPage is { Length: > 0 })
+            {
+                <MudMenuItem Icon="@Icons.Material.Filled.Logout" Href="@Site.Identity.LogoutPage">@Culture.Translate("Logout")</MudMenuItem>
+            }
         </ChildContent>
     </MudMenu>
 }
@@ -62,7 +68,7 @@ else
 
     private void OnExternalChange() => InvokeAsync(StateHasChanged);
 
-    private void GoToLogin() => Nav.NavigateTo("identity/auth/login");
+    private void GoToLogin() => Nav.NavigateTo(Site.Identity.LoginPage ?? string.Empty);
 
     public void Dispose()
     {

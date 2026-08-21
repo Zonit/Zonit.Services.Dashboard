@@ -66,7 +66,8 @@ public sealed class DashboardMountRegistry
         DashboardLayoutOptions layout,
         string[]? extensionsWhitelist,
         string? customSnippet,
-        DashboardThemeOverrides? themeOverrides = null)
+        DashboardThemeOverrides? themeOverrides = null,
+        DashboardIdentityOptions? identity = null)
     {
         ArgumentNullException.ThrowIfNull(layout);
 
@@ -74,7 +75,8 @@ public sealed class DashboardMountRegistry
             Layout: layout,
             ExtensionsWhitelist: extensionsWhitelist,
             CustomSnippet: customSnippet,
-            ThemeOverrides: themeOverrides ?? new DashboardThemeOverrides());
+            ThemeOverrides: themeOverrides ?? new DashboardThemeOverrides(),
+            Identity: identity ?? new DashboardIdentityOptions());
     }
 
     /// <summary>
@@ -130,5 +132,6 @@ public sealed class DashboardMountRegistry
         DashboardLayoutOptions Layout,
         string[]? ExtensionsWhitelist,
         string? CustomSnippet,
-        DashboardThemeOverrides ThemeOverrides);
+        DashboardThemeOverrides ThemeOverrides,
+        DashboardIdentityOptions Identity);
 }

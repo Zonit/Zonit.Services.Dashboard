@@ -1,0 +1,138 @@
+@*
+    Built-in profile page — the destination of the right rail's Account row and the app-bar menu's
+    "Profile" item, both of which linked at identity/profile while nothing served it.
+
+    Shows what the framework actually knows about the signed-in visitor: name, id, roles and
+    permissions, straight off IAuthenticatedProvider. That is deliberately the whole feature. A
+    profile EDITOR would need a user store the dashboard package does not have — the host owns
+    that — but "who am I and what may I do" is answerable from what is already in scope, and it is
+    the question people open this page to answer, especially while debugging a [RequirePermission]
+    that is not behaving.
+
+    Sign-out is a form post for the same reason as sign-in: clearing the auth cookie needs an HTTP
+    response, which a Blazor circuit cannot produce.
+*@
+@page "/identity/profile"
+@*
+    Reading width, not the layout's full-bleed default: this page is three stacked cards of short
+    text, and at MaxWidth.False on an ultrawide the "Roles" chip row ends up a long way from its
+    own heading. The ATTRIBUTE rather than the Width property, as PageBase documents — the
+    attribute is read before the page is instantiated and applies on the first render, while
+    assigning the property costs a re-render the visitor can see.
+*@
+@attribute [WebsiteWidth(PageWidth.Reading)]
+@inherits PageBase
+@namespace Zonit.Dashboard.Components.Pages.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Zonit.Extensions
+@using Zonit.Extensions.Auth
+@using Zonit.Extensions.Website
+
+@inject IAuthenticatedProvider Auth
+@inject IDashboardCurrentSite Site
+
+@if (!Auth.Current.HasValue)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+        @T("You are not signed in.")
+    </MudAlert>
+
+    @if (Site.Identity.LoginPage is { Length: > 0 } loginPage)
+    {
+        <MudButton Href="@loginPage" Variant="Variant.Filled" Color="MudBlazor.Color.Primary">
+            @T("Sign in")
+        </MudButton>
+    }
+}
+else
+{
+    var identity = Auth.Current;
+    var name = identity.Name.ToString() ?? string.Empty;
+
+    <MudPaper Class="pa-6 mb-4" Elevation="0" Outlined="true">
+        <div class="d-flex align-center" style="gap: 1rem;">
+            <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Large">
+                @(name.Length > 0 ? name[..1].ToUpperInvariant() : "?")
+            </MudAvatar>
+            <div style="min-width: 0;">
+                <MudText Typo="Typo.h6" Style="overflow-wrap: anywhere;">@name</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@identity.Id</MudText>
+            </div>
+        </div>
+    </MudPaper>
+
+    <MudPaper Class="pa-6 mb-4" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.subtitle2" Class="mb-3">@T("Roles")</MudText>
+        @if (Roles.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@T("No roles assigned.")</MudText>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap" style="gap: .5rem;">
+                @foreach (var role in Roles)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="MudBlazor.Color.Primary" Variant="Variant.Outlined">@role</MudChip>
+                }
+            </div>
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-6 mb-4" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.subtitle2" Class="mb-3">@T("Permissions")</MudText>
+        @if (Permissions.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@T("No permissions assigned.")</MudText>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap" style="gap: .5rem;">
+                @foreach (var permission in Permissions)
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@permission</MudChip>
+                }
+            </div>
+        }
+    </MudPaper>
+
+    @*
+        Posts to the HOST's sign-out endpoint, like every other sign-out in the package. This used
+        to post to "identity/auth/signout" — an endpoint this package owned before session handling
+        moved to the host — and kept pointing at it after that endpoint was deleted, so the button
+        posted to a route that answers 405. Nothing failed loudly; the click just did nothing.
+    *@
+    @if (Site.Identity.CanSignOut)
+    {
+        <form method="post" action="@Site.Identity.SignOutEndpoint">
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Outlined" Color="MudBlazor.Color.Error"
+                       StartIcon="@Icons.Material.Filled.Logout">
+                @T("Sign out")
+            </MudButton>
+        </form>
+    }
+}
+
+@code {
+    // Metadata, not a Title property — PageBase composes the document title and feeds the layout's
+    // <h1> from this. Declaring it here is also what lets the page drop its own <PageTitle>.
+    protected override PageMeta Metadata => new() { Title = "Profile", NoIndex = true };
+
+    // null means CLEAR, and it is the right answer for a page that has no trail of its own.
+    //
+    // The default is `false`, which means "leave the current crumbs alone" — sensible for a modal
+    // rendered over a page, wrong for a routed page. BreadcrumbsProvider is scoped to the circuit,
+    // not the request, so a page that says nothing keeps whatever the last page pushed: arriving
+    // here from the docs home printed "Documentation > Zonit documentation" above a heading that
+    // says Profile, pointing at a page the visitor had already left.
+    protected override bool? ShowBreadcrumbs => null;
+
+    // Materialised once per render rather than enumerated twice in the markup (count, then loop).
+    private IReadOnlyList<string> Roles =>
+        Auth.Current.Roles.Select(r => r.ToString() ?? string.Empty).Where(r => r.Length > 0).ToArray();
+
+    private IReadOnlyList<string> Permissions =>
+        Auth.Current.Permissions.Select(p => p.ToString() ?? string.Empty).Where(p => p.Length > 0).ToArray();
+
+    private string T(string key) => Culture.Translate(key).ToString() ?? key;
+}

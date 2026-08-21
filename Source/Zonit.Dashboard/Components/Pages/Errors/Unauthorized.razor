@@ -13,26 +13,52 @@
 @using Zonit.Extensions.Website
 
 @inject NavigationManager Nav
+@inject IDashboardCurrentSite Site
 
-<PageTitle>Unauthorized</PageTitle>
-
-<MudPaper Class="pa-8" Elevation="0">
-    <MudText Typo="Typo.h2" Color="MudBlazor.Color.Warning" Align="MudBlazor.Align.Center">401</MudText>
-    <MudText Typo="Typo.h5" Align="MudBlazor.Align.Center" Class="mt-2">Unauthorized</MudText>
-    <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="mt-4 mb-6">
-        You need to sign in to access this page.
-    </MudText>
-    <div style="display: flex; justify-content: center; gap: 8px;">
-        <MudButton Variant="Variant.Filled"
+<ErrorPanel Status="401"
+            Color="MudBlazor.Color.Warning"
+            Headline="Unauthorized"
+            Description="You need to sign in to access this page.">
+    <Actions>
+        @if (Site.Identity.LoginPage is { Length: > 0 })
+        {
+        @*
+            Carries the page the visitor was refused, so signing in returns them there instead of
+            dumping them on the dashboard root to find it again. LoginHref validates nothing itself
+            — the endpoint discards any returnUrl that is not a path inside this mount, which is
+            what stops this from being an open redirect.
+        *@
+        <MudButton Href="@LoginHref" Variant="Variant.Filled"
                    Color="MudBlazor.Color.Primary"
-                   StartIcon="@MudBlazor.Icons.Material.Filled.Login"
-                   OnClick="@(() => Nav.NavigateTo("identity/auth/login"))">
-            Sign in
+                   StartIcon="@Icons.Material.Filled.Login">
+            @Culture.Translate("Sign in")
         </MudButton>
-        <MudButton Variant="Variant.Outlined"
-                   StartIcon="@MudBlazor.Icons.Material.Filled.Home"
-                   OnClick="@(() => Nav.NavigateTo(""))">
-            Home
-        </MudButton>
-    </div>
-</MudPaper>
+        }
+    </Actions>
+</ErrorPanel>
+
+@code {
+    // Metadata through PageBase, not a raw <PageTitle>.
+    //
+    // A <PageTitle> writes the document title directly and bypasses everything the website
+    // kernel composes around it. Measured: these pages produced a bare "Sign in" / "Page not
+    // found" while a framework page on the same site produced
+    // "Cultures — overview - Zonit.Extensions Demo" — the tenant name silently missing from
+    // every built-in screen.
+    //
+    // NoIndex is stated per page rather than inherited from the mount, because
+    // DashboardSiteOptions.Indexable is a switch a host is allowed to turn on, and a
+    // deliberately public dashboard must still never put its login screen or its error pages
+    // into a search index.
+    protected override PageMeta Metadata => new() { Title = "Unauthorized", NoIndex = true };
+    private string LoginHref
+    {
+        get
+        {
+            // Absolute path of wherever they were, relative to the host — the shape the endpoint's
+            // Safe() check expects.
+            var current = new Uri(Nav.Uri).AbsolutePath;
+            return $"{Site.Identity.LoginPage}?returnUrl={Uri.EscapeDataString(current)}";
+        }
+    }
+}

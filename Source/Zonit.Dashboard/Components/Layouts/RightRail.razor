@@ -1,11 +1,16 @@
 @*
     Persistent right-side rail. Restores the legacy Zonit.Services.Dashboard UX
     where the user-settings column lived as a permanently visible drawer with
-    inline labelled switchers (avatar + "Theme · AUTO", "Org · ACME", ...). The
-    rail itself doesn't host the picker UI — clicking a row toggles the matching
-    drawer extension (zonit.dashboard.theme / .workspace / .project / .culture
-    / .user-profile). Reusing the existing drawer panels keeps a single source
-    of truth for the actual switching logic.
+    inline labelled switchers (avatar + "Theme · Auto", "Organization · Acme", ...).
+    The rail itself doesn't host the picker UI — clicking a row toggles the matching
+    drawer extension (zonit.dashboard.theme / .workspace / .project / .culture).
+    Reusing the existing drawer panels keeps a single source of truth for the actual
+    switching logic.
+
+    The Account row is the exception and navigates instead: the profile is a TOOLBAR
+    extension, not a drawer one, so there is no panel for it to open. This file used to
+    claim otherwise and toggled an id that GetDrawer could never resolve — see the
+    comment on the row itself.
 
     Hard-coded for now per request — future "blocks" iteration will expose this
     as a plug-in slot in Zonit.Extensions.Website so non-dashboard hosts can
@@ -23,36 +28,51 @@
 @implements IDisposable
 
 @inject ICultureProvider Culture
+@inject ICultureState CultureState
 @inject IAuthenticatedProvider Authenticated
 @inject IWorkspaceProvider Workspace
 @inject ICatalogProvider Catalog
 @inject IThemeManager ThemeManager
 @inject IExtensionDrawerStates DrawerStates
 @inject NavigationManager Nav
+@inject IDashboardCurrentSite Site
 
 <MudStack Spacing="0" Class="py-2">
 
-    @* ─── User profile ─── *@
-    @if (Authenticated.Current.HasValue)
+    @*
+        ─── User profile ───
+        Both branches are gated on the host having configured a page. A host on external SSO may
+        have no login page of its own here at all, and a labelled button that navigates to a 404
+        is the defect this whole file keeps running into.
+    *@
+    @if (Authenticated.Current.HasValue && Site.Identity.ProfilePage is { Length: > 0 })
     {
         var user = Authenticated.Current;
-        var initial = !string.IsNullOrWhiteSpace(user.Name.ToString())
-            ? user.Name.ToString()![..1].ToUpperInvariant()
+        var name = user.Name.ToString();
+        var initial = !string.IsNullOrWhiteSpace(name)
+            ? name![..1].ToUpperInvariant()
             : "?";
 
+        @*
+            Navigates, and does NOT toggle a drawer. It used to call
+            Toggle("zonit.dashboard.user-profile") — an id that belongs to a TOOLBAR extension, so
+            ExtensionRegistry.GetDrawer never resolved it, GetState returned null and Toggle()
+            silently did nothing. The most prominent control in the rail, and the first thing a
+            phone user reaches behind the settings button, was inert for every signed-in visitor.
+        *@
         <RailButton TooltipText="@T("Profile")"
-                    OnClick="@(() => Toggle(UserProfileId))">
+                    OnClick="@(() => Nav.NavigateTo(Site.Identity.ProfilePage!))">
             <LeadingTemplate>
                 <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Small">@initial</MudAvatar>
             </LeadingTemplate>
             <Label>@T("Account")</Label>
-            <Value>@user.Name.ToString()</Value>
+            <Value>@name</Value>
         </RailButton>
     }
-    else
+    else if (!Authenticated.Current.HasValue && Site.Identity.LoginPage is { Length: > 0 })
     {
         <RailButton TooltipText="@T("Sign in")"
-                    OnClick="@(() => Nav.NavigateTo("login"))">
+                    OnClick="@(() => Nav.NavigateTo(Site.Identity.LoginPage!))">
             <LeadingTemplate>
                 <MudIcon Icon="@Icons.Material.Filled.Login" Color="MudBlazor.Color.Default" Size="Size.Small" />
             </LeadingTemplate>
@@ -63,17 +83,23 @@
 
     <MudDivider Class="my-1" />
 
-    @* ─── Theme ─── *@
-    <RailButton TooltipText="@T("Change theme")"
-                OnClick="@(() => Toggle(ThemeId))">
-        <LeadingTemplate>
-            <MudIcon Icon="@ThemeIcon" Color="MudBlazor.Color.Default" Size="Size.Small" />
-        </LeadingTemplate>
-        <Label>@T("Theme")</Label>
-        <Value>@ThemeLabel</Value>
-    </RailButton>
+    @* ─── Theme ───
+         Gated like the two rows below it. ExtensionsWhitelist genuinely can remove the theme
+         drawer, and an ungated row in that configuration is a labelled button that does nothing —
+         Toggle() resolves through the same nullable GetState and no-ops. *@
+    @if (HasExtension(ThemeId))
+    {
+        <RailButton TooltipText="@T("Change theme")"
+                    OnClick="@(() => Toggle(ThemeId))">
+            <LeadingTemplate>
+                <MudIcon Icon="@ThemeIcon" Color="MudBlazor.Color.Default" Size="Size.Small" />
+            </LeadingTemplate>
+            <Label>@T("Theme")</Label>
+            <Value>@ThemeLabel</Value>
+        </RailButton>
 
-    <MudDivider Class="my-1" />
+        <MudDivider Class="my-1" />
+    }
 
     @*
         ─── Organization ───
@@ -92,12 +118,27 @@
             : Workspace.Organization.Name.HasValue
                 ? Workspace.Organization.Name.Value
                 : Workspace.Organization.Id.ToString();
-        var orgInitial = hasOrg && orgName.Length > 0 ? orgName[..1].ToUpperInvariant() : "—";
 
         <RailButton TooltipText="@T("Change organization")"
                     OnClick="@(() => Toggle(WorkspaceId))">
             <LeadingTemplate>
-                <MudAvatar Color="@(hasOrg ? MudBlazor.Color.Warning : MudBlazor.Color.Default)" Size="Size.Small">@orgInitial</MudAvatar>
+                @*
+                    An avatar only when there is something to put in it. The empty state used to
+                    render an em dash inside a filled square, which is a strong graphic mark
+                    standing for "nothing here" — it read as a broken image, and it sat in the
+                    same column as the user's real initial. An outline icon says "no organization"
+                    without claiming to be one.
+                *@
+                @if (hasOrg)
+                {
+                    <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Small">
+                        @(orgName.Length > 0 ? orgName[..1].ToUpperInvariant() : "?")
+                    </MudAvatar>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Outlined.Business" Color="MudBlazor.Color.Default" Size="Size.Small" />
+                }
             </LeadingTemplate>
             <Label>@T("Organization")</Label>
             <Value>@orgName</Value>
@@ -119,8 +160,8 @@
         <RailButton TooltipText="@T("Change project")"
                     OnClick="@(() => Toggle(ProjectId))">
             <LeadingTemplate>
-                <MudIcon Icon="@Icons.Material.Filled.Folder"
-                         Color="@(hasProject ? MudBlazor.Color.Info : MudBlazor.Color.Default)" Size="Size.Small" />
+                <MudIcon Icon="@(hasProject ? Icons.Material.Filled.Folder : Icons.Material.Outlined.Folder)"
+                         Color="MudBlazor.Color.Default" Size="Size.Small" />
             </LeadingTemplate>
             <Label>@T("Project")</Label>
             <Value>@projectName</Value>
@@ -130,14 +171,29 @@
     }
 
     @* ─── Culture ─── *@
-    <RailButton TooltipText="@T("Change language")"
-                OnClick="@(() => Toggle(CultureId))">
-        <LeadingTemplate>
-            <MudIcon Icon="@Icons.Material.Filled.Language" Color="MudBlazor.Color.Default" Size="Size.Small" />
-        </LeadingTemplate>
-        <Label>@T("Language")</Label>
-        <Value>@(Culture.Current.HasValue ? Culture.Current.ValueOrDefault.ToUpperInvariant() : "AUTO")</Value>
-    </RailButton>
+    @if (HasExtension(CultureId))
+    {
+        <RailButton TooltipText="@T("Change language")"
+                    OnClick="@(() => Toggle(CultureId))">
+            <LeadingTemplate>
+                @*
+                    The language's own flag, when the host registered a model for it. Falls back to the
+                    generic globe — a host may support a culture the Cultures package has no model for,
+                    and an empty slot would misalign this row against the four above it.
+                *@
+                @if (CurrentLanguage is { IconFlag.Length: > 0 } flagged)
+                {
+                    <span class="zpanel-flag">@((MarkupString)flagged.IconFlag)</span>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Language" Color="MudBlazor.Color.Default" Size="Size.Small" />
+                }
+            </LeadingTemplate>
+            <Label>@T("Language")</Label>
+            <Value>@LanguageLabel</Value>
+        </RailButton>
+    }
 
 </MudStack>
 
@@ -146,7 +202,6 @@
     // *DrawerExtension. Hard-coded constants here are intentional: any rename
     // breaks the rail's contract with the drawer system in exactly one place
     // (this file), so it surfaces immediately during code review.
-    private const string UserProfileId = "zonit.dashboard.user-profile";
     private const string ThemeId       = "zonit.dashboard.theme";
     private const string WorkspaceId   = "zonit.dashboard.workspace";
     private const string ProjectId     = "zonit.dashboard.project";
@@ -165,6 +220,53 @@
         ThemeMode.Light => T("Light"),
         _               => T("Auto"),
     };
+
+    /// <summary>The registered model for the active culture, or null when the host has none.</summary>
+    private LanguageModel? CurrentLanguage
+    {
+        get
+        {
+            if (!Culture.Current.HasValue) return null;
+            var code = Culture.Current.ValueOrDefault;
+
+            foreach (var lang in CultureState.Supported)
+                if (string.Equals(lang.Code, code, StringComparison.OrdinalIgnoreCase))
+                    return lang;
+
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// The language's name, not its tag.
+    /// </summary>
+    /// <remarks>
+    /// <para>This row printed <c>Culture.Current.ValueOrDefault.ToUpperInvariant()</c> — literally
+    /// "PL-PL", "EN-US". A BCP-47 tag is an identifier for the machine; the person reading the rail
+    /// wants to know they are looking at a Polish interface. Every supported language already
+    /// carries <c>EnglishName</c> and <c>NativeName</c> for exactly this.</para>
+    ///
+    /// <para>English name, run through the translator, is the right choice over
+    /// <c>NativeName</c>: the whole rail is rendered in the visitor's active language, so a
+    /// row that suddenly says "Deutsch" in an otherwise Polish column is the odd one out. The
+    /// native name belongs in the picker, where the visitor is choosing a language they may not
+    /// currently read — and that is where the panel puts it.</para>
+    ///
+    /// <para>Falls back to the upper-cased tag when the host supports a culture the Cultures
+    /// package has no model for: a tag is poor, but it is better than an empty row.</para>
+    /// </remarks>
+    private string LanguageLabel
+    {
+        get
+        {
+            if (CurrentLanguage is { } lang)
+                return T(lang.EnglishName);
+
+            return Culture.Current.HasValue
+                ? Culture.Current.ValueOrDefault.ToUpperInvariant()
+                : T("Auto");
+        }
+    }
 
     protected override void OnInitialized()
     {

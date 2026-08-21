@@ -7,37 +7,63 @@
 *@
 @implements IDisposable
 @namespace Zonit.Dashboard.Components.Drawers
+@using Zonit.Dashboard.Extensions
 @using Zonit.Dashboard.Themes
+@using Zonit.Extensions.Cultures
 
 @inject IThemeManager ThemeManager
+@inject ICultureProvider Culture
+@inject IExtensionDrawerStates DrawerStates
 
-<MudPaper Class="pa-4" Elevation="0">
-    <MudText Typo="Typo.h6" Class="mb-3">Theme</MudText>
+@*
+    This panel had neither a header nor a close button while its three siblings had both, so on a
+    phone — where the panel covers the screen — the only way out was to find the scrim. It also
+    stated its strings in English while every other panel translated them.
+*@
+<PanelHeader Title="@Culture.Translate("Appearance").ToString()" OnClose="@Close" />
 
-    <MudRadioGroup T="string"
-                   Value="@ThemeManager.Current.Id"
-                   ValueChanged="@OnThemeChanged"
-                   Class="mb-4">
-        @foreach (var theme in ThemeManager.Available)
-        {
-            <MudRadio T="string" Value="@theme.Id" Color="MudBlazor.Color.Primary" Dense="true">
-                <MudText Typo="Typo.body2"><b>@theme.Name</b></MudText>
-                <MudText Typo="Typo.caption" Color="MudBlazor.Color.Tertiary">@theme.Description</MudText>
-            </MudRadio>
-        }
-    </MudRadioGroup>
-
-    <MudDivider Class="my-3" />
-
-    <MudText Typo="Typo.subtitle2" Class="mb-2">Mode</MudText>
+<div class="zpanel-body">
+    <div class="zpanel-section">@Culture.Translate("Mode")</div>
+    @*
+        Mode first. It is the control people come here for — "make it dark" — and it was underneath
+        a list of three palettes, below the fold on a phone.
+    *@
     <MudRadioGroup T="ThemeMode"
                    Value="@ThemeManager.Mode"
-                   ValueChanged="@OnModeChanged">
-        <MudRadio T="ThemeMode" Value="ThemeMode.Auto"  Color="MudBlazor.Color.Primary" Dense="true">Auto (follow system)</MudRadio>
-        <MudRadio T="ThemeMode" Value="ThemeMode.Light" Color="MudBlazor.Color.Primary" Dense="true">Light</MudRadio>
-        <MudRadio T="ThemeMode" Value="ThemeMode.Dark"  Color="MudBlazor.Color.Primary" Dense="true">Dark</MudRadio>
+                   ValueChanged="@OnModeChanged"
+                   Class="mb-4">
+        <MudRadio T="ThemeMode" Value="ThemeMode.Auto" Color="MudBlazor.Color.Primary" Dense="true">
+            <MudText Typo="Typo.body2">@Culture.Translate("Auto")</MudText>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@Culture.Translate("Follow the system setting")</MudText>
+        </MudRadio>
+        <MudRadio T="ThemeMode" Value="ThemeMode.Light" Color="MudBlazor.Color.Primary" Dense="true">
+            <MudText Typo="Typo.body2">@Culture.Translate("Light")</MudText>
+        </MudRadio>
+        <MudRadio T="ThemeMode" Value="ThemeMode.Dark" Color="MudBlazor.Color.Primary" Dense="true">
+            <MudText Typo="Typo.body2">@Culture.Translate("Dark")</MudText>
+        </MudRadio>
     </MudRadioGroup>
-</MudPaper>
+
+    @* A single registered theme is not a choice; the whole block goes rather than presenting one
+       radio button that cannot be un-picked. *@
+    @if (ThemeManager.Available.Count > 1)
+    {
+        <MudDivider Class="my-3" />
+
+        <div class="zpanel-section">@Culture.Translate("Theme")</div>
+        <MudRadioGroup T="string"
+                       Value="@ThemeManager.Current.Id"
+                       ValueChanged="@OnThemeChanged">
+            @foreach (var theme in ThemeManager.Available)
+            {
+                <MudRadio T="string" Value="@theme.Id" Color="MudBlazor.Color.Primary" Dense="true">
+                    <MudText Typo="Typo.body2"><b>@Culture.Translate(theme.Name)</b></MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@Culture.Translate(theme.Description)</MudText>
+                </MudRadio>
+            }
+        </MudRadioGroup>
+    }
+</div>
 
 @code {
     protected override void OnInitialized()
@@ -46,6 +72,7 @@
         // render, theme-switch from another tab, etc.). InvokeAsync because the
         // event may fire off the synchronisation context.
         ThemeManager.OnChange += OnThemeManagerChanged;
+        Culture.OnChange += OnThemeManagerChanged;
     }
 
     private void OnThemeManagerChanged() => _ = InvokeAsync(StateHasChanged);
@@ -56,6 +83,12 @@
     private async Task OnModeChanged(ThemeMode mode)
         => await ThemeManager.SetModeAsync(mode);
 
+    private void Close()
+        => DrawerStates.GetState("zonit.dashboard.theme")?.Close();
+
     public void Dispose()
-        => ThemeManager.OnChange -= OnThemeManagerChanged;
+    {
+        ThemeManager.OnChange -= OnThemeManagerChanged;
+        Culture.OnChange -= OnThemeManagerChanged;
+    }
 }

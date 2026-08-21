@@ -30,8 +30,12 @@
         @* open = author's default OR "the visitor is standing inside this section". The second
            term is what keeps a deep tree navigable: without it, following a link three levels
            down renders its whole ancestry collapsed and the sidebar stops showing where you are. *@
-        <details class="znav-group" open="@IsOpen">
-            <summary aria-disabled="@(Group.Disabled ? "true" : null)" title="@Group.Tooltip">
+        @* Same reason as the @key on RenderNavItem's <details>: Blazor cannot re-assert an
+           attribute whose value did not change, so a hand-collapsed section stays collapsed when
+           the visitor navigates into it. Worse here, because Group.Expanded pins IsOpen true
+           forever, so after one manual collapse the section could never reopen on its own. *@
+        <details class="znav-group" @key="@($"{Current}|{IsOpen}")" open="@IsOpen">
+            <summary aria-disabled="@(Group.Disabled ? "true" : null)" tabindex="@(Group.Disabled ? "-1" : null)" title="@Group.Tooltip">
                 <NavIcon Icon="@Group.Icon" Reserve="@ReserveIcon" />
                 <span class="znav-label">@Group.Title.Value</span>
                 @if (!string.IsNullOrEmpty(Group.Badge))
@@ -82,7 +86,7 @@ else if (Group.Link is not null)
     @* Header-only group: one link, no disclosure. *@
     <li>
         <NavLink class="znav-link" href="@Group.Link.ToHref()" Match="NavLinkMatch.Prefix"
-                 aria-disabled="@(Group.Disabled ? "true" : null)" title="@Group.Tooltip">
+                 aria-disabled="@(Group.Disabled ? "true" : null)" tabindex="@(Group.Disabled ? "-1" : null)" title="@Group.Tooltip">
             <NavIcon Icon="@Group.Icon" Reserve="@ReserveIcon" />
             <span class="znav-label">@Group.Title.Value</span>
             @if (!string.IsNullOrEmpty(Group.Badge))

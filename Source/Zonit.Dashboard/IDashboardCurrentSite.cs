@@ -53,17 +53,25 @@ public interface IDashboardCurrentSite
     DashboardThemeOverrides ThemeOverrides { get; }
 
     /// <summary>
+    /// Where this mount's identity screens live and what they post to. Never <see langword="null"/>;
+    /// an unconfigured mount reports no sign-in endpoint, which the built-in login screen renders
+    /// as an explicit "not configured" panel rather than a form that cannot work.
+    /// </summary>
+    DashboardIdentityOptions Identity { get; }
+
+    /// <summary>
     /// Called once by the dashboard branch middleware. Subsequent calls overwrite
     /// and pin the explicit values, so the singleton fallback is no longer
     /// consulted on this scope.
     /// </summary>
-    void Set(DashboardLayoutOptions layout, string[]? extensionsWhitelist, string? customSnippet, DashboardThemeOverrides themeOverrides);
+    void Set(DashboardLayoutOptions layout, string[]? extensionsWhitelist, string? customSnippet, DashboardThemeOverrides themeOverrides, DashboardIdentityOptions identity);
 }
 
 internal sealed class DashboardCurrentSite : IDashboardCurrentSite
 {
     private static readonly DashboardLayoutOptions Defaults = new();
     private static readonly DashboardThemeOverrides EmptyTheme = new();
+    private static readonly DashboardIdentityOptions DefaultIdentity = new();
 
     private readonly DashboardMountRegistry _mounts;
     private readonly IHttpContextAccessor _httpContext;
@@ -76,6 +84,7 @@ internal sealed class DashboardCurrentSite : IDashboardCurrentSite
     private string[]? _extensionsWhitelist;
     private string? _customSnippet;
     private DashboardThemeOverrides _themeOverrides = EmptyTheme;
+    private DashboardIdentityOptions _identity = DefaultIdentity;
 
     // Cached singleton lookup. _resolveAttempted suppresses repeat NavigationManager
     // probes inside the same scope (BaseUri throws if accessed before the circuit
@@ -111,14 +120,20 @@ internal sealed class DashboardCurrentSite : IDashboardCurrentSite
         ? _themeOverrides
         : ResolveSnapshot()?.ThemeOverrides ?? EmptyTheme;
 
-    public void Set(DashboardLayoutOptions layout, string[]? extensionsWhitelist, string? customSnippet, DashboardThemeOverrides themeOverrides)
+    public DashboardIdentityOptions Identity => _explicit
+        ? _identity
+        : ResolveSnapshot()?.Identity ?? DefaultIdentity;
+
+    public void Set(DashboardLayoutOptions layout, string[]? extensionsWhitelist, string? customSnippet, DashboardThemeOverrides themeOverrides, DashboardIdentityOptions identity)
     {
         ArgumentNullException.ThrowIfNull(layout);
         ArgumentNullException.ThrowIfNull(themeOverrides);
+        ArgumentNullException.ThrowIfNull(identity);
         _layout = layout;
         _extensionsWhitelist = extensionsWhitelist;
         _customSnippet = customSnippet;
         _themeOverrides = themeOverrides;
+        _identity = identity;
         _explicit = true;
     }
 

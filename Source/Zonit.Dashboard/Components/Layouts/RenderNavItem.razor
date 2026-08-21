@@ -18,7 +18,23 @@
 @using Zonit.Extensions.Auth
 @using Zonit.Extensions.Website
 
-@if (Item.Children is { Count: > 0 })
+@*
+    Filtered BEFORE the branch decision, not after. The shape used to be decided from the raw
+    Item.Children and the permission filter applied inside the already-emitted <details>, so a
+    visitor without the permission got a row with a chevron that expanded onto an empty indented
+    rail. NavPermissions.IsVisible(NavGroup, …) descends into children and returns false when they
+    all fail; the NavItem overload is a bare permission check that never descends, so nothing else
+    was covering this.
+*@
+@{
+    var visibleChildren = Item.Children?
+        .Where(c => NavPermissions.IsVisible(c, Identity))
+        .OrderBy(c => c.Order)
+        .ToList();
+    var childrenHaveIcons = NavRender.AnyIcon(visibleChildren);
+}
+
+@if (visibleChildren is { Count: > 0 })
 {
     <li>
         @*
@@ -32,14 +48,24 @@
             a branch containing the active route renders open regardless of what the browser's
             own toggle did.
         *@
-        <details class="znav-group znav-branch" open="@IsOpen">
+        @*
+            @key, because the promise two comments up is otherwise not kept. Once the visitor
+            clicks a <summary>, the BROWSER owns the open attribute — and Blazor writes an
+            attribute only when its value differs from the previous render tree. Collapse a branch
+            by hand while IsOpen is already true, then navigate to another page inside it: IsOpen
+            is still true, the diff sees no change, nothing is written, and the sidebar leaves the
+            visitor's own position hidden. Keying on the pair re-creates the element on navigation,
+            which is the only point at which the DOM takes a fresh initial state — and it keeps the
+            no-JS, no-circuit property the whole tree is built around.
+        *@
+        <details class="znav-group znav-branch" @key="@($"{CurrentPath}|{IsOpen}")" open="@IsOpen">
             <summary title="@Item.Tooltip">
                 <NavLink class="znav-link znav-branch-link"
                          href="@Item.ToHref()"
                          Match="@(Item.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)"
                          target="@TargetAttr(Item.Target)"
                          rel="@RelAttr(Item.Target)"
-                         aria-disabled="@(Item.Disabled ? "true" : null)">
+                         aria-disabled="@(Item.Disabled ? "true" : null)" tabindex="@(Item.Disabled ? "-1" : null)">
                     <NavIcon Icon="@Item.Icon" Reserve="@ReserveIcon" />
                     <span class="znav-label">@Item.Title.Value</span>
                     @if (!string.IsNullOrEmpty(Item.Badge))
@@ -54,11 +80,7 @@
             </summary>
 
             <ul class="znav-children" data-depth="@DepthAttr">
-                @{
-                    var children = Item.Children.Where(c => NavPermissions.IsVisible(c, Identity)).ToList();
-                    var childrenHaveIcons = NavRender.AnyIcon(children);
-                }
-                @foreach (var child in children.OrderBy(c => c.Order))
+                @foreach (var child in visibleChildren)
                 {
                     <RenderNavItem Item="@child" Depth="@(Depth + 1)" CurrentPath="@CurrentPath"
                                    ReserveIcon="@childrenHaveIcons" />
@@ -79,7 +101,7 @@ else
                  Match="@(Item.Match ? NavLinkMatch.All : NavLinkMatch.Prefix)"
                  target="@TargetAttr(Item.Target)"
                  rel="@RelAttr(Item.Target)"
-                 aria-disabled="@(Item.Disabled ? "true" : null)"
+                 aria-disabled="@(Item.Disabled ? "true" : null)" tabindex="@(Item.Disabled ? "-1" : null)"
                  title="@Item.Tooltip">
             <NavIcon Icon="@Item.Icon" Reserve="@ReserveIcon" />
             <span class="znav-label">@Item.Title.Value</span>
@@ -117,7 +139,13 @@ else
 
     // Capped so the stylesheet has a finite set of steps to taper; deeper levels reuse the
     // last one rather than marching off the right edge of a 240px drawer.
-    private string DepthAttr => Math.Min(Depth, 4).ToString();
+    //
+    // Depth + 1, matching RenderNavGroup. Both renderers describe the depth of the <ul> they are
+    // EMITTING, not of the node emitting it — this one described the node, so for the same child
+    // slot a group's list came out data-depth="2" and an item's came out "1". "1" matches no taper
+    // rule at all, so a branch-item's children fell through to the base indent while a sibling
+    // sub-group's children stepped in: two rails at the same nesting level, visibly out of column.
+    private string DepthAttr => Math.Min(Depth + 1, 4).ToString();
 
     private static string? TargetAttr(Target t) => t == Target.Blank ? "_blank" : null;
 

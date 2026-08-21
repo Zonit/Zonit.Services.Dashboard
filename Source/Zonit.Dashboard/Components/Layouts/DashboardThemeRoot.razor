@@ -1,0 +1,70 @@
+@*
+    The four MudBlazor providers plus the root-element sync, in one place.
+
+    Every dashboard layout needs exactly this block, and two of the three were getting it wrong.
+    DashboardMinimalLayout and DashboardEmptyLayout each rendered a bare <MudThemeProvider /> — no
+    Theme, no IsDarkMode — so MudBlazor fell back to `new MudTheme()`: stock Material purple, 4px
+    radii, and a type scale whose h1 is 6rem where DashboardTypography asks for 1.75rem. The
+    visible result was that a visitor on a dark dashboard who hit /404 or /500 got a white page in
+    a colour scheme belonging to no part of the product, on top of the dark <html> the pre-boot
+    script had already painted.
+
+    A component rather than a snippet to copy: the failure mode was a layout forgetting two
+    attributes, and there is now nothing to forget.
+*@
+@namespace Zonit.Dashboard.Components.Layouts
+@using Zonit.Dashboard.Themes
+@implements IDisposable
+
+@inject IThemeManager ThemeManager
+
+<MudThemeProvider Theme="@ThemeManager.Current.MudTheme" IsDarkMode="@ThemeManager.IsDark" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@* ─── Root element sync ───────────────────────────────────────────────────────────────────
+   DashboardHead runs a pre-boot script that writes background-color and color-scheme straight
+   onto <html> as an INLINE STYLE, so the browser paints the right ground before MudBlazor's CSS
+   has loaded. That part is worth keeping. What it cannot do is change its mind: an inline style
+   outranks every stylesheet, so the value stamped at page load survived every later theme switch.
+   Switching to Light left <html> painted #161723 under a light body — measured in the browser —
+   which is the "the bottom of the page is a different colour, and in dark mode it is white"
+   report, and also why the switch looked like it had not worked at all until a reload.
+
+   One !important declaration, rendered by a component so it re-renders with the theme, takes the
+   root back. background-color reads MudThemeProvider's own custom property, so no colour is
+   duplicated here to drift; color-scheme is the one value that cannot come from a property, and
+   setting it on the root is also what overrides the server-rendered <meta name="color-scheme">
+   (which is likewise frozen at whatever the request believed). Scrollbars, form controls and the
+   overscroll gutter follow it. *@
+@*
+   --z-chrome-edge is the other value only this component knows. A dark theme cannot draw its
+   elevation ladder with fill — every step in a near-black ramp is worth about 1.1:1, and the
+   appbar measured 1.04:1 against the page — so the boundary has to be a drawn line instead. The
+   token carries the whole border shorthand so the stylesheet can state the rules statically and
+   this one declaration decides whether they paint. There is no class or attribute on <html> to
+   key a CSS selector off: MudBlazor writes the palette as custom properties and nothing else, and
+   the inline color-scheme the pre-boot script leaves behind is stale by definition. *@
+<style>
+    html {
+        background-color: var(--mud-palette-background, @(ThemeManager.IsDark ? "#0a0d12" : "#f4f6fa")) !important;
+        color-scheme: @(ThemeManager.IsDark ? "dark" : "light") !important;
+    }
+
+    :root {
+        --z-chrome-edge: @(ThemeManager.IsDark ? "1px solid var(--mud-palette-divider)" : "none");
+    }
+</style>
+
+@code {
+    protected override void OnInitialized()
+        => ThemeManager.OnChange += OnThemeChanged;
+
+    // The main layout subscribes for its own reasons; the minimal and empty layouts do not, and a
+    // theme switched from another tab has to reach them too.
+    private void OnThemeChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => ThemeManager.OnChange -= OnThemeChanged;
+}

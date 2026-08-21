@@ -9,9 +9,7 @@
 @inherits LayoutComponentBase
 @namespace Zonit.Dashboard.Components.Layouts
 
-<MudThemeProvider />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+@* Was a bare <MudThemeProvider /> — see DashboardThemeRoot for what that cost. *@
+<DashboardThemeRoot />
 
 @Body

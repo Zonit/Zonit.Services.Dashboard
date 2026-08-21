@@ -1,0 +1,60 @@
+@*
+    The shape every dashboard error page shares: a status number, a headline, a sentence, and one
+    or two ways out.
+
+    Extracted because the four pages were four copies of it, and the copies had already drifted —
+    NotFound sent its Home button to an absolute "/" while the other three used the base-relative
+    "", so on a dashboard mounted at /docs the 404 page was the only one that threw the visitor off
+    the site entirely. Everything below is also translated now; the copies were hardcoded English
+    on an otherwise localised dashboard, which is most visible exactly where it matters least to
+    the developer and most to the person who just hit an error.
+*@
+@namespace Zonit.Dashboard.Components.Pages.Errors
+@using Zonit.Extensions.Cultures
+
+@inject ICultureProvider Culture
+
+<MudPaper Class="pa-8" Elevation="0">
+    @*
+        aria-hidden on the number: "404" read aloud before the headline is noise, and the headline
+        underneath already says the same thing in words. Screen readers get the sentence, sighted
+        visitors get the landmark.
+    *@
+    <MudText Typo="Typo.h2" Color="@Color" Align="MudBlazor.Align.Center" aria-hidden="true">@Status</MudText>
+
+    <h1 class="zerror-title">@Culture.Translate(Headline)</h1>
+
+    <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="mt-4 mb-6 mud-text-secondary">
+        @Culture.Translate(Description)
+    </MudText>
+
+    <div class="zerror-actions">
+        @Actions
+
+        @* Href, not an OnClick handler: these pages render under the minimal layout with no
+           interactivity guaranteed — an error page that needs a circuit to offer a way out is an
+           error page that does not work when the circuit is what broke. Empty Href resolves
+           against <base href>, which keeps the visitor inside this mount. *@
+        <MudButton Href="" Variant="Variant.Outlined"
+                   StartIcon="@Icons.Material.Filled.Home">
+            @Culture.Translate("Home")
+        </MudButton>
+    </div>
+</MudPaper>
+
+@code {
+    /// <summary>The HTTP status, shown large.</summary>
+    [Parameter, EditorRequired] public string Status { get; set; } = default!;
+
+    /// <summary>Short headline, in English — it is the translation key.</summary>
+    [Parameter, EditorRequired] public string Headline { get; set; } = default!;
+
+    /// <summary>One sentence of explanation, in English — likewise a translation key.</summary>
+    [Parameter, EditorRequired] public string Description { get; set; } = default!;
+
+    /// <summary>Accent for the status number.</summary>
+    [Parameter] public MudBlazor.Color Color { get; set; } = MudBlazor.Color.Error;
+
+    /// <summary>Page-specific actions rendered before the always-present Home button.</summary>
+    [Parameter] public RenderFragment? Actions { get; set; }
+}

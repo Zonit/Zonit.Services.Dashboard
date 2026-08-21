@@ -1,7 +1,6 @@
 @*
-    Dedicated 404 page. Reached via direct navigation to /404 OR by the Router's
-    <NotFound> slot in Routes.razor (which redirects unmatched URLs here so a
-    bookmarked broken link doesn't render with the full dashboard chrome).
+    Dedicated 404 page. Reached via direct navigation to /404 OR by the branch's status-code
+    re-execution, which is what an unmatched URL under this mount turns into.
 
     Uses the dashboard's minimal layout — error pages don't need the navigation
     drawer and look better in the centered minimal box.
@@ -9,26 +8,30 @@
 @page "/404"
 @page "/error/404"
 @attribute [LayoutKey("Zonit.Minimal")]
+@attribute [AllowAnonymous]
 @inherits PageBase
 @namespace Zonit.Dashboard.Components.Pages
+@using Microsoft.AspNetCore.Authorization
+@using Zonit.Dashboard.Components.Pages.Errors
 @using Zonit.Extensions.Website
 
-@inject NavigationManager Nav
+<ErrorPanel Status="404"
+            Color="MudBlazor.Color.Primary"
+            Headline="Page not found"
+            Description="The page you are looking for does not exist or has moved." />
 
-<PageTitle>Page not found</PageTitle>
-
-<MudPaper Class="pa-8" Elevation="0">
-    <MudText Typo="Typo.h2" Color="MudBlazor.Color.Primary" Align="MudBlazor.Align.Center">404</MudText>
-    <MudText Typo="Typo.h5" Align="MudBlazor.Align.Center" Class="mt-2">Page not found</MudText>
-    <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="mt-4 mb-6">
-        The URL <code>@Nav.Uri</code> doesn't match any route on this dashboard mount.
-    </MudText>
-    <div style="display: flex; justify-content: center;">
-        <MudButton Variant="Variant.Filled"
-                   Color="MudBlazor.Color.Primary"
-                   StartIcon="@MudBlazor.Icons.Material.Filled.Home"
-                   OnClick="@(() => Nav.NavigateTo("/"))">
-            Back to dashboard
-        </MudButton>
-    </div>
-</MudPaper>
+@code {
+    // Metadata through PageBase, not a raw <PageTitle>.
+    //
+    // A <PageTitle> writes the document title directly and bypasses everything the website
+    // kernel composes around it. Measured: these pages produced a bare "Sign in" / "Page not
+    // found" while a framework page on the same site produced
+    // "Cultures — overview - Zonit.Extensions Demo" — the tenant name silently missing from
+    // every built-in screen.
+    //
+    // NoIndex is stated per page rather than inherited from the mount, because
+    // DashboardSiteOptions.Indexable is a switch a host is allowed to turn on, and a
+    // deliberately public dashboard must still never put its login screen or its error pages
+    // into a search index.
+    protected override PageMeta Metadata => new() { Title = "Page not found", NoIndex = true };
+}

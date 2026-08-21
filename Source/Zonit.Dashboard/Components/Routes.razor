@@ -28,28 +28,35 @@
 
 
 <Router AppAssembly="@typeof(DashboardApp).Assembly"
-        AdditionalAssemblies="@AreaAssemblies">
+        AdditionalAssemblies="@AreaAssemblies"
+        NotFoundPage="@typeof(Pages.NotFound)">
     <Found Context="routeData">
         <ZonitRouteView RouteData="@routeData"
                         DefaultLayout="@typeof(DashboardMainLayout)">
             <NotAuthorized>
+                @* Same panel the routable /403 page renders, so the two ways into "you may not
+                   see this" do not look like two different products. This was a hand-inlined
+                   copy, in English, beside a page that was already translated. *@
                 <LayoutView Layout="@typeof(DashboardMinimalLayout)">
-                    <PageTitle>Not authorized</PageTitle>
-                    <MudPaper Class="pa-8" Elevation="0">
-                        <MudText Typo="Typo.h2" Color="MudBlazor.Color.Error" Align="MudBlazor.Align.Center">403</MudText>
-                        <MudText Typo="Typo.h5" Align="MudBlazor.Align.Center" Class="mt-2">Not authorized</MudText>
-                        <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="mt-4">
-                            You need additional roles or permissions to view this page.
-                        </MudText>
-                    </MudPaper>
+                    <Zonit.Dashboard.Components.Pages.Errors.ErrorPanel
+                        Status="403"
+                        Color="MudBlazor.Color.Error"
+                        Headline="Not authorized"
+                        Description="You need additional roles or permissions to view this page." />
                 </LayoutView>
             </NotAuthorized>
         </ZonitRouteView>
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
-    @* Router doesn't ship a <NotFound> slot for static SSR, but the routable
-       NotFound.razor page (@page "/404") covers direct navigation. Unmatched
-       runtime routes redirect there via PageBase's interactive handler. *@
+    @* NotFoundPage, not the old "the routable /404 page covers it" assumption — which was only
+       ever true of the SSR pass.
+
+       Measured: requesting an unmatched URL under the mount returns a correct 404 whose body is
+       the dashboard's own Page-not-found screen, and then the circuit boots, the Router
+       re-evaluates the same route, finds nothing, and — with no not-found content configured —
+       replaces the whole document with Blazor's built-in bare text. The visitor sees the right
+       page for a moment and is left with the word "Not found" in the browser's default font,
+       no chrome, no theme, no way back. *@
 </Router>
 
 @code {

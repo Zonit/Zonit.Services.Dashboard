@@ -15,25 +15,41 @@
 
 @inject NavigationManager Nav
 
-<PageTitle>Something went wrong</PageTitle>
+<ErrorPanel Status="500"
+            Color="MudBlazor.Color.Error"
+            Headline="Internal server error"
+            Description="Something went wrong on our end. The error has been logged.">
+    <Actions>
+        @*
+            forceLoad, because the point of Retry on a 500 is to redo the REQUEST. An enhanced
+            navigation to the same URL would re-render inside the circuit that just failed, which
+            reproduces the error rather than retrying it.
 
-<MudPaper Class="pa-8" Elevation="0">
-    <MudText Typo="Typo.h2" Color="MudBlazor.Color.Error" Align="MudBlazor.Align.Center">500</MudText>
-    <MudText Typo="Typo.h5" Align="MudBlazor.Align.Center" Class="mt-2">Internal server error</MudText>
-    <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="mt-4 mb-6">
-        Something went wrong on our end. The error has been logged.
-    </MudText>
-    <div style="display: flex; justify-content: center; gap: 8px;">
+            This is the one error-page action that genuinely needs interactivity — there is no href
+            that means "do that again" — so it stays an OnClick and the Home button beside it stays
+            a plain link, which is what still works when the circuit is the thing that broke.
+        *@
         <MudButton Variant="Variant.Filled"
                    Color="MudBlazor.Color.Primary"
-                   StartIcon="@MudBlazor.Icons.Material.Filled.Refresh"
+                   StartIcon="@Icons.Material.Filled.Refresh"
                    OnClick="@(() => Nav.NavigateTo(Nav.Uri, forceLoad: true))">
-            Retry
+            @Culture.Translate("Retry")
         </MudButton>
-        <MudButton Variant="Variant.Outlined"
-                   StartIcon="@MudBlazor.Icons.Material.Filled.Home"
-                   OnClick="@(() => Nav.NavigateTo(""))">
-            Home
-        </MudButton>
-    </div>
-</MudPaper>
+    </Actions>
+</ErrorPanel>
+
+@code {
+    // Metadata through PageBase, not a raw <PageTitle>.
+    //
+    // A <PageTitle> writes the document title directly and bypasses everything the website
+    // kernel composes around it. Measured: these pages produced a bare "Sign in" / "Page not
+    // found" while a framework page on the same site produced
+    // "Cultures — overview - Zonit.Extensions Demo" — the tenant name silently missing from
+    // every built-in screen.
+    //
+    // NoIndex is stated per page rather than inherited from the mount, because
+    // DashboardSiteOptions.Indexable is a switch a host is allowed to turn on, and a
+    // deliberately public dashboard must still never put its login screen or its error pages
+    // into a search index.
+    protected override PageMeta Metadata => new() { Title = "Internal server error", NoIndex = true };
+}

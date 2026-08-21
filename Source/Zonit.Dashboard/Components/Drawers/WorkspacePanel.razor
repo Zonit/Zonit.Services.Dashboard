@@ -6,9 +6,7 @@
     ICatalogManager (re-hydrating projects) — the drawer closes itself once the
     switch completes.
 
-    Anonymous / no-workspace users see an empty state. Render is suppressed
-    entirely (the toolbar button still shows but the drawer is empty) so hosts
-    without org membership don't see broken UI.
+    Anonymous / no-workspace users see an empty state.
 *@
 @namespace Zonit.Dashboard.Components.Drawers
 @using Zonit.Dashboard.Extensions
@@ -24,62 +22,77 @@
 @inject IExtensionDrawerStates DrawerStates
 @inject NavigationManager Nav
 
-<MudDrawerHeader>
-    <div class="d-flex align-center justify-space-between flex-grow-1 py-2">
-        <div class="d-flex align-center">
-            <MudIcon Icon="@Icons.Material.Filled.Business" Class="mr-3" Size="Size.Medium" Color="MudBlazor.Color.Inherit" />
-            <MudText Typo="Typo.h6" Style="font-weight: 600;">@Culture.Translate("Organizations")</MudText>
-        </div>
-        <MudIconButton OnClick="@Close"
-                       Icon="@Icons.Material.Filled.Close"
-                       Size="Size.Small"
-                       aria-label="@Culture.Translate("Close").ToString()" />
-    </div>
-</MudDrawerHeader>
+<PanelHeader Title="@Culture.Translate("Organizations").ToString()" OnClose="@Close" />
 
-<div class="px-4 py-2">
+<div class="zpanel-body">
     @if (Workspace.Organization.HasValue)
     {
         var currentName = Workspace.Organization.Name.HasValue
             ? Workspace.Organization.Name.Value
             : Workspace.Organization.Id.ToString();
 
-        <div class="d-flex flex-column align-center py-3">
-            <MudAvatar Color="MudBlazor.Color.Warning" Rounded="true" Style="height: 80px; width: 80px; font-size: 1.75rem;">
+        <div class="zpanel-current">
+            <MudAvatar Color="MudBlazor.Color.Primary" Rounded="true" Style="height: 72px; width: 72px; font-size: 1.75rem;">
                 @(currentName.Length > 0 ? currentName[..1].ToUpperInvariant() : "?")
             </MudAvatar>
-            <MudText Typo="Typo.body1" Class="mt-3" Style="font-weight: 500;">@currentName</MudText>
+            <div class="zpanel-current-name">@currentName</div>
         </div>
 
-        <MudDivider Class="my-3" />
+        <MudDivider Class="mb-2" />
 
         @if (WorkspaceManager.Organizations is { Count: > 0 } orgs)
         {
-            <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">@Culture.Translate("Your organizations")</MudText>
-            <MudList T="Guid" SelectedValue="@Workspace.Organization.Id" SelectedValueChanged="@SwitchAsync">
-                @foreach (var org in orgs)
-                {
-                    <MudListItem Value="@org.Id" Text="@org.Name" />
-                }
-            </MudList>
-            <MudDivider Class="my-3" />
+            <div class="zpanel-section">@Culture.Translate("Your organizations")</div>
+
+            @*
+                Always present, matching the pre-refactor panel — the same reasoning as the language
+                picker: how long this list is, is the host's data, not something the panel can predict.
+            *@
+            <MudTextField @bind-Value="_search"
+                          Placeholder="@Culture.Translate("Search organizations...").ToString()"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Margin="Margin.Dense"
+                          Class="mb-2"
+                          Clearable="true"
+                          Immediate="true" />
+
+            var filtered = Filter(orgs);
+
+            @if (filtered.Count > 0)
+            {
+                <MudList T="Guid" SelectedValue="@Workspace.Organization.Id" SelectedValueChanged="@SwitchAsync">
+                    @foreach (var org in filtered)
+                    {
+                        <MudListItem Value="@org.Id" Text="@org.Name" />
+                    }
+                </MudList>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="pa-4 mud-text-secondary">
+                    @Culture.Translate("No organizations found")
+                </MudText>
+            }
+
+            <MudDivider Class="my-2" />
         }
 
+        @* Only the route the Organizations area actually registers. "organizations/team" and
+           "organizations/settings" were added by the refactor and neither exists — see the same
+           note on ProjectPanel. *@
         <MudList T="string">
-            <MudListItem OnClick="@(() => Go("organizations"))" Icon="@Icons.Material.Filled.SwapHoriz">
+            <MudListItem OnClick="@(() => Go("organizations"))" Icon="@Icons.Material.Outlined.SwapHoriz">
                 @Culture.Translate("Manage organizations")
-            </MudListItem>
-            <MudListItem OnClick="@(() => Go("organizations/team"))" Icon="@Icons.Material.Filled.Group">
-                @Culture.Translate("Manage the team")
-            </MudListItem>
-            <MudListItem OnClick="@(() => Go("organizations/settings"))" Icon="@Icons.Material.Filled.Settings">
-                @Culture.Translate("Settings")
             </MudListItem>
         </MudList>
 
         <MudDivider Class="my-3" />
 
-        <MudButton OnClick="@(() => Go("organizations/switch"))"
+        @* "organizations/switch" was not a route — the Organizations area registers
+           "organizations/switcher". One missing two letters, on the panel's only filled button. *@
+        <MudButton OnClick="@(() => Go("organizations/switcher"))"
                    Variant="Variant.Filled" Color="MudBlazor.Color.Primary" FullWidth="true"
                    StartIcon="@Icons.Material.Filled.Add" Class="mt-2">
             @Culture.Translate("Join")
@@ -87,7 +100,7 @@
     }
     else
     {
-        <EmptyState Icon="@Icons.Material.Filled.Business"
+        <EmptyState Icon="@Icons.Material.Outlined.Business"
                     Title="@Culture.Translate("No organization selected").ToString()"
                     Description="@Culture.Translate("You are not a member of any workspace yet.").ToString()"
                     MinHeight="240px" />
@@ -95,6 +108,8 @@
 </div>
 
 @code {
+    private string _search = string.Empty;
+
     protected override void OnInitialized()
     {
         Culture.OnChange += OnExternalChange;
@@ -102,6 +117,17 @@
     }
 
     private void OnExternalChange() => InvokeAsync(StateHasChanged);
+
+    private IReadOnlyList<OrganizationModel> Filter(IReadOnlyCollection<OrganizationModel> source)
+    {
+        if (string.IsNullOrWhiteSpace(_search)) return source.ToArray();
+
+        var s = _search.Trim();
+        return source
+            .Where(o => o.Name.Contains(s, StringComparison.OrdinalIgnoreCase)
+                     || o.FullName.Contains(s, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+    }
 
     private async Task SwitchAsync(Guid organizationId)
     {

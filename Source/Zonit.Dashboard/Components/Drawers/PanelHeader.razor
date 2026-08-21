@@ -1,0 +1,34 @@
+@*
+    Shared header for every right-side drawer panel: a title and a way out.
+
+    Replaces the copy of <MudDrawerHeader> that each panel carried, which paired the title with a
+    leading Material glyph at Size.Medium — an office block beside "Organizations", a folder beside
+    "Projects". The glyph restated the word next to it and, being the heaviest mark in the panel,
+    it out-shouted the content underneath. Dropped on request, and dropped in one place so the
+    three panels cannot drift apart again.
+
+    <h2> rather than MudText Typo.h6: the panel is a section of the page, and the page's own <h1>
+    is the routed page's title. A heading element keeps the two in a real document outline instead
+    of leaving the panel title as an anonymous <p>.
+*@
+@namespace Zonit.Dashboard.Components.Drawers
+@using Zonit.Extensions.Cultures
+
+@inject ICultureProvider Culture
+
+<div class="zpanel-header">
+    <h2>@Title</h2>
+    <MudIconButton OnClick="@OnClose"
+                   Icon="@Icons.Material.Filled.Close"
+                   Size="Size.Small"
+                   Color="MudBlazor.Color.Default"
+                   aria-label="@Culture.Translate("Close").ToString()" />
+</div>
+
+@code {
+    /// <summary>Panel title, already translated by the caller.</summary>
+    [Parameter, EditorRequired] public string Title { get; set; } = default!;
+
+    /// <summary>Invoked by the close button.</summary>
+    [Parameter] public EventCallback OnClose { get; set; }
+}

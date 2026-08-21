@@ -1,0 +1,155 @@
+@*
+    Built-in sign-in SCREEN. Markup only — this page has no idea what a session is.
+
+    The form posts straight to DashboardSiteOptions.Identity.SignInEndpoint, a URL the HOST maps
+    and owns. The package does not read the password, does not issue a token, and does not write a
+    cookie. An earlier revision did all three from an endpoint inside this package, and it was not
+    merely bad layering: the host wrote its Session cookie at path "/" while the package wrote one
+    at "/docs", both existed at once holding different users' sessions, and the package's sign-out
+    deleted only its own — so "Sign out" left the visitor signed in. See DashboardIdentityOptions.
+
+    Deliberately NOT @rendermode InteractiveServer. Signing in ends with an auth cookie, and a
+    cookie can only be written on an HTTP response; a Blazor circuit has already sent its headers
+    by the time any OnClick runs. A plain <form method="post"> is also the shape password managers
+    recognise, and it works with JavaScript off.
+
+    The action is used verbatim as configured. Give it a base-relative value ("auth/login") and it
+    resolves against <base href> into <PathBase>/auth/login, inside the mount.
+*@
+@page "/identity/auth/login"
+@attribute [LayoutKey("Zonit.Minimal")]
+@attribute [AllowAnonymous]
+@inherits PageBase
+@namespace Zonit.Dashboard.Components.Pages.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Zonit.Extensions.Auth
+@using Zonit.Extensions.Cultures
+@using Zonit.Extensions.Tenants
+@using Zonit.Extensions.Website
+
+@* Culture, Tenant and Authenticated come from PageBase — injecting them again here shadowed
+   the inherited members (CS0108) and gave the page a second instance of each. *@
+@inject IDashboardCurrentSite Site
+
+<div class="zauth">
+    <h1 class="zauth-title">@T("Sign in")</h1>
+    <p class="zauth-subtitle">@Tenant.Settings.Site.Title</p>
+
+    @if (Authenticated.Current.HasValue)
+    {
+        @*
+            Already signed in. Showing the form anyway would invite someone to re-enter a password
+            they do not need, and a second successful post would replace a working session with a
+            new one for no reason.
+        *@
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+            @Culture.Translate("You are signed in as {0}.", Authenticated.Current.Name.ToString() ?? string.Empty)
+        </MudAlert>
+
+        <MudButton Href="" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" FullWidth="true">
+            @T("Continue")
+        </MudButton>
+    }
+    else if (!Site.Identity.CanSignIn)
+    {
+        @*
+            No SignInEndpoint configured. The package can render the screen; only the host can own
+            the session behind it. An honest panel beats a form whose submit button goes nowhere —
+            and there is deliberately no default endpoint to fall back on, because a default would
+            mean shipping an authentication endpoint to every consumer including the ones on
+            external OIDC, for whom it is pure attack surface.
+        *@
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">
+            @T("Sign-in is not configured for this site.")
+        </MudAlert>
+
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+            @T("Set DashboardSiteOptions.Identity.SignInEndpoint to the URL of your own sign-in endpoint, or point Identity.LoginPage at your own login page.")
+        </MudText>
+    }
+    else
+    {
+        @if (ErrorMessage is { Length: > 0 } error)
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-4">@error</MudAlert>
+        }
+
+        <form method="post" action="@Site.Identity.SignInEndpoint" class="zauth-form">
+            @*
+                Lowercase name=, which is the raw HTML attribute MudBlazor splats onto the inner
+                <input>. The capitalised Name= reads as a MudBlazor parameter and its analyzer
+                rejects it (MUD0002) — it happened to work, but only by falling through to the
+                same splat, and a future version tightening that would silently post an empty form.
+
+                name= is what the host's endpoint reads off the posted form; MudTextField forwards
+                it to the underlying <input>. autocomplete= is what makes a browser recognise this
+                as a login form and offer to fill and save it.
+            *@
+            <MudTextField T="string" name="username" Label="@T("Username")"
+                          Variant="Variant.Outlined" Margin="Margin.Dense"
+                          Required="true" autocomplete="username" autofocus />
+
+            <MudTextField T="string" name="password" Label="@T("Password")"
+                          InputType="InputType.Password"
+                          Variant="Variant.Outlined" Margin="Margin.Dense"
+                          Required="true" autocomplete="current-password" />
+
+            @*
+                Passed through untouched. The host's endpoint MUST validate it against its own
+                origin before redirecting — an unchecked returnUrl on a login form is an open
+                redirect, and the package cannot do that check on the host's behalf because only
+                the host knows which origins are its own.
+            *@
+            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
+                       FullWidth="true" Size="Size.Large" Class="mt-2">
+                @T("Sign in")
+            </MudButton>
+        </form>
+    }
+</div>
+
+@code {
+    // Metadata through PageBase, not a raw <PageTitle>.
+    //
+    // A <PageTitle> writes the document title directly and bypasses everything the website
+    // kernel composes around it. Measured: these pages produced a bare "Sign in" / "Page not
+    // found" while a framework page on the same site produced
+    // "Cultures — overview - Zonit.Extensions Demo" — the tenant name silently missing from
+    // every built-in screen.
+    //
+    // NoIndex is stated per page rather than inherited from the mount, because
+    // DashboardSiteOptions.Indexable is a switch a host is allowed to turn on, and a
+    // deliberately public dashboard must still never put its login screen or its error pages
+    // into a search index.
+    protected override PageMeta Metadata => new() { Title = "Sign in", NoIndex = true };
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    /// <summary>
+    /// A fixed sentence per known code — the query string never reaches the page as text.
+    /// </summary>
+    /// <remarks>
+    /// A previous revision echoed a <c>message</c> query parameter here so a host could supply its
+    /// own wording. Blazor encodes it, so it was not an XSS — but it did let anyone put arbitrary
+    /// sentences on a trusted-looking login screen, which is a phishing primitive
+    /// ("Your session expired, call this number to restore access"). A closed set of codes gives
+    /// hosts the signal without handing strangers the megaphone.
+    /// </remarks>
+    private string? ErrorMessage => Error?.ToLowerInvariant() switch
+    {
+        null or "" => null,
+        "expired" => T("Your session has expired. Please sign in again."),
+        "error" => T("Something went wrong while signing in. Please try again."),
+        // Everything else, including a code nobody defined, reads as a rejected credential. Never
+        // distinguish "no such user" from "wrong password" — that difference is a username oracle.
+        _ => T("Incorrect username or password."),
+    };
+
+    private string T(string key) => Culture.Translate(key).ToString() ?? key;
+}

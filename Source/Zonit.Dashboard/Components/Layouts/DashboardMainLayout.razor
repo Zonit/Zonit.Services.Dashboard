@@ -22,10 +22,9 @@
 @using Zonit.Extensions.Tenants
 @using Zonit.Extensions.Website
 
-<MudThemeProvider Theme="@ThemeManager.Current.MudTheme" IsDarkMode="@ThemeManager.IsDark" />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+@* Providers + the <html> background / color-scheme sync. Shared with the minimal and empty
+   layouts so a new layout cannot silently ship without a theme. *@
+<DashboardThemeRoot />
 
 <MudRTLProvider RightToLeft="@IsRtl">
 <MudSwipeArea OnSwipeEnd="@OnSwipe" Style="width: 100%; touch-action: pan-y" PreventDefault="false">
@@ -101,7 +100,7 @@
                                aria-label="@Culture.Translate("Open settings").Value" />
             }
         }
-        else
+        else if (Site.Layout.ShowRightDrawer)
         {
             @* No rail configured, so the extensions have nowhere else to live. *@
             @foreach (var ext in RightAnchorDrawerExtensions)
@@ -160,17 +159,31 @@
         </MudDrawer>
     }
 
-    @* ─── Right drawer per extension (single-active-per-anchor) ─── *@
-    @foreach (var ext in RightAnchorDrawerExtensions)
+    @* ─── Right drawer per extension (single-active-per-anchor) ───
+         Class="zpanel" does two things the markup cannot. It lifts these above the rail — both
+         are Anchor=End MudDrawers and MudBlazor gives every drawer the SAME z-index, so paint
+         order decided the winner and the rail, being later in this file, covered the panel the
+         visitor had just asked for. Measured on a 390px viewport: tapping "Language" in the rail
+         opened a 320px panel of which only the leftmost 100px was visible and clickable, the rest
+         underneath the rail. That is exactly the "the right-hand navigation overlaps the
+         slide-out and it stops being clickable" report. The layout also closes the rail now (see
+         SyncOverlayDrawers) — this is the belt to that pair of braces.
+
+         The second job is width: a fixed 320px panel on a 360px phone leaves a 40px strip of
+         page, which reads as a broken overlay rather than a panel. See .zpanel in dashboard.css. *@
+    @foreach (var ext in (Site.Layout.ShowRightDrawer ? RightAnchorDrawerExtensions : []))
     {
         var state = DrawerStates.GetState(ext.Id);
         var isOpen = state?.IsOpen ?? false;
+        @* 0 means "take the mount's width" — see IDrawerExtension.Width. *@
+        var width = ext.Width > 0 ? ext.Width : Site.Layout.RightDrawerWidth;
         <MudDrawer Open="@isOpen"
                    OpenChanged="@((bool v) => OnDrawerOpenChanged(ext.Id, v))"
                    Anchor="Anchor.End"
                    Elevation="2"
                    Variant="DrawerVariant.Temporary"
-                   Width="@($"{ext.Width}px")">
+                   Class="zpanel"
+                   Width="@($"{width}px")">
             @ext.CreateDrawerContent()
         </MudDrawer>
     }
@@ -182,6 +195,8 @@
     @if (Site.Layout.ShowRightRail)
     {
         @* Same reason as the left drawer — see the @key comment there. *@
+        @* Class="zrail" carries the mobile width override: 220px is a sensible docked column and
+           a cramped overlay, so as an overlay it widens to a phone-appropriate size. *@
         <MudDrawer @key="@($"rail-{_rightRailVariant}")"
                    Open="@_rightRailOpen"
                    OpenChanged="@OnRightRailOpenChanged"
@@ -189,6 +204,7 @@
                    Elevation="2"
                    ClipMode="DrawerClipMode.Always"
                    Variant="_rightRailVariant"
+                   Class="zrail"
                    Width="@($"{Site.Layout.RightRailWidth}px")">
             <RightRail />
         </MudDrawer>
@@ -196,17 +212,24 @@
 
     @* ─── Main content ─── *@
     <MudMainContent>
-        @if (Site.Layout.ShowBreadcrumbs && BreadcrumbTrail.Count > 0)
-        {
-            @* Plain markup, not MudBreadcrumbs — see the .zcrumbs block in dashboard.css. The
-               short version: a crumb with nowhere to go must not be an <a>. *@
-            <MudContainer MaxWidth="@ContentWidth" Class="pt-3">
+        @* ONE container for the crumbs, the heading and the body.
+
+           They used to sit in two, each with its own padding, which meant the trail and the title
+           agreed on their left edge only by coincidence: any page whose PageWidth changed between
+           the two renders, or any future edit to one of the two Class strings, would step them
+           apart. It also stacked pt-3 on top of py-4 under a 48px MudMainContent offset, pushing
+           the heading roughly 90px down a phone screen before a single word of content. *@
+        <MudContainer MaxWidth="@ContentWidth" Class="zpage">
+            @if (Site.Layout.ShowBreadcrumbs && VisibleCrumbs.Count > 0)
+            {
+                @* Plain markup, not MudBreadcrumbs — see the .zcrumbs block in dashboard.css. The
+                   short version: a crumb with nowhere to go must not be an <a>. *@
                 <nav aria-label="@Culture.Translate("Breadcrumb").Value">
                     <ol class="zcrumbs">
-                        @for (var i = 0; i < BreadcrumbTrail.Count; i++)
+                        @for (var i = 0; i < VisibleCrumbs.Count; i++)
                         {
-                            var crumb = BreadcrumbTrail[i];
-                            var isCurrent = i == BreadcrumbTrail.Count - 1;
+                            var crumb = VisibleCrumbs[i];
+                            var isCurrent = i == VisibleCrumbs.Count - 1 && !TitleReplacesLastCrumb;
                             <li>
                                 @if (!isCurrent && crumb.Href.HasValue)
                                 {
@@ -220,22 +243,26 @@
                         }
                     </ol>
                 </nav>
-            </MudContainer>
-        }
+            }
 
-        @* Width, title and breadcrumbs all come from what the page already declared — the layout
-           reads them so no page has to render its own chrome. *@
-        <MudContainer MaxWidth="@ContentWidth" Class="py-4">
             @if (Site.Layout.ShowPageTitle && PageTitle is { Length: > 0 } heading)
             {
-                @* A real <h1> carrying the theme's own h1 typography — DashboardTypography sizes
-                   it at 1.75rem/600 precisely because MudBlazor's stock h1 is 6rem and unusable as
-                   a page heading. Not <MudText Typo="Typo.h1">: MudText picks its element from
-                   Typo, and asking for a smaller size would emit <h5>, leaving a page whose only
-                   heading is an <h5> — no document outline for a screen reader or a crawler. *@
-                <h1 class="mud-typography mud-typography-h1 mb-4">@heading</h1>
+                @* A real <h1>, sized by .zpage-title in dashboard.css rather than by the
+                   mud-typography-h1 class it used to borrow. MudBlazor emits typography as inline
+                   style from MudText, not as a class rule, so "mud-typography-h1" on a bare <h1>
+                   was styling nothing and the heading was rendering at the browser's own 2em.
+                   Not <MudText Typo="Typo.h1"> either: MudText picks its element from Typo, and
+                   asking for a smaller size would emit <h5>, leaving a page whose only heading is
+                   an <h5> — no document outline for a screen reader or a crawler.
+
+                   The size is fluid, which is the point of the rule: a fixed 1.75rem heading on a
+                   360px phone spends three lines on a title like "Value objects — identity". *@
+                <h1 class="zpage-title">@heading</h1>
             }
-            @Body
+
+            <div class="zpage-body">
+                @Body
+            </div>
         </MudContainer>
     </MudMainContent>
 

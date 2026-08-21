@@ -70,6 +70,13 @@ public class DashboardSiteOptions : SiteOptions
     public DashboardThemeOverrides Theme { get; } = new();
 
     /// <summary>
+    /// Where this mount's identity screens live and, critically, which host-owned URLs they post
+    /// to. The dashboard renders identity screens; it never creates or destroys a session — see
+    /// <see cref="DashboardIdentityOptions"/> for what went wrong when it did.
+    /// </summary>
+    public DashboardIdentityOptions Identity { get; } = new();
+
+    /// <summary>
     /// Pre-configure hook — runs BEFORE the consumer's <c>configure</c> lambda. Seeds
     /// the implicit <see cref="DashboardArea"/> so every dashboard mount always carries
     /// the dashboard chrome, regardless of the consumer's per-mount Area selection.
@@ -168,7 +175,7 @@ public class DashboardSiteOptions : SiteOptions
         // per-request, which it isn't (mount config is static for the host's lifetime).
         // See DashboardMountRegistry remarks for the full rationale.
         var mounts = services.GetRequiredService<DashboardMountRegistry>();
-        mounts.Register(Directory, Layout, ExtensionsWhitelist, CustomSnippet, Theme);
+        mounts.Register(Directory, Layout, ExtensionsWhitelist, CustomSnippet, Theme, Identity);
 
         // Late-pipeline middleware: stamp IDashboardCurrentSite for this branch
         // BEFORE the page is resolved, so layouts and components see the per-mount
@@ -181,7 +188,7 @@ public class DashboardSiteOptions : SiteOptions
             branch.Use(async (ctx, next) =>
             {
                 var current = ctx.RequestServices.GetRequiredService<IDashboardCurrentSite>();
-                current.Set(Layout, ExtensionsWhitelist, CustomSnippet, Theme);
+                current.Set(Layout, ExtensionsWhitelist, CustomSnippet, Theme, Identity);
                 await next();
             });
         });
@@ -194,7 +201,15 @@ public sealed class DashboardLayoutOptions
     /// <summary>Show the left navigation drawer.</summary>
     public bool ShowLeftDrawer { get; set; } = true;
 
-    /// <summary>Show the right extension drawer.</summary>
+    /// <summary>
+    /// Render the right-hand drawer extensions (theme, workspace, project, culture, and anything
+    /// a host registers). Turning this off also removes the app-bar buttons that open them, since
+    /// their only purpose is to open a drawer that would no longer exist.
+    /// </summary>
+    /// <remarks>
+    /// Declared and documented from the start, and read by nothing — setting it to
+    /// <see langword="false"/> changed nothing on screen. It is wired now.
+    /// </remarks>
     public bool ShowRightDrawer { get; set; } = true;
 
     /// <summary>
@@ -209,8 +224,17 @@ public sealed class DashboardLayoutOptions
     /// <summary>Left navigation drawer width (px).</summary>
     public int LeftDrawerWidth { get; set; } = 240;
 
-    /// <summary>Right extension drawer width (px).</summary>
-    public int RightDrawerWidth { get; set; } = 280;
+    /// <summary>
+    /// Width in pixels for right-hand drawer extensions that do not state their own.
+    /// </summary>
+    /// <remarks>
+    /// 320 rather than the 280 this said before, because 320 is the width the panels were
+    /// actually rendering at — <see cref="Zonit.Dashboard.Extensions.IDrawerExtension.Width"/> hard-coded it and this option
+    /// was read by nothing. Matching the real value means wiring the option up changes no pixels
+    /// for a host that never set it, which is the only honest way to fix a setting that has
+    /// silently done nothing.
+    /// </remarks>
+    public int RightDrawerWidth { get; set; } = 320;
 
     /// <summary>Right rail width (px). The rail itself is narrow because every
     /// row is a label + icon; the actual switcher UI opens in a separate drawer.</summary>

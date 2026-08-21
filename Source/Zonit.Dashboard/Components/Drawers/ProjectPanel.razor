@@ -17,67 +17,78 @@
 @inject IExtensionDrawerStates DrawerStates
 @inject NavigationManager Nav
 
-<MudDrawerHeader>
-    <div class="d-flex align-center justify-space-between flex-grow-1 py-2">
-        <div class="d-flex align-center">
-            <MudIcon Icon="@Icons.Material.Filled.Folder" Class="mr-3" Size="Size.Medium" Color="MudBlazor.Color.Inherit" />
-            <MudText Typo="Typo.h6" Style="font-weight: 600;">@Culture.Translate("Projects")</MudText>
-        </div>
-        <MudIconButton OnClick="@Close"
-                       Icon="@Icons.Material.Filled.Close"
-                       Size="Size.Small"
-                       aria-label="@Culture.Translate("Close").ToString()" />
-    </div>
-</MudDrawerHeader>
+<PanelHeader Title="@Culture.Translate("Projects").ToString()" OnClose="@Close" />
 
-<div class="px-4 py-2">
+<div class="zpanel-body">
     @if (Catalog.Project.HasValue)
     {
         var currentName = Catalog.Project.Name.HasValue
             ? Catalog.Project.Name.Value
             : Catalog.Project.Id.ToString();
 
-        <div class="d-flex flex-column align-center py-3">
-            <MudAvatar Color="MudBlazor.Color.Tertiary" Rounded="true" Style="height: 80px; width: 80px; font-size: 1.75rem;">
+        <div class="zpanel-current">
+            <MudAvatar Color="MudBlazor.Color.Secondary" Rounded="true" Style="height: 72px; width: 72px; font-size: 1.75rem;">
                 @(currentName.Length > 0 ? currentName[..1].ToUpperInvariant() : "?")
             </MudAvatar>
-            <MudText Typo="Typo.body1" Class="mt-3" Style="font-weight: 500;">@currentName</MudText>
+            <div class="zpanel-current-name">@currentName</div>
         </div>
 
-        <MudDivider Class="my-3" />
+        <MudDivider Class="mb-2" />
 
         @if (CatalogManager.Projects is { Count: > 0 } projects)
         {
-            <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">@Culture.Translate("Your projects")</MudText>
-            <MudList T="Guid" SelectedValue="@Catalog.Project.Id" SelectedValueChanged="@SwitchAsync">
-                @foreach (var p in projects)
-                {
-                    <MudListItem Value="@p.Id" Text="@p.Name" />
-                }
-            </MudList>
-            <MudDivider Class="my-3" />
+            <div class="zpanel-section">@Culture.Translate("Your projects")</div>
+
+            @*
+                Always present, matching the pre-refactor panel — the same reasoning as the language
+                picker: how long this list is, is the host's data, not something the panel can predict.
+            *@
+            <MudTextField @bind-Value="_search"
+                          Placeholder="@Culture.Translate("Search projects...").ToString()"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Margin="Margin.Dense"
+                          Class="mb-2"
+                          Clearable="true"
+                          Immediate="true" />
+
+            var filtered = Filter(projects);
+
+            @if (filtered.Count > 0)
+            {
+                <MudList T="Guid" SelectedValue="@Catalog.Project.Id" SelectedValueChanged="@SwitchAsync">
+                    @foreach (var p in filtered)
+                    {
+                        <MudListItem Value="@p.Id" Text="@p.Name" />
+                    }
+                </MudList>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="pa-4 mud-text-secondary">
+                    @Culture.Translate("No projects found")
+                </MudText>
+            }
+
+            <MudDivider Class="my-2" />
         }
 
+        @*
+            One row, and it is the one the pre-refactor panel had. The refactor added
+            "projects/settings" and "projects/new" alongside it — neither is a route the Projects
+            area registers, so both were buttons that navigated to a 404. An invented destination
+            is worse than a missing one: it looks like a feature until it is pressed.
+        *@
         <MudList T="string">
-            <MudListItem OnClick="@(() => Go("projects"))" Icon="@Icons.Material.Filled.SwapHoriz">
+            <MudListItem OnClick="@(() => Go("projects"))" Icon="@Icons.Material.Outlined.SwapHoriz">
                 @Culture.Translate("Manage projects")
             </MudListItem>
-            <MudListItem OnClick="@(() => Go("projects/settings"))" Icon="@Icons.Material.Filled.Settings">
-                @Culture.Translate("Settings")
-            </MudListItem>
         </MudList>
-
-        <MudDivider Class="my-3" />
-
-        <MudButton OnClick="@(() => Go("projects/new"))"
-                   Variant="Variant.Filled" Color="MudBlazor.Color.Primary" FullWidth="true"
-                   StartIcon="@Icons.Material.Filled.Add" Class="mt-2">
-            @Culture.Translate("New project")
-        </MudButton>
     }
     else
     {
-        <EmptyState Icon="@Icons.Material.Filled.Folder"
+        <EmptyState Icon="@Icons.Material.Outlined.Folder"
                     Title="@Culture.Translate("No project selected").ToString()"
                     Description="@Culture.Translate("Create or join a project to get started.").ToString()"
                     MinHeight="240px" />
@@ -85,6 +96,8 @@
 </div>
 
 @code {
+    private string _search = string.Empty;
+
     protected override void OnInitialized()
     {
         Culture.OnChange += OnExternalChange;
@@ -92,6 +105,16 @@
     }
 
     private void OnExternalChange() => InvokeAsync(StateHasChanged);
+
+    private IReadOnlyList<ProjectModel> Filter(IReadOnlyCollection<ProjectModel> source)
+    {
+        if (string.IsNullOrWhiteSpace(_search)) return source.ToArray();
+
+        var s = _search.Trim();
+        return source
+            .Where(p => p.Name.Contains(s, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+    }
 
     private async Task SwitchAsync(Guid projectId)
     {

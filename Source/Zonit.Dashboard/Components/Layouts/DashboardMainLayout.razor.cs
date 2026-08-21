@@ -44,6 +44,9 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     [Inject] private IPageMetaState PageMeta { get; set; } = default!;
     [Inject] private ILayoutContext LayoutContext { get; set; } = default!;
     [Inject] private ICultureProvider Culture { get; set; } = default!;
+    // Distinct from Culture above: that one translates, this one enumerates. The supported-language
+    // list is where a language's own metadata lives (direction, display name, flag).
+    [Inject] private ICultureState CultureState { get; set; } = default!;
     [Inject] private IBrowserViewportService BrowserViewport { get; set; } = default!;
     [Inject] private IAuthenticatedProvider Authenticated { get; set; } = default!;
 
@@ -92,7 +95,26 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
 
     // RTL flag pulled from the active culture. Arabic / Hebrew / Persian flip the
     // entire MudBlazor layout via <MudRTLProvider>; everything else renders LTR.
-    private bool IsRtl => Culture.Current.HasValue && IsRtlCulture(Culture.Current.ValueOrDefault);
+    //
+    // Answered by the culture package's own LanguageModel.IsRightToLeft rather than by a prefix
+    // list kept here. The list this replaced covered ar/he/fa/ur and nothing else, so a host that
+    // registered any other RTL language — Kurdish, Pashto, Divehi, Yiddish — got a left-to-right
+    // dashboard with right-to-left text in it, and the only place stating that language's
+    // direction had already been asked and ignored.
+    private bool IsRtl
+    {
+        get
+        {
+            if (!Culture.Current.HasValue) return false;
+            var code = Culture.Current.ValueOrDefault;
+
+            foreach (var lang in CultureState.Supported)
+                if (string.Equals(lang.Code, code, StringComparison.OrdinalIgnoreCase))
+                    return lang.IsRightToLeft;
+
+            return IsRtlCulture(code);
+        }
+    }
 
     // Progress-bar visibility flag exposed to the layout markup so extensions can
     // turn it on/off without owning the layout. Read-only here — wired via
@@ -182,6 +204,51 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
         => BreadcrumbsProvider.Get() ?? [];
 
     /// <summary>
+    /// <see langword="true"/> when the last crumb says the same thing as the <c>&lt;h1&gt;</c>
+    /// directly beneath it, so the trail should stop one short.
+    /// </summary>
+    /// <remarks>
+    /// <para>A page pushes "Cultures / Cultures — overview" and states its title as "Cultures —
+    /// overview", and the chrome printed both, one under the other, two lines apart. Every page in
+    /// the demo host does this, because it is what the two APIs each ask for on their own: the
+    /// trail wants to end at the current page, and the heading names the current page.</para>
+    ///
+    /// <para>Resolved in favour of the heading — it is the larger, more legible copy, and a trail
+    /// that ends at the last <em>link</em> is still a complete answer to "where am I". The crumb is
+    /// dropped only when the strings match after translation, so a trail whose leaf genuinely says
+    /// something else keeps it.</para>
+    /// </remarks>
+    private bool TitleReplacesLastCrumb
+    {
+        get
+        {
+            if (!Site.Layout.ShowPageTitle) return false;
+            if (PageTitle is not { Length: > 0 } title) return false;
+            if (BreadcrumbTrail.Count == 0) return false;
+
+            var last = BreadcrumbTrail[^1];
+            return string.Equals(
+                Culture.Translate(last.Text.Value).Value,
+                title,
+                StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    /// <summary>The trail as rendered — see <see cref="TitleReplacesLastCrumb"/>.</summary>
+    private IReadOnlyList<BreadcrumbsModel> VisibleCrumbs
+    {
+        get
+        {
+            var trail = BreadcrumbTrail;
+            if (!TitleReplacesLastCrumb) return trail;
+
+            // A one-crumb trail that duplicates the heading has nothing left to show, and an empty
+            // <nav> is worse than no <nav>.
+            return trail.Count <= 1 ? [] : trail.Take(trail.Count - 1).ToArray();
+        }
+    }
+
+    /// <summary>
     /// The page's own title, for the <c>&lt;h1&gt;</c> above its body.
     /// </summary>
     /// <remarks>
@@ -235,7 +302,7 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
         LayoutContext.OnChange += OnReactiveSourceChanged;
 
         ThemeManager.OnChange += OnReactiveSourceChanged;
-        DrawerStates.OnChange += OnReactiveSourceChanged;
+        DrawerStates.OnChange += OnDrawerStatesChanged;
         BreadcrumbsProvider.OnChange += OnReactiveSourceChanged;
         NavProvider.OnChanged += OnNavigationChanged;
         Tenant.OnChange += OnReactiveSourceChanged;
@@ -265,6 +332,46 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     private void OnReactiveSourceChanged()
         => _ = InvokeAsync(StateHasChanged);
 
+    private void OnDrawerStatesChanged()
+    {
+        SyncOverlayDrawers();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Enforces "at most one overlay open on the right" whenever a drawer extension's state
+    /// changes.
+    /// </summary>
+    /// <remarks>
+    /// <para>The rail and the extension panels are all <c>Anchor=End</c> <c>MudDrawer</c>s and
+    /// MudBlazor stamps them all with the same z-index, so which one the visitor actually sees is
+    /// decided by document order — and the rail is last. On a phone, tapping "Language" in the rail
+    /// opened the 320px language panel <em>underneath</em> the 220px rail: measured, only the
+    /// leftmost 100px of the panel was visible or clickable, and both panels drew their own scrim
+    /// so the page behind went double-dark. The reported symptom — "the right-hand navigation
+    /// overlaps the slide-out and it stops being clickable" — is this.</para>
+    ///
+    /// <para>Enforced here rather than at each call site because a drawer can be opened from four
+    /// places (a rail row, an appbar button, a toolbar extension, a panel's own link) and only this
+    /// one is guaranteed to run for all of them. Docked rails are left alone — a persistent rail is
+    /// a column beside the panel, not on top of it, and closing it on a wide screen would make the
+    /// chrome jump for no reason.</para>
+    /// </remarks>
+    private void SyncOverlayDrawers()
+    {
+        if (_rightRailVariant != DrawerVariant.Temporary || !_rightRailOpen)
+            return;
+
+        foreach (var ext in RightAnchorDrawerExtensions)
+        {
+            if (DrawerStates.GetState(ext.Id)?.IsOpen == true)
+            {
+                _rightRailOpen = false;
+                return;
+            }
+        }
+    }
+
     // INavigationProvider.OnChanged carries an area-key payload; we don't filter
     // on it (the layout always re-renders the whole nav tree). The parameter is
     // named (not "_") to avoid colliding with the discard pattern below.
@@ -277,6 +384,11 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
         // opened. Docked drawers stay put — there is nothing to get out of the way of.
         if (_leftDrawerVariant == DrawerVariant.Temporary) _leftDrawerOpen = false;
         if (_rightRailVariant == DrawerVariant.Temporary) _rightRailOpen = false;
+
+        // Extension panels are always overlays, at every width, so they always have to go. The
+        // built-in panels close themselves when their own links navigate; nothing was closing them
+        // when the visitor picked a page out of the sidebar behind them instead.
+        DrawerStates.CloseAll(DrawerAnchor.End);
 
         _ = InvokeAsync(StateHasChanged);
     }
@@ -298,7 +410,14 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
         _rightRailOpen = !_rightRailOpen;
 
         if (_rightRailOpen && _rightRailVariant == DrawerVariant.Temporary)
+        {
             _leftDrawerOpen = false;
+
+            // The other half of SyncOverlayDrawers: a panel left open behind the rail would be
+            // reachable only by its own scrim, and the visitor would be tapping a language list
+            // they cannot see.
+            DrawerStates.CloseAll(DrawerAnchor.End);
+        }
     }
 
     private void OnRightRailOpenChanged(bool open) => _rightRailOpen = open;
@@ -322,7 +441,7 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
         PageMeta.OnChange -= OnReactiveSourceChanged;
         LayoutContext.OnChange -= OnReactiveSourceChanged;
         ThemeManager.OnChange -= OnReactiveSourceChanged;
-        DrawerStates.OnChange -= OnReactiveSourceChanged;
+        DrawerStates.OnChange -= OnDrawerStatesChanged;
         BreadcrumbsProvider.OnChange -= OnReactiveSourceChanged;
         NavProvider.OnChanged -= OnNavigationChanged;
         Tenant.OnChange -= OnReactiveSourceChanged;
@@ -392,22 +511,34 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     private void OnSwipe(SwipeEventArgs args)
     {
         if (!Site.Layout.EnableSwipeGestures) return;
-        // Only handle swipe where a drawer is actually an overlay; on a docked layout
-        // swipe usually means "select text" or "two-finger scroll" and stealing those
-        // gestures is rude.
-        if (_viewportWidth >= NavBreakpoint) return;
+
+        // Only handle swipe where a drawer is actually an overlay; on a docked layout swipe
+        // usually means "select text" or "two-finger scroll" and stealing those gestures is rude.
+        //
+        // Tested per drawer rather than against NavBreakpoint. The rail is still an overlay
+        // between 960 and 1280, and an extension panel is an overlay at EVERY width, so the old
+        // single width test disabled the gesture for both of them across the entire laptop band
+        // while claiming to be about "a docked layout".
+        var navIsOverlay = _leftDrawerVariant == DrawerVariant.Temporary;
+        var railIsOverlay = _rightRailVariant == DrawerVariant.Temporary;
+        var panelOpen = RightAnchorDrawerExtensions.Any(e => DrawerStates.GetState(e.Id)?.IsOpen == true);
 
         switch (args.SwipeDirection)
         {
             case SwipeDirection.LeftToRight:
-                // Right-hand overlay wins the gesture when it is the one on screen,
-                // otherwise a swipe meant to dismiss the rail would open the nav behind it.
-                if (_rightRailOpen) _rightRailOpen = false;
-                else _leftDrawerOpen = true;
+                // Dismiss what is on the right, innermost first. The panel was invisible to this
+                // handler before, so a panel could never be swiped away — and the rail could be
+                // dismissed out from under one, leaving the panel stranded with no visible chrome.
+                if (panelOpen) DrawerStates.CloseAll(DrawerAnchor.End);
+                else if (railIsOverlay && _rightRailOpen) _rightRailOpen = false;
+                else if (navIsOverlay) _leftDrawerOpen = true;
                 break;
+
             case SwipeDirection.RightToLeft:
-                if (_leftDrawerOpen) _leftDrawerOpen = false;
-                else if (Site.Layout.ShowRightRail) _rightRailOpen = true;
+                if (navIsOverlay && _leftDrawerOpen) _leftDrawerOpen = false;
+                // Never summon the rail on top of an open panel — that is the overlap bug,
+                // reproduced by gesture.
+                else if (railIsOverlay && Site.Layout.ShowRightRail && !panelOpen) _rightRailOpen = true;
                 break;
         }
     }

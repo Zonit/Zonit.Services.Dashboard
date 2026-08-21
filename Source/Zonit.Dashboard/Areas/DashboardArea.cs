@@ -29,6 +29,7 @@ public sealed class DashboardArea : IWebsiteArea, IWebsiteServices
     /// <summary>No own navigation — see remarks on the class.</summary>
     public IReadOnlyList<NavGroup> Navigation { get; } = Array.Empty<NavGroup>();
 
+
     /// <summary>
     /// Intentionally a no-op. All dashboard DI happens in <c>AddDashboard()</c> so
     /// it can read the <c>DashboardOptions</c> instance the consumer just

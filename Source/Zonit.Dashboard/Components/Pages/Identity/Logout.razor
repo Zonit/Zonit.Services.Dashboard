@@ -1,0 +1,85 @@
+@*
+    Sign-out confirmation. Markup only — the POST goes to the host's own endpoint, and the host is
+    what actually ends the session.
+
+    A GET page fronting a POST endpoint, and both halves are deliberate. The chrome offers "Logout"
+    as a LINK, and a link is a GET — but signing out must not be a GET: any page on the internet
+    can embed <img src=".../logout"> and quietly end someone's session. So the link lands here, and
+    here is a form that posts.
+
+    It also buys a confirmation for an action that is mildly destructive (unsaved work, a filter
+    someone spent a minute building), which is worth one click.
+*@
+@page "/identity/auth/logout"
+@attribute [LayoutKey("Zonit.Minimal")]
+@attribute [AllowAnonymous]
+@inherits PageBase
+@namespace Zonit.Dashboard.Components.Pages.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Zonit.Extensions.Auth
+@using Zonit.Extensions.Cultures
+@using Zonit.Extensions.Website
+
+@* Culture, Tenant and Authenticated come from PageBase — injecting them again here shadowed
+   the inherited members (CS0108) and gave the page a second instance of each. *@
+@inject IDashboardCurrentSite Site
+
+<div class="zauth">
+    <h1 class="zauth-title">@T("Sign out")</h1>
+
+    @if (!Authenticated.Current.HasValue)
+    {
+        <p class="zauth-subtitle">@T("You are already signed out.")</p>
+
+        <MudButton Href="" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" FullWidth="true">
+            @T("Home")
+        </MudButton>
+    }
+    else if (!Site.Identity.CanSignOut)
+    {
+        @* Same rule as sign-in: the package will not guess an endpoint that ends a session. *@
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">
+            @T("Sign-out is not configured for this site.")
+        </MudAlert>
+
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+            @T("Set DashboardSiteOptions.Identity.SignOutEndpoint to the URL of your own sign-out endpoint.")
+        </MudText>
+    }
+    else
+    {
+        <p class="zauth-subtitle">
+            @Culture.Translate("Signed in as {0}.", Authenticated.Current.Name.ToString() ?? string.Empty)
+        </p>
+
+        <form method="post" action="@Site.Identity.SignOutEndpoint" class="zauth-form">
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled" Color="MudBlazor.Color.Error"
+                       FullWidth="true" Size="Size.Large"
+                       StartIcon="@Icons.Material.Filled.Logout">
+                @T("Sign out")
+            </MudButton>
+        </form>
+
+        <MudButton Href="" Variant="Variant.Text" FullWidth="true" Class="mt-2">
+            @T("Cancel")
+        </MudButton>
+    }
+</div>
+
+@code {
+    // Metadata through PageBase, not a raw <PageTitle>.
+    //
+    // A <PageTitle> writes the document title directly and bypasses everything the website
+    // kernel composes around it. Measured: these pages produced a bare "Sign in" / "Page not
+    // found" while a framework page on the same site produced
+    // "Cultures — overview - Zonit.Extensions Demo" — the tenant name silently missing from
+    // every built-in screen.
+    //
+    // NoIndex is stated per page rather than inherited from the mount, because
+    // DashboardSiteOptions.Indexable is a switch a host is allowed to turn on, and a
+    // deliberately public dashboard must still never put its login screen or its error pages
+    // into a search index.
+    protected override PageMeta Metadata => new() { Title = "Sign out", NoIndex = true };
+    private string T(string key) => Culture.Translate(key).ToString() ?? key;
+}

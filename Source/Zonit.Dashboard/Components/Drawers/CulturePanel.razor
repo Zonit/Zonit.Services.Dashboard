@@ -1,6 +1,6 @@
 @*
     Right-side drawer body for the culture (language) switcher. Lists all
-    supported cultures with their flag icon + English name, lets the user pick
+    supported cultures with their flag icon + name, lets the user pick
     one, and closes the drawer once the selection is committed.
 
     Reads from ICultureProvider (current) + ICultureState (supported list) and
@@ -11,27 +11,26 @@
 @using Zonit.Dashboard.Extensions
 @using Zonit.Extensions
 @using Zonit.Extensions.Cultures
+@using Zonit.Extensions.Website
+@using Zonit.Extensions.Website.Cultures
 @implements IDisposable
 
 @inject ICultureProvider Culture
 @inject ICultureState CultureState
 @inject ICultureManager CultureManager
 @inject IExtensionDrawerStates DrawerStates
+@inject ICookieProvider Cookies
 
-<MudDrawerHeader>
-    <div class="d-flex align-center justify-space-between flex-grow-1 py-2">
-        <div class="d-flex align-center">
-            <MudIcon Icon="@Icons.Material.Filled.Language" Class="mr-3" Size="Size.Medium" Color="MudBlazor.Color.Inherit" />
-            <MudText Typo="Typo.h6" Style="font-weight: 600;">@Culture.Translate("Select language")</MudText>
-        </div>
-        <MudIconButton OnClick="@Close"
-                       Icon="@Icons.Material.Filled.Close"
-                       Size="Size.Small"
-                       aria-label="@Culture.Translate("Close").ToString()" />
-    </div>
-</MudDrawerHeader>
+<PanelHeader Title="@Culture.Translate("Select language").ToString()" OnClose="@Close" />
 
-<div class="px-4 py-2">
+<div class="zpanel-body">
+    @*
+        Always present, matching the pre-refactor panel. An earlier pass here hid it below eight
+        languages on the theory that a short list does not need filtering — but the host's
+        supported set is configuration, the panel cannot know how long it will be in someone
+        else's deployment, and a control that appears and disappears with the data is worse than
+        one that is simply always where you left it.
+    *@
     <MudTextField @bind-Value="_search"
                   Placeholder="@Culture.Translate("Search languages...").ToString()"
                   Variant="Variant.Outlined"
@@ -44,13 +43,42 @@
 
     @if (FilteredLanguages.Count > 0)
     {
+        @*
+            Lower-cased on purpose. Culture.Current.Value is the canonical ICU tag ("pl-PL");
+            LanguageModel.Code is documented and implemented as lower-case ("pl-pl"), and that is
+            what each row carries as its Value. MudList compares the two ordinally, so they never
+            matched and the picker opened with nothing selected no matter which language was
+            active — the one row that should have been obvious was the one that never highlighted.
+        *@
         <MudList T="string"
-                 SelectedValue="@Culture.Current.Value"
+                 SelectedValue="@CurrentCode"
                  SelectedValueChanged="@SwitchAsync">
             @foreach (var lang in FilteredLanguages)
             {
-                <MudListItem Icon="@lang.IconFlag" Value="@lang.Code">
-                    @Culture.Translate(lang.EnglishName)
+                <MudListItem Value="@lang.Code">
+                    <div class="d-flex align-center" style="gap: .75rem; min-width: 0;">
+                        @*
+                            Rendered here rather than through MudListItem's Icon slot. That slot is
+                            sized for a 24px monochrome Material glyph and these are 32x32 flag
+                            documents with their own viewBox — .zpanel-flag gives them a box they
+                            fit and a small radius so a rectangle of national colours does not read
+                            as a stray graphic.
+                        *@
+                        <span class="zpanel-flag">@((MarkupString)lang.IconFlag)</span>
+                        <div class="d-flex flex-column" style="min-width: 0;">
+                            <span>@Culture.Translate(lang.EnglishName)</span>
+                            @*
+                                The native name, for anyone hunting for a language they cannot
+                                currently read — the one place in the chrome where it belongs.
+                                Suppressed when it says the same thing as the line above it.
+                            *@
+                            @if (!string.Equals(lang.NativeName, Culture.Translate(lang.EnglishName).ToString(),
+                                                StringComparison.OrdinalIgnoreCase))
+                            {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@lang.NativeName</MudText>
+                            }
+                        </div>
+                    </div>
                 </MudListItem>
             }
         </MudList>
@@ -78,6 +106,8 @@
                 .Where(l =>
                     l.EnglishName.Contains(s, StringComparison.OrdinalIgnoreCase) ||
                     l.NativeName.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                    // The tag itself, so someone who thinks in "pl" or "de-DE" can find the row.
+                    l.Code.Contains(s, StringComparison.OrdinalIgnoreCase) ||
                     Culture.Translate(l.EnglishName).ToString().Contains(s, StringComparison.OrdinalIgnoreCase))
                 .ToArray();
         }
@@ -90,12 +120,29 @@
 
     private void OnExternalChange() => InvokeAsync(StateHasChanged);
 
+    /// <summary>The active culture in the same casing the list items use.</summary>
+    private string CurrentCode => Culture.Current.HasValue
+        ? Culture.Current.ValueOrDefault.ToLowerInvariant()
+        : string.Empty;
+
     private async Task SwitchAsync(string code)
     {
-        if (string.IsNullOrEmpty(code) || code == Culture.Current.Value) return;
+        // Ordinal-ignore-case, for the same reason CurrentCode exists: "pl-pl" and "pl-PL" are the
+        // same language, and an ordinal == here meant re-picking the active language ran a full
+        // switch instead of doing nothing.
+        if (string.IsNullOrEmpty(code) ||
+            string.Equals(code, Culture.Current.Value, StringComparison.OrdinalIgnoreCase))
+            return;
+
         CultureManager.SetCulture(global::Zonit.Extensions.Culture.TryCreate(code, out var c) ? c : global::Zonit.Extensions.Culture.Default);
+
+        // SetCulture only moves the scoped state. CultureMiddleware resolves the next request from
+        // the "lang" cookie before anything else, so without this write the page turns Polish and
+        // the very next navigation turns it back — a language switcher that appears to work and
+        // then silently undoes itself.
+        await CultureCookie.PersistAsync(Cookies, code);
+
         Close();
-        await Task.CompletedTask;
     }
 
     private void Close()

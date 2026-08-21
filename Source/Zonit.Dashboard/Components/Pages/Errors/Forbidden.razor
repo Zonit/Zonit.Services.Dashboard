@@ -1,6 +1,10 @@
 @*
     HTTP 403 — Forbidden. Reached via direct navigation OR the framework's
     UseStatusCodePagesWithReExecute pipeline (default "/error" → "/error/403").
+
+    Distinct from 401 on purpose: 401 means "we do not know who you are, sign in", 403 means "we
+    know exactly who you are and it is not enough". Offering a Sign in button here would be telling
+    someone to re-enter credentials that are already correct.
 *@
 @page "/403"
 @page "/error/403"
@@ -11,22 +15,23 @@
 @using Microsoft.AspNetCore.Authorization
 @using Zonit.Extensions.Website
 
-@inject NavigationManager Nav
+<ErrorPanel Status="403"
+            Color="MudBlazor.Color.Error"
+            Headline="Forbidden"
+            Description="You need additional roles or permissions to view this page." />
 
-<PageTitle>Forbidden</PageTitle>
-
-<MudPaper Class="pa-8" Elevation="0">
-    <MudText Typo="Typo.h2" Color="MudBlazor.Color.Error" Align="MudBlazor.Align.Center">403</MudText>
-    <MudText Typo="Typo.h5" Align="MudBlazor.Align.Center" Class="mt-2">Forbidden</MudText>
-    <MudText Typo="Typo.body2" Align="MudBlazor.Align.Center" Class="mt-4 mb-6">
-        You don't have permission to access this resource.
-    </MudText>
-    <div style="display: flex; justify-content: center;">
-        <MudButton Variant="Variant.Filled"
-                   Color="MudBlazor.Color.Primary"
-                   StartIcon="@MudBlazor.Icons.Material.Filled.Home"
-                   OnClick="@(() => Nav.NavigateTo(""))">
-            Back to dashboard
-        </MudButton>
-    </div>
-</MudPaper>
+@code {
+    // Metadata through PageBase, not a raw <PageTitle>.
+    //
+    // A <PageTitle> writes the document title directly and bypasses everything the website
+    // kernel composes around it. Measured: these pages produced a bare "Sign in" / "Page not
+    // found" while a framework page on the same site produced
+    // "Cultures — overview - Zonit.Extensions Demo" — the tenant name silently missing from
+    // every built-in screen.
+    //
+    // NoIndex is stated per page rather than inherited from the mount, because
+    // DashboardSiteOptions.Indexable is a switch a host is allowed to turn on, and a
+    // deliberately public dashboard must still never put its login screen or its error pages
+    // into a search index.
+    protected override PageMeta Metadata => new() { Title = "Forbidden", NoIndex = true };
+}
