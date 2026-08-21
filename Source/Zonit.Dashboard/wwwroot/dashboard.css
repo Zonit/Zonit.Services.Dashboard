@@ -681,7 +681,46 @@
     phone-appropriate share of the screen instead, capped so it never becomes the whole viewport.
 */
 @media (max-width: 1279px) {
-    .mud-drawer.zrail.mud-drawer-temporary { width: min(300px, 86vw) !important; }
+    /*
+        NOT scoped to .mud-drawer-temporary any more, and that qualifier was the bug.
+
+        The whole point of these rules is to survive the case where the C# got the variant wrong,
+        and a rail stuck on "persistent" was precisely that case — so the one state that needed
+        the override was the one state excluded from it. Photographed on a phone: the rail kept
+        its docked 220px and rendered as a bare strip of icons with every label clipped.
+    */
+    .mud-drawer.zrail { width: min(300px, 86vw) !important; }
+
+    /*
+        Flush to the edge, whatever MudLayout thinks.
+
+        MudBlazor positions a right-hand drawer by animating `right`, and a drawer it believes is
+        docked contributes its own width to how the others are placed. With two End drawers open
+        and a stale docked state between them, the second one is positioned past the edge of the
+        screen — which is the panel in the photograph, readable only for its first few
+        characters and impossible to dismiss.
+
+        Pinning an OPEN right drawer to right:0 removes the whole class of failure: it cannot be
+        offset by a sibling, so it cannot leave the viewport. Closed drawers are untouched, so
+        the slide-in animation still works.
+    */
+    .mud-drawer.mud-drawer-pos-right.mud-drawer--open {
+        right: 0 !important;
+        left: auto !important;
+    }
+
+    /* No drawer may ever be wider than the screen it is on. */
+    .mud-drawer { max-width: 100vw !important; }
+
+    /*
+        One right-hand overlay at a time, enforced in CSS rather than trusted to state.
+
+        SyncOverlayDrawers already closes the rail when a panel opens, and the swipe handler
+        agrees — but both read the variant, and the variant is exactly what goes stale. If a panel
+        is open on a narrow screen then the rail is, by definition, not what the visitor is
+        looking at; hiding it needs no state to be correct and cannot be raced.
+    */
+    .mud-layout:has(.mud-drawer.zpanel.mud-drawer--open) .mud-drawer.zrail { display: none !important; }
 }
 
 /* Same for the panels: a fixed 320px on a 360px phone leaves a 40px sliver of page, which reads

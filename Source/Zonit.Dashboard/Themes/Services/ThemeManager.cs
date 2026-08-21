@@ -45,6 +45,9 @@ internal sealed class ThemeManager : IThemeManager
     // every second+ visit instead of always rendering light then re-rendering dark.
     private bool _systemPrefersDark;
 
+    /// <summary>System preference, resolved through the same gate as <see cref="Mode"/>.</summary>
+    private bool SystemPrefersDark { get { EnsureResolved(); return _systemPrefersDark; } }
+
     public ThemeManager(IEnumerable<IDashboardTheme> themes, ICookieProvider cookies)
     {
         _cookies = cookies;
@@ -58,28 +61,71 @@ internal sealed class ThemeManager : IThemeManager
                 "No IDashboardTheme registered. AddDashboard() seeds three built-ins; " +
                 "verify it ran before resolving IThemeManager.");
 
-        Current = Available[0];
-        Mode = ThemeMode.Auto;
+        // Backing fields directly: the compiler does not track definite assignment through a
+        // property setter, and these are non-nullable.
+        _current = Available[0];
+        _mode = ThemeMode.Auto;
 
-        // Eager cookie read during construction — ICookieProvider is request-scoped
-        // and CookieMiddleware has already seeded the repo from
-        // HttpContext.Request.Cookies by the time DI resolves us inside SSR. This
-        // means the very first render already carries the user's persisted choice;
-        // HydrateAsync later only re-bridges the request → circuit scope split
-        // when running interactively. The result: no flash of the default theme
-        // on returning visitors.
-        ReadFromCookies();
+        // Deliberately NOT reading cookies here. See EnsureResolved.
+        TryResolve();
     }
 
-    public IDashboardTheme Current { get; private set; }
-    public ThemeMode Mode { get; private set; }
+    // Whether the values below were resolved from a cookie jar that actually had something in it.
+    // Until that happens they are provisional and get re-resolved on every read.
+    private bool _resolved;
+
+    private IDashboardTheme _current;
+    private ThemeMode _mode;
+
+    /// <summary>
+    /// The active theme. Reading it resolves state from cookies if that has not yet succeeded.
+    /// </summary>
+    public IDashboardTheme Current { get { EnsureResolved(); return _current; } private set => _current = value; }
+
+    /// <inheritdoc cref="Current"/>
+    public ThemeMode Mode { get { EnsureResolved(); return _mode; } private set => _mode = value; }
+
     public IReadOnlyList<IDashboardTheme> Available { get; }
+
+    /// <summary>
+    /// Resolves theme / mode / system-preference from cookies, but only <em>latches</em> the
+    /// result once the cookie jar was non-empty.
+    /// </summary>
+    /// <remarks>
+    /// <para><b>This is what fixed the dark-then-light flash on every page load.</b> The
+    /// constructor used to read cookies once and keep whatever it got. During SSR that is fine —
+    /// the request-scoped jar is seeded from <c>HttpContext.Request.Cookies</c> before anything
+    /// resolves this service. In the CIRCUIT it was not: the jar is seeded by
+    /// <c>WebsiteHydrator</c>, which <c>AppBase</c> places in the BODY, and <c>DashboardHead</c>
+    /// is a HEAD component — built first. So the circuit constructed this manager against an
+    /// empty jar, latched <c>Mode = Auto</c> with no system preference (i.e. light), rendered the
+    /// page light, and only then did <c>HydrateAsync</c> re-read the cookies and repaint. Server
+    /// dark, circuit light, one visible flip per refresh.</para>
+    ///
+    /// <para>An empty jar is not an answer, it is the absence of one. Treating it as provisional
+    /// makes the outcome independent of which component happens to resolve this service first —
+    /// the read that matters is the one the layout makes, and by then the jar is populated.</para>
+    /// </remarks>
+    private void EnsureResolved()
+    {
+        if (_resolved) return;
+        TryResolve();
+    }
+
+    private void TryResolve()
+    {
+        // GetCookies() is the live jar, not a copy — an empty one means "not seeded yet".
+        if (_cookies.GetCookies() is not { Count: > 0 }) return;
+
+        ReadFromCookies();
+        _resolved = true;
+    }
 
     public bool IsDark => Mode switch
     {
         ThemeMode.Light => false,
         ThemeMode.Dark  => true,
-        _               => _systemPrefersDark, // Auto
+        _               => SystemPrefersDark, // Auto
     };
 
     public event Action? OnChange;
@@ -104,6 +150,10 @@ internal sealed class ThemeManager : IThemeManager
 
         var changed = ReadFromCookies();
 
+        // RefreshAsync read the browser's actual document.cookie, so whatever came back is the
+        // truth even when it is empty — latch it and stop re-resolving on every read.
+        _resolved = true;
+
         // ---- 2. No live re-query. ----
         //
         // This used to ask the browser for prefers-color-scheme over JS interop and overwrite
@@ -124,6 +174,11 @@ internal sealed class ThemeManager : IThemeManager
     /// in-memory state. Returns <see langword="true"/> when something actually
     /// changed — callers raise <see cref="OnChange"/> only if it did.
     /// </summary>
+    /// <remarks>
+    /// Reads and writes the backing fields directly, never the properties. The properties resolve
+    /// lazily through <see cref="EnsureResolved"/>, and this method runs INSIDE that resolution —
+    /// touching a property here would re-enter it and recurse until the stack ran out.
+    /// </remarks>
     private bool ReadFromCookies()
     {
         var changed = false;
@@ -133,17 +188,17 @@ internal sealed class ThemeManager : IThemeManager
         {
             var picked = Available.FirstOrDefault(
                 t => string.Equals(t.Id, themeCookie, StringComparison.OrdinalIgnoreCase));
-            if (picked is not null && !ReferenceEquals(picked, Current))
+            if (picked is not null && !ReferenceEquals(picked, _current))
             {
-                Current = picked;
+                _current = picked;
                 changed = true;
             }
         }
 
         var modeCookie = _cookies.Get(ModeCookieKey)?.Value;
-        if (Enum.TryParse<ThemeMode>(modeCookie, ignoreCase: true, out var parsed) && parsed != Mode)
+        if (Enum.TryParse<ThemeMode>(modeCookie, ignoreCase: true, out var parsed) && parsed != _mode)
         {
-            Mode = parsed;
+            _mode = parsed;
             changed = true;
         }
 

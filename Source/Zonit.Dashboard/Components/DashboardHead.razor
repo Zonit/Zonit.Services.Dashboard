@@ -17,9 +17,20 @@
 
 @inject ITenantProvider Tenant
 @inject IDashboardCurrentSite Dashboard
-@inject Zonit.Dashboard.Themes.IThemeManager ThemeManager
 
-<meta name="color-scheme" content="@(ThemeManager.IsDark ? "dark" : "light")" />
+@*
+    No <meta name="color-scheme"> here any more, and no IThemeManager injection either.
+
+    Injecting it made this component — which lives in the HEAD, and AppBase builds the head before
+    the body — the first thing in the circuit to resolve the scoped ThemeManager. That happened
+    before WebsiteHydrator (body) had restored the cookie jar, so the manager resolved against an
+    empty jar, decided Auto/light, and the page rendered light under a server that had rendered
+    dark. The correction one render later is the flash.
+
+    Nothing is lost by dropping the meta: DashboardThemeRoot emits
+    "color-scheme: dark|light !important" on :root, and a CSS declaration on the root element
+    overrides the meta tag anyway — so the meta was already being ignored by the browser.
+*@
 
 @* Zero-flicker dark-mode handshake. Runs BEFORE Blazor boots:
      1. Detects prefers-color-scheme.
