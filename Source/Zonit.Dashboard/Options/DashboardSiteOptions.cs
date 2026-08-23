@@ -264,15 +264,14 @@ public sealed class DashboardLayoutOptions
     /// Honour <c>PageWidth</c> when sizing the content container.
     /// </summary>
     /// <remarks>
-    /// <para>The mapping is deliberately conservative: <c>Content</c> — what a page gets when it
-    /// says nothing — stays <c>MaxWidth.False</c>, exactly what this layout did before, so nothing
-    /// existing moves. Only a page that asks for something else gets something else.</para>
+    /// <para>Each of the five values resolves to its own width: <c>Narrow</c> 600px, <c>Reading</c>
+    /// 960px, <c>Content</c> 1280px, <c>Wide</c> 1920px, <c>Full</c> uncapped and without gutters.
+    /// <c>Content</c> is what a page gets when it says nothing.</para>
     ///
-    /// <para><c>Content</c> and <c>Wide</c> resolve to the same width here, and that is honest
-    /// rather than an oversight: a dashboard's ordinary page <em>is</em> full-bleed, so the
-    /// distinction the enum draws for a content site has nothing to separate here. The value of the
-    /// mapping is at the other end — a settings form that says <c>Narrow</c> and stops being a
-    /// single input stretched across an ultrawide monitor.</para>
+    /// <para><b>Turning this off is the escape hatch, not a tuning knob.</b> With
+    /// <see langword="false"/> every page on the mount gets an uncapped container regardless of what
+    /// it declared — which is what this layout did before widths existed. Reach for it when a mount
+    /// is genuinely all wide data grids; for a single page, say <c>Full</c> on that page instead.</para>
     /// </remarks>
     public bool HonourPageWidth { get; set; } = true;
 

@@ -292,23 +292,32 @@ public sealed partial class DashboardMainLayout : LayoutComponentBase, IAsyncDis
     /// The content container's width, from whatever the routed page asked for.
     /// </summary>
     /// <remarks>
-    /// <para><see cref="PageWidth.Content"/> — the value a page gets when it says nothing — maps to
-    /// <c>MaxWidth.False</c>, which is precisely what this container was hard-coded to before. That
-    /// is the point: turning the feature on moves nothing that existed.</para>
+    /// <para>Five values, five widths. An earlier revision collapsed <see cref="PageWidth.Content"/>
+    /// and <see cref="PageWidth.Wide"/> onto <c>MaxWidth.False</c> on the theory that a dashboard
+    /// page is full-bleed by nature. In use that theory did not hold: on a 1920px monitor an
+    /// ordinary list — a name, three numbers and three icon buttons — spread its content to both
+    /// edges with a gulf of empty page in the middle, and the row became harder to read the wider
+    /// the screen got. Worse, that was the behaviour a page got by <em>saying nothing</em>, so every
+    /// page had to opt out of it.</para>
     ///
-    /// <para><see cref="PageWidth.Wide"/> lands on the same value, and that is not an omission. A
-    /// dashboard page is full-bleed by nature, so the distinction the enum draws for a content site
-    /// has nothing to separate here; the mapping earns its keep at the narrow end, where a settings
-    /// form stops being one input stretched across an ultrawide monitor.</para>
+    /// <para>So <c>Content</c> — still the default — now caps at <c>Large</c> (1280px), the width a
+    /// page gets when it has an opinion about nothing else. A page that genuinely earns the room
+    /// says <c>Wide</c> and gets <c>ExtraLarge</c>; a page that wants the viewport edge says
+    /// <c>Full</c> and gets no cap and no gutters. The scale is monotonic, which it was not before:
+    /// <c>Wide</c> used to resolve no wider than <c>Content</c>.</para>
+    ///
+    /// <para><b>This moves existing pages</b>, and deliberately so — a page that never declared a
+    /// width goes from edge-to-edge to 1280px. Set <see cref="DashboardLayoutOptions.HonourPageWidth"/>
+    /// to <see langword="false"/> to get the old uncapped container back for a whole mount.</para>
     /// </remarks>
     private MaxWidth ContentWidth => Site.Layout.HonourPageWidth
         ? LayoutContext.Width switch
         {
             PageWidth.Narrow => MaxWidth.Small,
             PageWidth.Reading => MaxWidth.Medium,
-            PageWidth.Wide => MaxWidth.False,
+            PageWidth.Wide => MaxWidth.ExtraLarge,
             PageWidth.Full => MaxWidth.False,
-            _ => MaxWidth.False,
+            _ => MaxWidth.Large,
         }
         : MaxWidth.False;
 
